@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Abandoned but not Forgotten: NASA's Discarded Equipment on the Moon and Mars</title>
   
   <!-- Google Fonts: Space Mono & Inter -->
@@ -53,6 +53,10 @@
 
       <!-- Header Action Buttons -->
       <div class="header-actions">
+        <button class="hud-btn" id="btn-sources-toggle" title="Resmi Veri Kaynakları">
+          <span>📚</span>
+          <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
+        </button>
         <button class="hud-btn" id="btn-tour-toggle" title="Rehberli Hikaye Turunu Başlat">
           <span>🚀</span>
           <span data-i18n="btn_tour">HİKAYE TURU</span>
@@ -82,10 +86,10 @@
     </div>
 
     <!-- Left Dock: Planetary Telemetry & Relics Quick Search -->
-    <aside class="left-dock interactive">
+    <aside class="left-dock interactive" id="left-dock">
       
       <!-- Planetary Telemetry Card -->
-      <div class="glass-card">
+      <div class="glass-card" id="card-telemetry">
         <div class="card-label">
           <span data-i18n="telemetry_header">GÖK CİSMİ TELEMETRİSİ</span>
           <span class="live-badge">CANLI RADAR</span>
@@ -121,9 +125,10 @@
       </div>
 
       <!-- Quick Relics List & Search Card -->
-      <div class="glass-card" style="flex:1;">
+      <div class="glass-card" id="card-relics-list" style="flex:1;">
         <div class="card-label">
           <span data-i18n="relics_list_header">TARİHİ EKİPMANLAR LİSTESİ</span>
+          <button class="mobile-close-list-btn" id="btn-mobile-close-list">✕</button>
         </div>
 
         <div class="search-wrapper">
@@ -137,10 +142,10 @@
       </div>
     </aside>
 
-    <!-- Bottom Filter Dock -->
+    <!-- Bottom Filter Dock (Desktop) -->
     <footer class="bottom-dock interactive">
       <div class="controls-hint">
-        <kbd>Fare</kbd> <span data-i18n="hint_controls">360° Gezin • Tekerlek ile Yakınlaş • Noktalara Tıkla</span>
+        <kbd>Fare / Dokun</kbd> <span data-i18n="hint_controls">360° Gezin • Yakınlaş • Noktalara Tıkla</span>
       </div>
 
       <div class="filter-bar">
@@ -154,6 +159,30 @@
         <button class="pill-btn decade-pill" data-decade="2020">2020'LER</button>
       </div>
     </footer>
+
+    <!-- Mobile Bottom Navigation Dock (Visible only on mobile) -->
+    <nav class="mobile-nav-bar interactive">
+      <button class="mobile-nav-btn active" id="m-btn-map">
+        <span class="m-icon">🪐</span>
+        <span class="m-label">Harita</span>
+      </button>
+      <button class="mobile-nav-btn" id="m-btn-relics">
+        <span class="m-icon">📋</span>
+        <span class="m-label">Kalıntılar</span>
+      </button>
+      <button class="mobile-nav-btn" id="m-btn-telemetry">
+        <span class="m-icon">📊</span>
+        <span class="m-label">Telemetri</span>
+      </button>
+      <button class="mobile-nav-btn" id="m-btn-tour">
+        <span class="m-icon">🚀</span>
+        <span class="m-label">Tur</span>
+      </button>
+      <button class="mobile-nav-btn" id="m-btn-sources">
+        <span class="m-icon">📚</span>
+        <span class="m-label">Kaynaklar</span>
+      </button>
+    </nav>
 
     <!-- Right Sliding Story Drawer (Rich Narrative Modal) -->
     <div class="story-drawer interactive" id="story-drawer">
@@ -249,15 +278,24 @@
           </div>
         </div>
 
-        <!-- Audio Transmission Snippet -->
+        <!-- Audio Transmission Broadcast Box with Animated Equalizer -->
         <div class="audio-broadcast-box">
           <div class="audio-info">
-            <span class="audio-label" data-i18n="transmission_label">TELSİZ VE TELEMETRİ KAYDI</span>
-            <span class="audio-text" id="drawer-audio-text">"Houston, Tranquility Base here..."</span>
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <span class="audio-label" data-i18n="transmission_label">TELSİZ VE TELEMETRİ SESİ</span>
+              <div class="waveform-equalizer" id="audio-equalizer">
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+              </div>
+            </div>
+            <span class="audio-text" id="drawer-audio-text">"Houston, Tranquility Base here. The Eagle has landed."</span>
           </div>
           <button class="play-tone-btn" id="btn-play-transmission">
-            <span>📡</span>
-            <span data-i18n="play_audio_btn">TELSİZ TONUNU ÇAL</span>
+            <span id="audio-btn-icon">📻</span>
+            <span id="audio-btn-text" data-i18n="play_audio_btn">TELSİZİ DİNLE</span>
           </button>
         </div>
 
@@ -275,6 +313,28 @@
         </button>
       </div>
 
+    </div>
+
+    <!-- Official Sources Modal Dialog -->
+    <div class="modal-overlay" id="sources-modal">
+      <div class="modal-content glass-card interactive">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span>🏛️</span>
+            <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ</h2>
+          </div>
+          <button class="close-btn" id="btn-close-sources">✕</button>
+        </div>
+        <p class="sources-intro" data-i18n="sources_intro">
+          Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:
+        </p>
+        <div class="sources-list" id="sources-list-container">
+          <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
+        </div>
+        <div class="modal-footer-note">
+          <span>✦ NASA Açık Veri Politikası (Open Data Policy) kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
+        </div>
+      </div>
     </div>
 
     <!-- 3D Floating Tooltip -->

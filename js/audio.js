@@ -1,6 +1,7 @@
 /**
- * Web Audio API Sound Synthesizer for NASA Mission Telemetry & Deep Space Atmosphere
- * Zero external audio files required — synthesized entirely via Web Audio nodes.
+ * Web Audio API Sound Synthesizer & Apollo Radio Transmission Engine
+ * Combines Web Audio Quindar tones, bandpass radio filter, static bursts,
+ * and SpeechSynthesis to realistically broadcast historical astronaut communications.
  */
 
 class SpaceAudioEngine {
@@ -10,8 +11,9 @@ class SpaceAudioEngine {
     this.ambientGain = null;
     this.ambientOsc1 = null;
     this.ambientOsc2 = null;
-    this.ambientLFO = null;
     this.isAmbientPlaying = false;
+    this.isTransmitting = false;
+    this.synth = window.speechSynthesis || null;
   }
 
   _initContext() {
@@ -31,6 +33,10 @@ class SpaceAudioEngine {
     if (this.ambientGain) {
       this.ambientGain.gain.setValueAtTime(this.enabled ? 0.08 : 0, this.ctx ? this.ctx.currentTime : 0);
     }
+    if (!this.enabled && this.synth) {
+      this.synth.cancel();
+      this.isTransmitting = false;
+    }
     return this.enabled;
   }
 
@@ -44,7 +50,7 @@ class SpaceAudioEngine {
 
     try {
       this.ambientGain = this.ctx.createGain();
-      this.ambientGain.gain.setValueAtTime(this.enabled ? 0.07 : 0, this.ctx.currentTime);
+      this.ambientGain.gain.setValueAtTime(this.enabled ? 0.06 : 0, this.ctx.currentTime);
       this.ambientGain.connect(this.ctx.destination);
 
       // Low rumble 55Hz
@@ -57,10 +63,9 @@ class SpaceAudioEngine {
       this.ambientOsc2.type = 'triangle';
       this.ambientOsc2.frequency.setValueAtTime(82.4, this.ctx.currentTime);
 
-      // Filter
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(120, this.ctx.currentTime);
+      filter.frequency.setValueAtTime(110, this.ctx.currentTime);
 
       this.ambientOsc1.connect(filter);
       this.ambientOsc2.connect(filter);
@@ -70,30 +75,34 @@ class SpaceAudioEngine {
       this.ambientOsc2.start();
       this.isAmbientPlaying = true;
     } catch (e) {
-      console.warn("Ambient audio init deferred:", e);
+      console.warn("Ambient audio deferred:", e);
     }
   }
 
   /**
-   * Authentic NASA Apollo Quindar Tone
-   * Intro tone: 2525 Hz pure sine wave for 250 milliseconds
+   * NASA Apollo Quindar Tone
+   * intro = true: 2525 Hz key-up tone (starts radio channel)
+   * intro = false: 2475 Hz key-down tone (ends radio channel)
    */
-  playQuindarTone() {
-    if (!this.enabled) return;
+  playQuindarTone(intro = true, onComplete = null) {
     this._initContext();
-    if (!this.ctx) return;
+    if (!this.ctx || !this.enabled) {
+      if (onComplete) onComplete();
+      return;
+    }
 
     try {
       const now = this.ctx.currentTime;
+      const freq = intro ? 2525 : 2475;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(2525, now);
+      osc.frequency.setValueAtTime(freq, now);
 
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.09, now + 0.015);
-      gain.gain.setValueAtTime(0.09, now + 0.22);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.015);
+      gain.gain.setValueAtTime(0.12, now + 0.22);
       gain.gain.linearRampToValueAtTime(0, now + 0.25);
 
       osc.connect(gain);
@@ -102,13 +111,18 @@ class SpaceAudioEngine {
       osc.start(now);
       osc.stop(now + 0.26);
 
-      // Followed by subtle radio static crackle
-      this.playRadioStatic(0.15, 0.04, 0.24);
-    } catch (e) {}
+      this.playRadioStatic(0.2, 0.05, 0.22);
+
+      if (onComplete) {
+        setTimeout(onComplete, 280);
+      }
+    } catch (e) {
+      if (onComplete) onComplete();
+    }
   }
 
   /**
-   * Radio communications static burst
+   * VHF radio static burst
    */
   playRadioStatic(duration = 0.2, volume = 0.05, delay = 0) {
     if (!this.enabled) return;
@@ -117,7 +131,7 @@ class SpaceAudioEngine {
 
     try {
       const startTime = this.ctx.currentTime + delay;
-      const bufferSize = this.ctx.sampleRate * duration;
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const output = buffer.getChannelData(0);
 
@@ -128,15 +142,14 @@ class SpaceAudioEngine {
       const whiteNoise = this.ctx.createBufferSource();
       whiteNoise.buffer = buffer;
 
-      // Bandpass filter to sound like analog VHF/UHF radio
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1500, startTime);
+      filter.frequency.setValueAtTime(1400, startTime);
       filter.Q.setValueAtTime(1.8, startTime);
 
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(volume, startTime + 0.03);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
       gain.gain.linearRampToValueAtTime(0, startTime + duration);
 
       whiteNoise.connect(filter);
@@ -176,7 +189,7 @@ class SpaceAudioEngine {
   }
 
   /**
-   * Body switch sound (atmospheric whoosh)
+   * Body switch sound (warp whoosh)
    */
   playWarpTransition() {
     if (!this.enabled) return;
@@ -204,6 +217,79 @@ class SpaceAudioEngine {
       osc.stop(now + 0.72);
       this.playRadioStatic(0.4, 0.06, 0.2);
     } catch (e) {}
+  }
+
+  /**
+   * Plays the complete astronaut radio communication:
+   * 1. Quindar Key-Up Beep (2525 Hz)
+   * 2. Radio Squelch & Static Burst
+   * 3. Spoken Astronaut Voice (via SpeechSynthesis with radio modulation)
+   * 4. Quindar Key-Down Outro Beep (2475 Hz) + Squelch
+   */
+  playRadioTransmission(text, onStart = null, onEnd = null) {
+    this._initContext();
+    if (!this.enabled) {
+      if (onEnd) onEnd();
+      return;
+    }
+
+    if (this.isTransmitting) {
+      if (this.synth) this.synth.cancel();
+      this.isTransmitting = false;
+      if (onEnd) onEnd();
+      return;
+    }
+
+    this.isTransmitting = true;
+    if (onStart) onStart();
+
+    // Clean text from bracketed labels like "[Apollo 12 Seismometer...]"
+    const cleanSpeech = text.replace(/\[.*?\]/g, '').replace(/Conrad:|Shepard:|Duke:|Scott:|Cernan:/g, '').trim();
+
+    // 1. Play Quindar Intro
+    this.playQuindarTone(true, () => {
+      // 2. Play continuous subtle radio background hiss while speaking
+      this.playRadioStatic(cleanSpeech.length * 0.12, 0.02, 0);
+
+      if (this.synth && cleanSpeech.length > 2) {
+        // Cancel any pending speech
+        this.synth.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(cleanSpeech);
+        utterance.rate = 0.95;  // Deliberate NASA flight pace
+        utterance.pitch = 0.95; // Radio communications pitch
+        utterance.lang = 'en-US';
+
+        // Select an English voice if available
+        const voices = this.synth.getVoices();
+        const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('David') || v.name.includes('George') || v.name.includes('Natural') || v.name.includes('Male'))) || voices.find(v => v.lang.startsWith('en'));
+        if (enVoice) utterance.voice = enVoice;
+
+        utterance.onend = () => {
+          this.isTransmitting = false;
+          // 3. Play Quindar Outro Beep when finished speaking
+          this.playQuindarTone(false, () => {
+            if (onEnd) onEnd();
+          });
+        };
+
+        utterance.onerror = () => {
+          this.isTransmitting = false;
+          this.playQuindarTone(false);
+          if (onEnd) onEnd();
+        };
+
+        this.synth.speak(utterance);
+      } else {
+        // Fallback if no speech synthesis: pulse simulated radio carrier wave
+        this.playRadioStatic(1.5, 0.06, 0);
+        setTimeout(() => {
+          this.isTransmitting = false;
+          this.playQuindarTone(false);
+          if (onEnd) onEnd();
+        }, 1600);
+      }
+    });
   }
 }
 

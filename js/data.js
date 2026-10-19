@@ -857,3 +857,47 @@ function getArtifactsByBody(body) {
 function getArtifactById(id) {
   return ARTIFACTS.find(a => a.id === id);
 }
+
+const OFFICIAL_SOURCES = [
+  {
+    name_tr: "NASA Apollo Lunar Surface Journal (ALSJ)",
+    name_en: "NASA Apollo Lunar Surface Journal (ALSJ)",
+    desc_tr: "Apollo 11'den Apollo 17'ye kadar tüm Ay inişlerinin tam telsiz konuşma kayıtları, yüzey zaman çizelgeleri ve geride bırakılan donanım envanterleri.",
+    desc_en: "The definitive historical record of Apollo surface missions, air-to-ground audio transcripts, and lunar hardware manifests.",
+    url: "https://www.hq.nasa.gov/alsj/",
+    curator: "NASA History Division & Eric M. Jones"
+  },
+  {
+    name_tr: "NASA Planetary Data System (PDS)",
+    name_en: "NASA Planetary Data System (PDS)",
+    desc_tr: "NASA'nın tüm gezegen görevlerinden toplanan doğrulanmış bilimsel verilerini, santimetre hassasiyetindeki iniş koordinatlarını ve kütle ölçümlerini barındıran resmi federal arşivi.",
+    desc_en: "NASA's primary federal archive for planetary science telemetry, calibrated coordinates, and returned sample cataloging.",
+    url: "https://pds.nasa.gov/",
+    curator: "NASA Science Mission Directorate / Geosciences Node"
+  },
+  {
+    name_tr: "LROC - Lunar Reconnaissance Orbiter Camera (ASU)",
+    name_en: "LROC - Lunar Reconnaissance Orbiter Camera (ASU)",
+    desc_tr: "Ay yörüngesindeki LRO uydusunun Apollo iniş kademelerini, rover tekerlek izlerini ve kasıtlı roket çarpışma kraterlerini 0.5 metre çözünürlükle fotoğrafladığı resmi katalog.",
+    desc_en: "Sub-meter orbital imagery confirming Apollo descent stages, lunar roving vehicle tracks, and rocket impact scars.",
+    url: "https://www.lroc.asu.edu/",
+    curator: "Arizona State University & NASA Goddard Space Flight Center"
+  },
+  {
+    name_tr: "NASA Jet Propulsion Laboratory (JPL) Mars Exploration",
+    name_en: "NASA Jet Propulsion Laboratory (JPL) Mars Exploration",
+    desc_tr: "Viking 1-2, Pathfinder, Spirit, Opportunity, Curiosity, InSight, Perseverance ve Ingenuity helikopterinin son telemetri durumları, uçuş günlükleri ve yüzey koordinatları.",
+    desc_en: "Official operations logs, telemetry reports, and surface coordinates for Viking, Spirit, Opportunity, Curiosity, InSight, and Ingenuity.",
+    url: "https://mars.nasa.gov/",
+    curator: "NASA / Caltech Jet Propulsion Laboratory"
+  },
+  {
+    name_tr: "NASA NSSDC Master Catalog (Spacecraft Query)",
+    name_en: "NASA NSSDC Master Catalog (Spacecraft Query)",
+    desc_tr: "Tarihteki tüm uzay araçlarının uluslararası COSPAR ve NSSDC tescil numaraları, fırlatma ve kuru iniş kütleleri.",
+    desc_en: "Master registry of international spacecraft designators, launch masses, trajectories, and hardware dispositions.",
+    url: "https://nssdc.gsfc.nasa.gov/nmc/",
+    curator: "NASA Goddard Space Flight Center"
+  }
+];
+

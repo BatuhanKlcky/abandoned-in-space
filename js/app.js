@@ -123,11 +123,117 @@ class AbandonedInSpaceApp {
       nextSiteBtn.addEventListener('click', () => this.navigateAdjacentArtifact(1));
     }
 
-    // Audio broadcast snippet button
+    // Audio broadcast snippet button (Spoken Radio Transmission with Quindar tones & static)
     const playAudioBtn = document.getElementById('btn-play-transmission');
     if (playAudioBtn) {
       playAudioBtn.addEventListener('click', () => {
-        window.SpaceAudio.playQuindarTone();
+        const artifact = this.sceneManager.selectedArtifact;
+        if (!artifact) return;
+
+        const speechText = artifact.audioSnippet || artifact.quote_en || "";
+        const eq = document.getElementById('audio-equalizer');
+        const icon = document.getElementById('audio-btn-icon');
+        const btnText = document.getElementById('audio-btn-text');
+
+        window.SpaceAudio.playRadioTransmission(
+          speechText,
+          () => {
+            // onStart
+            if (eq) eq.classList.add('active');
+            playAudioBtn.classList.add('transmitting');
+            if (icon) icon.innerText = "🔊";
+            if (btnText) btnText.innerText = this.currentLang === 'tr' ? 'YAYINLANIYOR...' : 'TRANSMITTING...';
+          },
+          () => {
+            // onEnd
+            if (eq) eq.classList.remove('active');
+            playAudioBtn.classList.remove('transmitting');
+            if (icon) icon.innerText = "📻";
+            if (btnText) btnText.innerText = this.currentLang === 'tr' ? 'TELSİZİ DİNLE' : 'LISTEN TO TRANSMISSION';
+          }
+        );
+      });
+    }
+
+    // Sources Modal Controls
+    const sourcesBtn = document.getElementById('btn-sources-toggle');
+    const mSourcesBtn = document.getElementById('m-btn-sources');
+    const sourcesModal = document.getElementById('sources-modal');
+    const closeSourcesBtn = document.getElementById('btn-close-sources');
+
+    const openSources = () => {
+      this.renderSourcesList();
+      if (sourcesModal) sourcesModal.classList.add('open');
+      window.SpaceAudio.playTelemetryPing(1000, 0.05);
+    };
+
+    if (sourcesBtn) sourcesBtn.addEventListener('click', openSources);
+    if (mSourcesBtn) mSourcesBtn.addEventListener('click', openSources);
+    if (closeSourcesBtn) closeSourcesBtn.addEventListener('click', () => {
+      if (sourcesModal) sourcesModal.classList.remove('open');
+    });
+    if (sourcesModal) {
+      sourcesModal.addEventListener('click', (e) => {
+        if (e.target === sourcesModal) sourcesModal.classList.remove('open');
+      });
+    }
+
+    // Mobile Navigation Controls
+    const mBtnMap = document.getElementById('m-btn-map');
+    const mBtnRelics = document.getElementById('m-btn-relics');
+    const mBtnTelemetry = document.getElementById('m-btn-telemetry');
+    const mBtnTour = document.getElementById('m-btn-tour');
+    const leftDock = document.getElementById('left-dock');
+    const cardTelemetry = document.getElementById('card-telemetry');
+    const cardRelics = document.getElementById('card-relics-list');
+    const btnMobileCloseList = document.getElementById('btn-mobile-close-list');
+
+    const setMobileTabActive = (activeBtn) => {
+      document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+      if (activeBtn) activeBtn.classList.add('active');
+    };
+
+    if (mBtnMap) {
+      mBtnMap.addEventListener('click', () => {
+        setMobileTabActive(mBtnMap);
+        if (leftDock) leftDock.classList.remove('mobile-visible');
+        this.closeDrawer();
+      });
+    }
+
+    if (mBtnRelics) {
+      mBtnRelics.addEventListener('click', () => {
+        setMobileTabActive(mBtnRelics);
+        if (cardTelemetry) cardTelemetry.style.display = 'none';
+        if (cardRelics) cardRelics.style.display = 'flex';
+        if (leftDock) leftDock.classList.add('mobile-visible');
+        this.closeDrawer();
+      });
+    }
+
+    if (mBtnTelemetry) {
+      mBtnTelemetry.addEventListener('click', () => {
+        setMobileTabActive(mBtnTelemetry);
+        if (cardTelemetry) cardTelemetry.style.display = 'block';
+        if (cardRelics) cardRelics.style.display = 'none';
+        if (leftDock) leftDock.classList.add('mobile-visible');
+        this.closeDrawer();
+      });
+    }
+
+    if (mBtnTour) {
+      mBtnTour.addEventListener('click', () => {
+        setMobileTabActive(mBtnTour);
+        if (leftDock) leftDock.classList.remove('mobile-visible');
+        if (this.isTourActive) this.endTour();
+        else this.startTour();
+      });
+    }
+
+    if (btnMobileCloseList) {
+      btnMobileCloseList.addEventListener('click', () => {
+        if (leftDock) leftDock.classList.remove('mobile-visible');
+        setMobileTabActive(mBtnMap);
       });
     }
 
@@ -428,15 +534,45 @@ class AbandonedInSpaceApp {
       this.openDrawer(this.sceneManager.selectedArtifact);
     }
   }
+
+  // --- Official Sources Modal Renderer ---
+  renderSourcesList() {
+    const container = document.getElementById('sources-list-container');
+    if (!container || typeof OFFICIAL_SOURCES === 'undefined') return;
+
+    container.innerHTML = '';
+    const isTr = this.currentLang === 'tr';
+
+    OFFICIAL_SOURCES.forEach(source => {
+      const card = document.createElement('div');
+      card.className = 'source-item-card';
+      card.innerHTML = `
+        <div class="source-header-row">
+          <span class="source-title">${isTr ? source.name_tr : source.name_en}</span>
+          <span class="source-curator">${source.curator}</span>
+        </div>
+        <p class="source-desc">${isTr ? source.desc_tr : source.desc_en}</p>
+        <div class="source-link-row">
+          <a href="${source.url}" target="_blank" rel="noopener noreferrer" class="source-link">
+            <span>Resmi Arşive Git ↗</span>
+          </a>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
 }
 
 // Internationalization Strings
 const TRANSLATIONS = {
   tr: {
     app_subtitle: "Ay ve Mars'taki Tarihi NASA Kalıntıları ve Hikaye Haritası",
+    btn_sources: "RESMİ KAYNAKLAR",
     btn_tour: "HİKAYE TURU",
     btn_reset: "GÖRÜNÜMÜ SIFIRLA",
-    btn_sound: "SES",
+    btn_sound: "SES: AÇIK",
+    sound_on: "SES: AÇIK",
+    sound_off: "SES: KAPALI",
     telemetry_header: "GÖK CİSMİ TELEMETRİSİ",
     radius_label: "YARIÇAP",
     gravity_label: "YERÇEKİMİ",
@@ -449,18 +585,23 @@ const TRANSLATIONS = {
     condition_label: "BUGÜNKÜ DURUMU (YILLAR SONRA)",
     discarded_label: "TERK EDİLEN TEÇHİZAT LİSTESİ",
     specs_label: "TEKNİK TELEMETRİ BİLGİSİ",
-    transmission_label: "TELSİZ VE TELEMETRİ KAYDI",
-    play_audio_btn: "TELSİZ TONUNU ÇAL",
+    transmission_label: "TELSİZ VE TELEMETRİ SESİ",
+    play_audio_btn: "TELSİZİ DİNLE",
     btn_prev_site: "Önceki Kalıntı",
     btn_next_site: "Sonraki Kalıntı",
-    hint_controls: "Fare ile 360° Gezin • Tekerlek ile Yakınlaş • Noktalara Tıkla",
-    tour_active_title: "REHBERLİ HİKAYE TURU"
+    hint_controls: "360° Gezin • Yakınlaş • Noktalara Tıkla",
+    tour_active_title: "REHBERLİ HİKAYE TURU",
+    sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ",
+    sources_intro: "Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:"
   },
   en: {
     app_subtitle: "Historical NASA Artifacts & Storytelling Map on the Moon and Mars",
+    btn_sources: "OFFICIAL SOURCES",
     btn_tour: "STORY TOUR",
     btn_reset: "RESET VIEW",
-    btn_sound: "AUDIO",
+    btn_sound: "AUDIO: ON",
+    sound_on: "AUDIO: ON",
+    sound_off: "AUDIO: OFF",
     telemetry_header: "CELESTIAL TELEMETRY",
     radius_label: "RADIUS",
     gravity_label: "GRAVITY",
@@ -474,11 +615,13 @@ const TRANSLATIONS = {
     discarded_label: "DISCARDED EQUIPMENT CHECKLIST",
     specs_label: "TECHNICAL SPECS & TELEMETRY",
     transmission_label: "RADIO AUDIO & TELEMETRY",
-    play_audio_btn: "PLAY QUINDAR BEEP",
+    play_audio_btn: "LISTEN TO TRANSMISSION",
     btn_prev_site: "Previous Site",
     btn_next_site: "Next Site",
-    hint_controls: "Drag to Rotate 360° • Scroll to Zoom • Click Beacons to Inspect",
-    tour_active_title: "GUIDED STORY TOUR"
+    hint_controls: "Rotate 360° • Zoom • Tap Beacons",
+    tour_active_title: "GUIDED STORY TOUR",
+    sources_modal_title: "OFFICIAL NASA DATA SOURCES & ARCHIVES",
+    sources_intro: "All coordinates, mission dates, discarded hardware manifests, and air-to-ground radio transmissions are compiled from NASA's official public archives:"
   }
 };
 
@@ -486,3 +629,4 @@ const TRANSLATIONS = {
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new AbandonedInSpaceApp();
 });
+

@@ -534,7 +534,7 @@ body {
 
 .controls-hint {
   position: fixed;
-  bottom: 22px;
+  bottom: 20px;
   right: 24px;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -544,6 +544,11 @@ body {
   gap: 8px;
   z-index: 20;
   pointer-events: none;
+  background: rgba(8, 12, 22, 0.75);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .controls-hint kbd {
@@ -552,6 +557,12 @@ body {
   border-radius: 4px;
   padding: 2px 6px;
   color: #fff;
+}
+
+@media (max-width: 1350px) {
+  .controls-hint {
+    display: none !important;
+  }
 }
 
 /* ==========================================================================
@@ -916,8 +927,67 @@ body {
 @keyframes pulseGreen {
   0% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
   100% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.8); }
+/* ==========================================================================
+   Guided Story Tour Top Banner (Desktop & Mobile)
+   ========================================================================== */
+.tour-banner {
+  position: fixed;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 15, 28, 0.95);
+  border: 1px solid var(--amber-gold);
+  border-radius: 30px;
+  padding: 8px 24px;
+  display: none !important;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 30px rgba(255, 179, 0, 0.35), 0 8px 32px rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  white-space: nowrap;
 }
 
+.tour-banner.active {
+  display: flex !important;
+}
+
+.tour-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber-gold);
+  letter-spacing: 1px;
+}
+
+.tour-progress {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tour-btn {
+  background: rgba(255, 179, 0, 0.15);
+  border: 1px solid var(--amber-gold);
+  color: #fff;
+  padding: 5px 14px;
+  border-radius: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--trans-smooth);
+}
+
+.tour-btn:hover {
+  background: var(--amber-gold);
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 179, 0, 0.5);
+}
+
+/* ==========================================================================
+   Official Sources Modal Dialog
+   ========================================================================== */
 .modal-overlay {
   display: none !important;
   position: fixed;

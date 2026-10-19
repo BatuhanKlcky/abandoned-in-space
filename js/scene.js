@@ -34,7 +34,7 @@ class SpaceSceneManager {
       1,
       8000
     );
-    this.camera.position.set(0, 70, 290);
+    this.camera.position.set(30, 15, 290);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -111,16 +111,17 @@ class SpaceSceneManager {
 
   initPlanets() {
     const sphereGeo = new THREE.SphereGeometry(this.sphereRadius, 96, 64);
+    const textureLoader = new THREE.TextureLoader();
 
-    // 1. Moon Mesh
-    const moonTex = window.CelestialTextures.generateMoonTexture();
-    const moonBump = window.CelestialTextures.generateMoonBump();
+    // 1. Moon Materials with Real NASA Photographic Texture
+    const moonTex = textureLoader.load('assets/moon.jpg');
+    const moonBump = textureLoader.load('assets/moon_bump.jpg');
 
     this.moonMaterial = new THREE.MeshStandardMaterial({
       map: moonTex,
       bumpMap: moonBump,
-      bumpScale: 1.8,
-      roughness: 0.92,
+      bumpScale: 0.85,
+      roughness: 0.90,
       metalness: 0.05,
     });
 
@@ -128,14 +129,14 @@ class SpaceSceneManager {
     this.moonMesh.rotation.x = THREE.MathUtils.degToRad(1.5); // Moon axial tilt
     this.planetGroup.add(this.moonMesh);
 
-    // 2. Mars Mesh
-    const marsTex = window.CelestialTextures.generateMarsTexture();
-    const marsBump = window.CelestialTextures.generateMarsBump();
+    // 2. Mars Materials with Real NASA Photographic Texture
+    const marsTex = textureLoader.load('assets/mars.jpg');
+    const marsBump = textureLoader.load('assets/mars_bump.jpg');
 
     this.marsMaterial = new THREE.MeshStandardMaterial({
       map: marsTex,
       bumpMap: marsBump,
-      bumpScale: 2.2,
+      bumpScale: 1.1,
       roughness: 0.82,
       metalness: 0.08,
     });
@@ -227,7 +228,7 @@ class SpaceSceneManager {
     this.updatePins();
 
     // Reset camera position smoothly
-    this.flyCameraTo(new THREE.Vector3(0, 60, 280), new THREE.Vector3(0, 0, 0), 1000);
+    this.flyCameraTo(new THREE.Vector3(30, 15, 290), new THREE.Vector3(0, 0, 0), 1000);
   }
 
   /**
@@ -392,7 +393,7 @@ class SpaceSceneManager {
   resetView() {
     this.selectedArtifact = null;
     this.isAutoRotating = true;
-    this.flyCameraTo(new THREE.Vector3(0, 60, 280), new THREE.Vector3(0, 0, 0), 1000);
+    this.flyCameraTo(new THREE.Vector3(30, 15, 290), new THREE.Vector3(0, 0, 0), 1000);
     this.pins.forEach(p => {
       p.orbMesh.scale.setScalar(1.0);
       p.orbMesh.material.color.setHex(this.currentBody === 'moon' ? 0x00e5ff : 0xff7043);

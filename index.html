@@ -315,34 +315,28 @@
 
     </div>
 
-    <!-- Official Sources Modal Dialog -->
-    <div class="modal-overlay" id="sources-modal">
-      <div class="modal-content glass-card interactive">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <span>🏛️</span>
-            <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ</h2>
-          </div>
-          <button class="close-btn" id="btn-close-sources">✕</button>
+  </div>
+
+  <!-- Official Sources Modal Dialog (Root level, hidden by default) -->
+  <div class="modal-overlay" id="sources-modal">
+    <div class="modal-content glass-card interactive">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span>🏛️</span>
+          <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ</h2>
         </div>
-        <p class="sources-intro" data-i18n="sources_intro">
-          Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:
-        </p>
-        <div class="sources-list" id="sources-list-container">
-          <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
-        </div>
-        <div class="modal-footer-note">
-          <span>✦ NASA Açık Veri Politikası (Open Data Policy) kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
-        </div>
+        <button class="close-btn" id="btn-close-sources">✕</button>
+      </div>
+      <p class="sources-intro" data-i18n="sources_intro">
+        Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:
+      </p>
+      <div class="sources-list" id="sources-list-container">
+        <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
+      </div>
+      <div class="modal-footer-note">
+        <span>✦ NASA Açık Veri Politikası (Open Data Policy) kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
       </div>
     </div>
-
-    <!-- 3D Floating Tooltip -->
-    <div class="beacon-tooltip" id="beacon-tooltip">
-      <span class="tooltip-title" id="tooltip-title">Apollo 11</span>
-      <span class="tooltip-meta" id="tooltip-meta">Mare Tranquillitatis</span>
-    </div>
-
   </div>
 
   <!-- JavaScript Modules -->

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abandoned but not Forgotten: NASA's Discarded Equipment on the Moon and Mars</title>
+  
+  <!-- Google Fonts: Space Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Three.js & OrbitControls via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <!-- WebGL 3D Container -->
+  <div id="canvas-container"></div>
+  <div class="scanlines-overlay"></div>
+
+  <!-- UI HUD Layer -->
+  <div class="ui-layer">
+    
+    <!-- Top Header Bar -->
+    <header class="header-bar interactive">
+      <div class="brand-section">
+        <div class="nasa-meatball" title="National Aeronautics and Space Administration"></div>
+        <div class="title-group">
+          <h1>
+            <span>ABANDONED BUT NOT FORGOTTEN</span>
+            <span class="sub-badge">NASA RELICS</span>
+          </h1>
+          <p id="app-tagline" data-i18n="app_subtitle">Ay ve Mars'taki Tarihi NASA Kalıntıları ve Hikaye Haritası</p>
+        </div>
+      </div>
+
+      <!-- Celestial Body Switcher -->
+      <div class="planet-toggle-container">
+        <button class="planet-btn active" data-body="moon" title="Ay Yüzeyini İncele">
+          <span class="btn-dot"></span>
+          <span>AY (MOON)</span>
+        </button>
+        <button class="planet-btn" data-body="mars" title="Mars Yüzeyini İncele">
+          <span class="btn-dot"></span>
+          <span>MARS</span>
+        </button>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <div class="header-actions">
+        <button class="hud-btn" id="btn-tour-toggle" title="Rehberli Hikaye Turunu Başlat">
+          <span>🚀</span>
+          <span data-i18n="btn_tour">HİKAYE TURU</span>
+        </button>
+        <button class="hud-btn" id="btn-reset-view" title="Kamera Bakış Açısını Sıfırla">
+          <span>🎯</span>
+          <span data-i18n="btn_reset">GÖRÜNÜMÜ SIFIRLA</span>
+        </button>
+        <button class="hud-btn" id="btn-sound-toggle" title="Sesi Aç / Kapat">
+          <span>🔊</span>
+          <span data-i18n="btn_sound">SES: AÇIK</span>
+        </button>
+        <button class="hud-btn" id="btn-lang-toggle" title="Switch Language">
+          <span>🌐</span>
+          <span>EN</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Guided Story Tour Top Banner (Appears during Story Tour) -->
+    <div class="tour-banner interactive" id="tour-banner">
+      <span class="tour-badge" data-i18n="tour_active_title">REHBERLİ HİKAYE TURU</span>
+      <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
+      <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
+      <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
+      <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
+    </div>
+
+    <!-- Left Dock: Planetary Telemetry & Relics Quick Search -->
+    <aside class="left-dock interactive">
+      
+      <!-- Planetary Telemetry Card -->
+      <div class="glass-card">
+        <div class="card-label">
+          <span data-i18n="telemetry_header">GÖK CİSMİ TELEMETRİSİ</span>
+          <span class="live-badge">CANLI RADAR</span>
+        </div>
+        
+        <div style="margin-bottom: 8px;">
+          <h2 id="body-name-text" style="font-size:16px; color:#fff; font-weight:700;">Ay</h2>
+          <p id="body-tagline-text" style="font-size:11px; color:var(--text-muted); line-height:1.4;">İnsanlığın Başka Bir Dünyadaki İlk Ayak İzleri</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="radius_label">YARIÇAP</div>
+            <div class="stat-val" id="stat-radius">1,737 km</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="gravity_label">YERÇEKİMİ</div>
+            <div class="stat-val" id="stat-gravity">1.62 m/s²</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="temp_label">YÜZEY SICAKLIĞI</div>
+            <div class="stat-val" id="stat-temp">-130°C / +120°C</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="atmo_label">ATMOSFER</div>
+            <div class="stat-val" id="stat-atmosphere">Sert Vakum</div>
+          </div>
+          <div class="stat-item full-width">
+            <div class="stat-title" data-i18n="mass_label">TOPLAM TERK EDİLEN KÜTLE</div>
+            <div class="stat-val" id="stat-total-mass">~190.000 kg insan malzemesi</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Relics List & Search Card -->
+      <div class="glass-card" style="flex:1;">
+        <div class="card-label">
+          <span data-i18n="relics_list_header">TARİHİ EKİPMANLAR LİSTESİ</span>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="search-input" placeholder="Kalıntı veya görev ara..." data-i18n-placeholder="search_placeholder">
+        </div>
+
+        <div class="artifacts-list" id="artifacts-list-container">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom Filter Dock -->
+    <footer class="bottom-dock interactive">
+      <div class="controls-hint">
+        <kbd>Fare</kbd> <span data-i18n="hint_controls">360° Gezin • Tekerlek ile Yakınlaş • Noktalara Tıkla</span>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-tag">DÖNEM:</span>
+        <button class="pill-btn decade-pill active" data-decade="all">TÜMÜ</button>
+        <button class="pill-btn decade-pill" data-decade="1960">1960'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="1970">1970'LER</button>
+        <button class="pill-btn decade-pill" data-decade="1990">1990'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="2000">2000'LER</button>
+        <button class="pill-btn decade-pill" data-decade="2010">2010'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="2020">2020'LER</button>
+      </div>
+    </footer>
+
+    <!-- Right Sliding Story Drawer (Rich Narrative Modal) -->
+    <div class="story-drawer interactive" id="story-drawer">
+      
+      <!-- Drawer Header -->
+      <div class="drawer-header">
+        <div class="header-meta">
+          <div class="mission-tag">
+            <span>🛰️</span>
+            <span id="drawer-mission">APOLLO 11</span>
+            <span>•</span>
+            <span id="drawer-date" style="color:var(--text-muted);">20 Temmuz 1969</span>
+          </div>
+          <h2 class="artifact-title" id="drawer-title">Apollo 11 'Kartal' İniş Kademesi</h2>
+        </div>
+        <button class="close-btn" id="btn-close-drawer" title="Kapat">✕</button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="drawer-content">
+        
+        <!-- 3D Holographic Artifact Mini-Viewport -->
+        <div class="mini-model-box">
+          <canvas id="mini-model-canvas"></canvas>
+          <span class="model-compass-badge">HOLOGRAPHIC RECONSTRUCTION</span>
+          <span class="model-hud-badge">3D SPECIMEN</span>
+        </div>
+
+        <!-- Famous Historic Quote Card -->
+        <div class="quote-card">
+          <p id="drawer-quote">"İnsan için küçük, insanlık için dev bir adım."</p>
+          <span class="quote-author" id="drawer-quote-author">— Neil Armstrong</span>
+        </div>
+
+        <!-- Deep Narrative Story -->
+        <div>
+          <h3 class="story-headline" id="drawer-headline">İnsanlığın Başka Bir Dünyaya İndiği Nokta</h3>
+          <p class="story-text" id="drawer-story" style="margin-top: 8px;">
+            Apollo 11 iniş kademesi ve arkasındaki detaylı hikaye...
+          </p>
+        </div>
+
+        <!-- Alert: Why Abandoned -->
+        <div class="info-block why-left">
+          <span class="block-title">
+            <span>⚠️</span>
+            <span data-i18n="why_left_label">NEDEN GERİDE BIRAKILDI?</span>
+          </span>
+          <p class="block-desc" id="drawer-why-left">
+            Yörüngeye dönüş mekaniği ve ağırlık tasarrufu kısıtlamaları nedeniyle...
+          </p>
+        </div>
+
+        <!-- Alert: Current Condition After Decades -->
+        <div class="info-block condition">
+          <span class="block-title">
+            <span>🔬</span>
+            <span data-i18n="condition_label">BUGÜNKÜ DURUMU (YILLAR SONRA)</span>
+          </span>
+          <p class="block-desc" id="drawer-condition">
+            Ay vakumunda aşınmadan duruyor, ancak güneş UV ışınımı folyoları ağartmış vaziyette...
+          </p>
+        </div>
+
+        <!-- Discarded Items Checklist -->
+        <div class="items-list-container">
+          <div class="section-heading" data-i18n="discarded_label">TERK EDİLEN TEÇHİZAT LİSTESİ</div>
+          <ul class="checklist" id="drawer-checklist">
+            <!-- Dynamic items -->
+          </ul>
+        </div>
+
+        <!-- Technical Specs Table -->
+        <div class="items-list-container">
+          <div class="section-heading" data-i18n="specs_label">TEKNİK TELEMETRİ BİLGİSİ</div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-title">KORUNAN KÜTLE</div>
+              <div class="stat-val" id="spec-mass">2,034 kg</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-title">GÜÇ KAYNAĞI</div>
+              <div class="stat-val" id="spec-power">Gümüş-Çinko Pilleri</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-title">AKTİF GÖREV ÖMRÜ</div>
+              <div class="stat-val" id="spec-duration">21 saat 36 dk</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-title">KOORDİNATLAR</div>
+              <div class="stat-val" id="spec-coords">0°40' K, 23°28' D</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Transmission Snippet -->
+        <div class="audio-broadcast-box">
+          <div class="audio-info">
+            <span class="audio-label" data-i18n="transmission_label">TELSİZ VE TELEMETRİ KAYDI</span>
+            <span class="audio-text" id="drawer-audio-text">"Houston, Tranquility Base here..."</span>
+          </div>
+          <button class="play-tone-btn" id="btn-play-transmission">
+            <span>📡</span>
+            <span data-i18n="play_audio_btn">TELSİZ TONUNU ÇAL</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Drawer Footer Navigation -->
+      <div class="drawer-footer">
+        <button class="nav-site-btn" id="btn-prev-artifact">
+          <span>◀</span>
+          <span data-i18n="btn_prev_site">Önceki Kalıntı</span>
+        </button>
+        <button class="nav-site-btn" id="btn-next-artifact">
+          <span data-i18n="btn_next_site">Sonraki Kalıntı</span>
+          <span>▶</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 3D Floating Tooltip -->
+    <div class="beacon-tooltip" id="beacon-tooltip">
+      <span class="tooltip-title" id="tooltip-title">Apollo 11</span>
+      <span class="tooltip-meta" id="tooltip-meta">Mare Tranquillitatis</span>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/data.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

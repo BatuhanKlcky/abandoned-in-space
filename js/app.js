@@ -475,7 +475,7 @@ class AbandonedInSpaceApp {
           card.className = 'nasa-photo-card';
           card.innerHTML = `
             <div class="photo-thumb-wrapper">
-              <img class="photo-thumb" src="${photo.url}" alt="${isTr ? photo.title_tr : photo.title_en}" loading="lazy">
+              <img class="photo-thumb" src="${photo.url}" alt="${isTr ? photo.title_tr : photo.title_en}" loading="lazy" onerror="this.onerror=null; this.closest('.nasa-photo-card').style.display='none';">
               <span class="photo-overlay-tag">${photo.catalogId}</span>
             </div>
             <div class="photo-card-info">

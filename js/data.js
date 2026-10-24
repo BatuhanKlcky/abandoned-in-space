@@ -51,25 +51,25 @@ const ARTIFACTS = [
         "title_en": "LROC Satellite View of Apollo 11 Site (Shadow & Paths)",
         "catalogId": "NASA PIA12909 / LROC NAC",
         "instrument": "Lunar Reconnaissance Orbiter (0.5m/piksel)",
-        "url": "https://images-assets.nasa.gov/image/PIA12909/PIA12909~medium.jpg",
+        "url": "assets/photos/apollo11_lroc.jpg",
         "desc_tr": "Ay yörüngesindeki LRO uydusundan çekilen bu fotoğrafta 'Kartal' iniş kademesi, döktüğü gölgesi ve astronotların ALSEP deney alanına doğru yürürken bıraktığı koyu ayak izi patikaları açıkça görülmektedir.",
         "desc_en": "Orbital view showing the Eagle descent stage, its cast shadow, and dark astronaut walking trails toward the ALSEP."
       },
       {
         "title_tr": "Buzz Aldrin ve Sessizlik Denizi'ndeki Ay Modülü",
         "title_en": "Buzz Aldrin & Lunar Module in Sea of Tranquility",
-        "catalogId": "NASA as11-40-5927",
+        "catalogId": "NASA AS11-40-5927",
         "instrument": "Hasselblad 70mm EVA Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/as11-40-5927/as11-40-5927~medium.jpg",
+        "url": "assets/photos/apollo11_aldrin.jpg",
         "desc_tr": "Neil Armstrong'un vizör yansımasında görüldüğü tarihi karede Buzz Aldrin ve arkasında geride bırakılan altın Mylar folyo kaplı İniş Kademesi yer almaktadır.",
         "desc_en": "Iconic photo by Neil Armstrong showing Buzz Aldrin with the gold Mylar-wrapped descent stage in the background."
       },
       {
         "title_tr": "Ay Yüzeyindeki İlk İnsan Bot İzi",
         "title_en": "The Iconic Lunar Bootprint",
-        "catalogId": "NASA as11-40-5886",
-        "instrument": "Hasselblad 70mm",
-        "url": "https://images-assets.nasa.gov/image/as11-40-5886/as11-40-5886~medium.jpg",
+        "catalogId": "NASA AS11-40-5877",
+        "instrument": "Hasselblad 70mm Yüzey Kamerası",
+        "url": "assets/photos/apollo11_bootprint.jpg",
         "desc_tr": "Ay regolitinin mikroskobik tutunma özelliklerini test etmek için çekilen ve insanlığın başka bir dünyadaki ayak izini simgeleyen ünlü kare.",
         "desc_en": "Captured to assess lunar soil cohesion, becoming an enduring symbol of humanity on another world."
       }
@@ -132,7 +132,7 @@ const ARTIFACTS = [
         "title_en": "Pete Conrad Inspecting Surveyor 3",
         "catalogId": "NASA AS12-48-7133",
         "instrument": "Hasselblad 70mm Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/AS12-48-7133/AS12-48-7133~medium.jpg",
+        "url": "assets/photos/apollo12_surveyor.jpg",
         "desc_tr": "Tarihin ilk dünya dışı arkeolojik incelemesi: Pete Conrad, 2.5 yıl önce Ay'a inmiş olan insansız Surveyor 3'ü inceliyor. Ufukta Apollo 12 Ay Modülü Intrepid görülüyor.",
         "desc_en": "History's first extraterrestrial archaeology: Pete Conrad inspects the Surveyor 3 robot with the Apollo 12 LM on the horizon."
       }
@@ -191,9 +191,9 @@ const ARTIFACTS = [
       {
         "title_tr": "Apollo 13 Hasarlı Servis Modülü",
         "title_en": "Damaged Apollo 13 Service Module",
-        "catalogId": "NASA AS13-60-8622",
+        "catalogId": "NASA AS13-59-8562",
         "instrument": "Hasselblad 70mm",
-        "url": "https://images-assets.nasa.gov/image/AS13-60-8622/AS13-60-8622~medium.jpg",
+        "url": "assets/photos/apollo13_sm.jpg",
         "desc_tr": "Oksijen tankı patlamasından sonra ayrılan Servis Modülü'nün dış panelindeki devasa patlama yarığı. Bu esnada 14 tonluk roket kademesi Ay'a doğru son hızla ilerliyordu.",
         "desc_en": "Severe panel blowout damage on the Apollo 13 service module, captured as the S-IVB booster was diving toward lunar impact."
       }
@@ -254,9 +254,9 @@ const ARTIFACTS = [
       {
         "title_tr": "Fra Mauro Düzlüğünde Apollo 14 İniş Kademesi",
         "title_en": "Apollo 14 Lunar Module at Fra Mauro",
-        "catalogId": "NASA as14-66-9306",
+        "catalogId": "NASA AS14-66-9306",
         "instrument": "Hasselblad 70mm Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/as14-66-9306/as14-66-9306~medium.jpg",
+        "url": "assets/photos/apollo14_lm.jpg",
         "desc_tr": "Antares iniş kademesi, arka planda engebeli Fra Mauro krater tepeleriyle birlikte.",
         "desc_en": "Antares descent stage with the steep slopes of Fra Mauro rising toward Cone Crater in the background."
       }
@@ -318,9 +318,9 @@ const ARTIFACTS = [
       {
         "title_tr": "Düşen Astronot (Fallen Astronaut) Anıt Plaketi",
         "title_en": "Fallen Astronaut Memorial Plaque",
-        "catalogId": "NASA as15-88-11894",
+        "catalogId": "NASA AS15-88-11894",
         "instrument": "Hasselblad 70mm Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/as15-88-11894/as15-88-11894~medium.jpg",
+        "url": "assets/photos/apollo15_plaque.jpg",
         "desc_tr": "David Scott tarafından Hadley Rille toprağına dikilen 8.5 cm'lik alüminyum heykelcik ve uzay yarışında hayatını kaybeden 14 kozmonot ve astronotun isimlerinin yer aldığı anıt plaketi.",
         "desc_en": "The 8.5 cm aluminum figurine and commemorative plaque placed by David Scott to honor 14 fallen US and Soviet space explorers."
       }
@@ -383,7 +383,7 @@ const ARTIFACTS = [
         "title_en": "John Young Saluting with LRV-002",
         "catalogId": "NASA AS16-113-18339",
         "instrument": "Hasselblad 70mm Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/as16-113-18339/as16-113-18339~medium.jpg",
+        "url": "assets/photos/apollo16_young.jpg",
         "desc_tr": "John Young'ın Ay yerçekiminde havaya sıçrayıp selam verdiği tarihi kare. Arkada Orion Ay Modülü ve elektrikli Ay Arabası görülüyor.",
         "desc_en": "Iconic photo of John Young jumping into the air while saluting the flag, with the Orion LM and Lunar Rover in view."
       }
@@ -446,7 +446,7 @@ const ARTIFACTS = [
         "title_en": "Harrison Schmitt by the American Flag",
         "catalogId": "NASA AS17-134-20384",
         "instrument": "Hasselblad 70mm Yüzey Kamerası",
-        "url": "https://images-assets.nasa.gov/image/AS17-134-20384/AS17-134-20384~medium.jpg",
+        "url": "assets/photos/apollo17_flag.jpg",
         "desc_tr": "Apollo programının son yüzey yürüyüşünde jeolog astronot Harrison Schmitt ve arkada görkemli Taurus-Littrow dağ silsilesi.",
         "desc_en": "Geologist astronaut Harrison Schmitt stands on the Taurus-Littrow floor with the lunar rover and towering massifs in the background."
       }
@@ -594,7 +594,7 @@ const ARTIFACTS = [
         "title_en": "First Color Panorama of Mars Surface (1976)",
         "catalogId": "NASA PIA00383",
         "instrument": "Viking Lander Facsimile Camera",
-        "url": "https://images-assets.nasa.gov/image/PIA00383/PIA00383~medium.jpg",
+        "url": "assets/photos/viking1_surface.jpg",
         "desc_tr": "İnsanlık tarihinde Mars'ın kızıl toprakları ve gökyüzünü ilk kez canlı renkleriyle Dünya'ya ileten tarihi panoramik kare.",
         "desc_en": "The landmark color panorama from Chryse Planitia that gave humanity its first true-color look at the martian surface."
       }
@@ -650,7 +650,25 @@ const ARTIFACTS = [
       "coordinatesReadable": "19°20' K, 33°33' B"
     },
     "audioSnippet": "[Pathfinder Modem Telemetry Carrier Signal]",
-    "realPhotos": []
+    "realPhotos": [
+      {
+        "title_tr": "Sojourner Mars Yüzeyindeki Yogi Kayasında",
+        "title_en": "Sojourner at Yogi Rock",
+        "catalogId": "NASA PIA01120",
+        "instrument": "Pathfinder IMP / APXS Spektrometresi",
+        "url": "assets/photos/pathfinder_sojourner.jpg",
+        "desc_tr": "Mars yüzeyinde tekerlek çeviren tarihin ilk gezgini Sojourner, Yogi adlı volkanik kayanın kimyasal bileşimini APXS spektrometresiyle analiz ederken.",
+        "desc_en": "The first rover on Mars, Sojourner, pressed its APXS sensor against the volcanic rock named Yogi to analyze its elemental composition."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "📻 CARL SAGAN ANIT İSTASYONU",
+      "badge_en": "📻 CARL SAGAN MEMORIAL STATION",
+      "title_tr": "Mars'a İnen İlk Başarılı Mikro Gezgin (10.6 kg)",
+      "title_en": "The 10.6 kg Micro-Rover That Paved the Way",
+      "desc_tr": "Pathfinder iniş üssü görevin ardından Carl Sagan Anıt İstasyonu olarak adlandırıldı. Minik Sojourner, Dünya ile iletişimi kesildikten sonra bile hafızasındaki döngüyle istasyonun çevresinde dönmeye devam etti.",
+      "desc_en": "Named the Carl Sagan Memorial Station upon touchdown, the mission's 10.6 kg rover Sojourner circled the base station tirelessly until batteries froze in the martian night."
+    }
   },
   {
     "id": "spirit-rover",
@@ -744,7 +762,7 @@ const ARTIFACTS = [
         "title_en": "Opportunity Digging a Trench on Mars",
         "catalogId": "NASA PIA19112",
         "instrument": "MER Panoramic Camera (Pancam)",
-        "url": "https://images-assets.nasa.gov/image/PIA19112/PIA19112~medium.jpg",
+        "url": "assets/photos/opportunity_trench.jpg",
         "desc_tr": "Opportunity tekerlekleriyle Mars toprağını kazarak eski su akıntılarının bıraktığı hematit kürelerini ortaya çıkarırken.",
         "desc_en": "Opportunity spinning its wheel to excavate the red soil, revealing hematite blueberries formed in ancient martian water."
       }
@@ -848,9 +866,9 @@ const ARTIFACTS = [
       {
         "title_tr": "HiRISE Uydusundan Gökyüzü Vinci Çarpma Krateri",
         "title_en": "HiRISE View of Sky Crane Impact Crater",
-        "catalogId": "NASA PIA19159",
+        "catalogId": "NASA PIA19159 / HiRISE",
         "instrument": "Mars Reconnaissance Orbiter HiRISE",
-        "url": "https://images-assets.nasa.gov/image/PIA19159/PIA19159~medium.jpg",
+        "url": "assets/photos/curiosity_skycrane_crash.jpg",
         "desc_tr": "MRO uydusundan çekilen bu karede, Sky Crane'in 650 metre öteye fırlayıp yere çakıldığı nokta, yakıt yanık izi ve enkaz saçılımı net şekilde görülmektedir.",
         "desc_en": "High-resolution orbital image from HiRISE showing the dark scorch mark and impact scar where the Sky Crane crashed 650m from Curiosity."
       }
@@ -950,7 +968,17 @@ const ARTIFACTS = [
       "coordinatesReadable": "18°26'41\" K, 77°27'3\" D"
     },
     "audioSnippet": "[Perseverance EDL Supersonic Chute Deployment Sonic Boom]",
-    "realPhotos": []
+    "realPhotos": [
+      {
+        "title_tr": "Ingenuity Uçuşundan Sırtlık ve Süpersonik Paraşüt Enkazı",
+        "title_en": "Ingenuity Aerial View of Backshell & Parachute Debris",
+        "catalogId": "NASA PIA25287 / Ingenuity RTE",
+        "instrument": "Ingenuity Renkli Havadan Keşif Kamerası (RTE)",
+        "url": "assets/photos/perseverance_backshell.jpg",
+        "desc_tr": "Ingenuity 26. uçuşunda, Perseverance'ın Mars atmosferine giriş sırasında saatte binlerce km hızla ayrılan sırt kapağının ve süpersonik paraşütünün parçalanmış enkazını gökyüzünden fotoğrafladı.",
+        "desc_en": "Ingenuity captured detailed aerial reconnaissance of Perseverance's shattered backshell and supersonic parachute wreckage during Flight 26."
+      }
+    ],
   },
   {
     "id": "ingenuity-helicopter",
@@ -1000,7 +1028,7 @@ const ARTIFACTS = [
         "title_en": "Ingenuity Perched Alone on Mars",
         "catalogId": "NASA PIA24466",
         "instrument": "Perseverance Mastcam-Z",
-        "url": "https://images-assets.nasa.gov/image/PIA24466/PIA24466~medium.jpg",
+        "url": "assets/photos/ingenuity_jezero.jpg",
         "desc_tr": "Perseverance gezgininin gözünden Jezero Krateri zemininde gururla duran minik hava kaşifi.",
         "desc_en": "Ingenuity rotorcraft photographed by Perseverance's Mastcam-Z standing solo on the floor of Jezero Crater."
       }

@@ -190,6 +190,20 @@ class AbandonedInSpaceApp {
       });
     }
 
+    // Photo Lightbox Modal Controls
+    const photoModal = document.getElementById('photo-modal');
+    const closePhotoBtn = document.getElementById('btn-close-photo');
+    if (closePhotoBtn) {
+      closePhotoBtn.addEventListener('click', () => {
+        if (photoModal) photoModal.classList.remove('open');
+      });
+    }
+    if (photoModal) {
+      photoModal.addEventListener('click', (e) => {
+        if (e.target === photoModal) photoModal.classList.remove('open');
+      });
+    }
+
     // Mobile Navigation Controls
     const mBtnMap = document.getElementById('m-btn-map');
     const mBtnRelics = document.getElementById('m-btn-relics');
@@ -274,6 +288,11 @@ class AbandonedInSpaceApp {
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        const photoModal = document.getElementById('photo-modal');
+        if (photoModal && photoModal.classList.contains('open')) {
+          photoModal.classList.remove('open');
+          return;
+        }
         if (window.SpaceSimulation && window.SpaceSimulation.isPlaying) {
           window.SpaceSimulation.stopSimulation();
           return;
@@ -432,10 +451,79 @@ class AbandonedInSpaceApp {
     document.getElementById('spec-duration').innerText = artifact.technicalSpecs.activeDuration;
     document.getElementById('spec-coords').innerText = artifact.technicalSpecs.coordinatesReadable;
 
+    // Secret Relic / Easter Egg Highlight Card
+    const relicCard = document.getElementById('secret-relic-card');
+    if (relicCard) {
+      if (artifact.secretRelic) {
+        document.getElementById('relic-badge').innerText = isTr ? artifact.secretRelic.badge_tr : artifact.secretRelic.badge_en;
+        document.getElementById('relic-title').innerText = isTr ? artifact.secretRelic.title_tr : artifact.secretRelic.title_en;
+        document.getElementById('relic-desc').innerText = isTr ? artifact.secretRelic.desc_tr : artifact.secretRelic.desc_en;
+        relicCard.style.display = 'flex';
+      } else {
+        relicCard.style.display = 'none';
+      }
+    }
+
+    // Authentic NASA Satellite & Surface Photography Gallery
+    const photosSection = document.getElementById('drawer-photos-section');
+    const photosGrid = document.getElementById('drawer-photos-grid');
+    if (photosSection && photosGrid) {
+      photosGrid.innerHTML = '';
+      if (artifact.realPhotos && artifact.realPhotos.length > 0) {
+        artifact.realPhotos.forEach(photo => {
+          const card = document.createElement('div');
+          card.className = 'nasa-photo-card';
+          card.innerHTML = `
+            <div class="photo-thumb-wrapper">
+              <img class="photo-thumb" src="${photo.url}" alt="${isTr ? photo.title_tr : photo.title_en}" loading="lazy">
+              <span class="photo-overlay-tag">${photo.catalogId}</span>
+            </div>
+            <div class="photo-card-info">
+              <span class="photo-card-title">${isTr ? photo.title_tr : photo.title_en}</span>
+              <span class="photo-card-meta">${photo.instrument}</span>
+            </div>
+          `;
+          card.addEventListener('click', () => {
+            this.openPhotoLightbox(photo);
+          });
+          photosGrid.appendChild(card);
+        });
+        photosSection.style.display = 'block';
+      } else {
+        photosSection.style.display = 'none';
+      }
+    }
+
     // Audio transmission text
     document.getElementById('drawer-audio-text').innerText = artifact.audioSnippet;
 
     drawer.classList.add('open');
+  }
+
+  openPhotoLightbox(photo) {
+    const modal = document.getElementById('photo-modal');
+    if (!modal) return;
+    const isTr = this.currentLang === 'tr';
+
+    const titleEl = document.getElementById('lightbox-title');
+    const imgEl = document.getElementById('lightbox-img');
+    const idEl = document.getElementById('lightbox-id');
+    const instEl = document.getElementById('lightbox-instrument');
+    const descEl = document.getElementById('lightbox-desc');
+    const catEl = document.getElementById('lightbox-cat');
+
+    if (catEl) catEl.innerText = isTr ? 'NASA ARŞİVİ' : 'NASA ARCHIVE';
+    if (titleEl) titleEl.innerText = isTr ? photo.title_tr : photo.title_en;
+    if (imgEl) {
+      imgEl.src = photo.url;
+      imgEl.alt = isTr ? photo.title_tr : photo.title_en;
+    }
+    if (idEl) idEl.innerText = photo.catalogId || 'NASA ARCHIVE';
+    if (instEl) instEl.innerText = photo.instrument || 'Orbiter Camera';
+    if (descEl) descEl.innerText = isTr ? photo.desc_tr : photo.desc_en;
+
+    modal.classList.add('open');
+    window.SpaceAudio.playTelemetryPing(1100, 0.04);
   }
 
   closeDrawer() {
@@ -617,7 +705,9 @@ const TRANSLATIONS = {
     hint_controls: "360° Gezin • Yakınlaş • Noktalara Tıkla",
     tour_active_title: "REHBERLİ HİKAYE TURU",
     sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ",
-    sources_intro: "Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:"
+    sources_intro: "Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:",
+    nasa_photos_label: "📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI",
+    nasa_photos_subtext: "NASA LROC ve Mars MRO uydularından doğrulanmış arşiv kareleri (Büyütmek için tıklayın):"
   },
   en: {
     app_subtitle: "Historical NASA Artifacts & Storytelling Map on the Moon and Mars",
@@ -648,7 +738,9 @@ const TRANSLATIONS = {
     hint_controls: "Rotate 360° • Zoom • Tap Beacons",
     tour_active_title: "GUIDED STORY TOUR",
     sources_modal_title: "OFFICIAL NASA DATA SOURCES & ARCHIVES",
-    sources_intro: "All coordinates, mission dates, discarded hardware manifests, and air-to-ground radio transmissions are compiled from NASA's official public archives:"
+    sources_intro: "All coordinates, mission dates, discarded hardware manifests, and air-to-ground radio transmissions are compiled from NASA's official public archives:",
+    nasa_photos_label: "📷 AUTHENTIC NASA SATELLITE & SURFACE PHOTOS",
+    nasa_photos_subtext: "Verified archive photography from NASA LROC & Mars MRO orbiters (Click to enlarge):"
   }
 };
 

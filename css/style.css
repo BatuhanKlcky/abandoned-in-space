@@ -1526,6 +1526,258 @@ body {
 }
 
 /* ==========================================================================
+   AUTHENTIC NASA ARCHIVE PHOTOS & SECRET RELICS
+   ========================================================================== */
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pill-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan-primary);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.photos-subtext {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* Secret Relic / Easter Egg Box */
+.secret-relic-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.secret-relic-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--amber-glow);
+}
+
+.relic-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber-glow);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.relic-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.relic-desc {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* NASA Photos Grid */
+.nasa-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.nasa-photo-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.nasa-photo-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--cyan-primary);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.2);
+}
+
+.photo-thumb-wrapper {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  background: #000;
+  overflow: hidden;
+}
+
+.photo-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.nasa-photo-card:hover .photo-thumb {
+  transform: scale(1.06);
+}
+
+.photo-overlay-tag {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.85);
+  color: var(--cyan-primary);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+}
+
+.photo-card-info {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.photo-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.photo-card-meta {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+/* Photo Fullscreen Modal Lightbox */
+.photo-modal-card {
+  width: 820px;
+  max-width: 95vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(8, 12, 20, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.95), 0 0 32px rgba(0, 240, 255, 0.25);
+}
+
+.photo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.photo-cat-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan-primary);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+}
+
+.photo-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 4px 0 0 0;
+}
+
+.photo-img-wrapper {
+  flex: 1;
+  min-height: 250px;
+  max-height: 56vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020408;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.photo-img-wrapper img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.photo-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 15, 25, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-meta-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.photo-meta-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.photo-meta-item .meta-label {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.photo-meta-item .meta-val {
+  color: var(--cyan-primary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.photo-modal-desc {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ==========================================================================
    RESPONSIVE MOBILE STYLES (< 768px)
    ========================================================================== */
 @media (max-width: 768px) {

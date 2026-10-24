@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=3.2">
+  <link rel="stylesheet" href="css/style.css?v=3.3">
   
   <!-- Three.js & OrbitControls via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -269,6 +269,27 @@
           </ul>
         </div>
 
+        <!-- Legendary Relic / Easter Egg Highlight Box -->
+        <div class="secret-relic-box" id="secret-relic-card" style="display: none;">
+          <div class="relic-header">
+            <span class="relic-badge" id="relic-badge">🏌️ GİZLİ TARİHİ ESER</span>
+          </div>
+          <h4 class="relic-title" id="relic-title">Alan Shepard'ın Ay Golf Topları</h4>
+          <p class="relic-desc" id="relic-desc"></p>
+        </div>
+
+        <!-- Authentic NASA Satellite & Surface Photography Gallery -->
+        <div class="items-list-container" id="drawer-photos-section" style="display: none;">
+          <div class="section-heading-row">
+            <div class="section-heading" data-i18n="nasa_photos_label">📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI</div>
+            <span class="pill-badge">LROC & HiRISE</span>
+          </div>
+          <p class="photos-subtext" data-i18n="nasa_photos_subtext">NASA LROC ve Mars MRO uydularından doğrulanmış arşiv kareleri (Büyütmek için tıklayın):</p>
+          <div class="nasa-photos-grid" id="drawer-photos-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
         <!-- Technical Specs Table -->
         <div class="items-list-container">
           <div class="section-heading" data-i18n="specs_label">TEKNİK TELEMETRİ BİLGİSİ</div>
@@ -427,12 +448,43 @@
     </div>
   </div>
 
+  <!-- =====================================================================
+       NASA ARCHIVE PHOTO LIGHTBOX MODAL (Root level)
+       ===================================================================== -->
+  <div class="modal-overlay" id="photo-modal">
+    <div class="photo-modal-card glass-card interactive">
+      <div class="photo-modal-header">
+        <div class="photo-title-group">
+          <span class="photo-cat-badge" id="lightbox-cat">NASA ARŞİVİ</span>
+          <h3 class="photo-title" id="lightbox-title">Fotoğraf Başlığı</h3>
+        </div>
+        <button class="close-btn" id="btn-close-photo" title="Kapat">✕</button>
+      </div>
+      <div class="photo-img-wrapper">
+        <img id="lightbox-img" src="" alt="NASA Yüksek Çözünürlüklü Arşiv Fotoğrafı">
+      </div>
+      <div class="photo-modal-footer">
+        <div class="photo-meta-row">
+          <div class="photo-meta-item">
+            <span class="meta-label">KATALOG NO:</span>
+            <span class="meta-val" id="lightbox-id">NASA PIA12909</span>
+          </div>
+          <div class="photo-meta-item">
+            <span class="meta-label">ENSTRÜMAN:</span>
+            <span class="meta-val" id="lightbox-instrument">LROC NAC Camera</span>
+          </div>
+        </div>
+        <p class="photo-modal-desc" id="lightbox-desc"></p>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript Modules -->
-  <script src="js/data.js"></script>
+  <script src="js/data.js?v=3.3"></script>
   <script src="js/textures.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/scene.js"></script>
-  <script src="js/simulation.js?v=3.2"></script>
-  <script src="js/app.js?v=3.2"></script>
+  <script src="js/simulation.js?v=3.3"></script>
+  <script src="js/app.js?v=3.3"></script>
 </body>
 </html>

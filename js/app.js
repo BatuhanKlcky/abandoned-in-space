@@ -498,6 +498,12 @@ class AbandonedInSpaceApp {
     document.getElementById('drawer-audio-text').innerText = artifact.audioSnippet;
 
     drawer.classList.add('open');
+
+    // Ensure holographic 3D specimen viewer is rendered at exact container dimensions
+    if (this.sceneManager) {
+      setTimeout(() => this.sceneManager.resizeMiniViewer(), 60);
+      setTimeout(() => this.sceneManager.resizeMiniViewer(), 480);
+    }
   }
 
   openPhotoLightbox(photo) {

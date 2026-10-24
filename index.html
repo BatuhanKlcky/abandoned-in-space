@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
-  <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="css/style.css">
+  <!-- CSS Stylesheet with Cache-Buster -->
+  <link rel="stylesheet" href="css/style.css?v=3.0">
   
   <!-- Three.js & OrbitControls via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -19,7 +19,7 @@
 </head>
 <body>
 
-  <!-- WebGL 3D Container -->
+  <!-- WebGL 3D Planetary Canvas -->
   <div id="canvas-container"></div>
   <div class="scanlines-overlay"></div>
 
@@ -51,9 +51,13 @@
         </button>
       </div>
 
-      <!-- Header Action Buttons -->
+      <!-- Header Action Buttons (Desktop) -->
       <div class="header-actions">
-        <button class="hud-btn" id="btn-sources-toggle" title="Resmi Veri Kaynakları">
+        <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Seçili Görevin İniş veya Çarpışma Sahnesini Canlandır">
+          <span>🎬</span>
+          <span data-i18n="btn_sim">SİMÜLASYON</span>
+        </button>
+        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları">
           <span>📚</span>
           <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
         </button>
@@ -76,7 +80,7 @@
       </div>
     </header>
 
-    <!-- Guided Story Tour Top Banner (Appears during Story Tour) -->
+    <!-- Guided Story Tour Top Banner (Visible during Tour) -->
     <div class="tour-banner interactive" id="tour-banner">
       <span class="tour-badge" data-i18n="tour_active_title">REHBERLİ HİKAYE TURU</span>
       <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
@@ -96,7 +100,7 @@
         </div>
         
         <div style="margin-bottom: 8px;">
-          <h2 id="body-name-text" style="font-size:16px; color:#fff; font-weight:700;">Ay</h2>
+          <h2 id="body-name-text" style="font-size:15px; color:#fff; font-weight:700;">Ay</h2>
           <p id="body-tagline-text" style="font-size:11px; color:var(--text-muted); line-height:1.4;">İnsanlığın Başka Bir Dünyadaki İlk Ayak İzleri</p>
         </div>
 
@@ -119,7 +123,7 @@
           </div>
           <div class="stat-item full-width">
             <div class="stat-title" data-i18n="mass_label">TOPLAM TERK EDİLEN KÜTLE</div>
-            <div class="stat-val" id="stat-total-mass">~190.000 kg insan malzemesi</div>
+            <div class="stat-val" id="stat-total-mass">~190.000 kg insan yapımı malzeme</div>
           </div>
         </div>
       </div>
@@ -205,6 +209,15 @@
       <!-- Drawer Body -->
       <div class="drawer-content">
         
+        <!-- PROMINENT ACTION: Cinematic 3D Simulation Button -->
+        <button class="big-sim-action-btn" id="btn-drawer-sim">
+          <span class="sim-play-icon">🎬</span>
+          <div class="sim-btn-text-group">
+            <span class="sim-btn-main" data-i18n="sim_action_btn">İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)</span>
+            <span class="sim-btn-sub">Gerçek fizik, itici alevleri, toz püskürmesi ve sismik darbe canlandırması</span>
+          </div>
+        </button>
+
         <!-- 3D Holographic Artifact Mini-Viewport -->
         <div class="mini-model-box">
           <canvas id="mini-model-canvas"></canvas>
@@ -316,9 +329,82 @@
 
     </div>
 
+    <!-- 3D Floating Tooltip -->
+    <div class="beacon-tooltip" id="beacon-tooltip">
+      <span class="tooltip-title" id="tooltip-title">Apollo 11</span>
+      <span class="tooltip-meta" id="tooltip-meta">Mare Tranquillitatis</span>
+    </div>
+
   </div>
 
-  <!-- Official Sources Modal Dialog (Root level, hidden by default) -->
+  <!-- =====================================================================
+       CINEMATIC 3D MISSION SIMULATION THEATER (Overlay)
+       ===================================================================== -->
+  <div class="sim-modal-overlay" id="simulation-modal">
+    <div class="sim-modal-container">
+      
+      <!-- Simulation Top Bar -->
+      <div class="sim-top-bar">
+        <div class="sim-header-info">
+          <span class="sim-badge" id="sim-badge">🛰️ İNİŞ SİMÜLASYONU</span>
+          <h2 class="sim-title" id="sim-title">Apollo 11 'Eagle' Landing Reenactment</h2>
+        </div>
+
+        <div class="sim-top-controls">
+          <!-- Camera Selector -->
+          <div class="sim-cam-group">
+            <span class="sim-cam-label">KAMERA:</span>
+            <select class="sim-select" id="sim-cam-select">
+              <option value="cinematic">Sinematik Yönetmen</option>
+              <option value="follow">Takip Kamerası</option>
+              <option value="ground">Yüzey Sabit Kamerası</option>
+            </select>
+          </div>
+
+          <button class="sim-action-btn" id="btn-replay-sim" title="Simülasyonu Baştan Başlat">
+            <span>🔄</span> <span>Tekrar Oynat</span>
+          </button>
+
+          <button class="sim-close-btn" id="btn-close-sim" title="Simülasyonu Kapat">
+            <span>✕ ÇIKIŞ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- WebGL Simulation Viewport -->
+      <div class="sim-canvas-wrapper">
+        <canvas id="sim-canvas"></canvas>
+
+        <!-- Real-Time Telemetry HUD Overlay -->
+        <div class="sim-hud-overlay">
+          <div class="hud-gauge-row">
+            <div class="hud-gauge">
+              <span class="gauge-label">İRTİFA (ALTITUDE)</span>
+              <span class="gauge-val" id="hud-alt">75.0 m</span>
+            </div>
+            <div class="hud-gauge">
+              <span class="gauge-label">DİKEY HIZ (VERTICAL VELOCITY)</span>
+              <span class="gauge-val" id="hud-speed">-3.2 m/s</span>
+            </div>
+            <div class="hud-gauge">
+              <span class="gauge-label">İTME GÜCÜ (THRUST)</span>
+              <span class="gauge-val" id="hud-thrust">78%</span>
+            </div>
+          </div>
+
+          <div class="hud-phase-bar">
+            <span class="phase-indicator-dot"></span>
+            <span class="phase-text" id="hud-phase">ALÇALMA VE FRENLEME AŞAMASI (TERMINAL DESCENT)</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       OFFICIAL SOURCES MODAL DIALOG (Root level)
+       ===================================================================== -->
   <div class="modal-overlay" id="sources-modal">
     <div class="modal-content glass-card interactive">
       <div class="modal-header">
@@ -329,7 +415,7 @@
         <button class="close-btn" id="btn-close-sources">✕</button>
       </div>
       <p class="sources-intro" data-i18n="sources_intro">
-        Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:
+        Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri ve telsiz konuşmaları NASA'nın resmi kamuya açık bilimsel arşivlerinden doğrulanmıştır:
       </p>
       <div class="sources-list" id="sources-list-container">
         <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
@@ -345,6 +431,7 @@
   <script src="js/textures.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/scene.js"></script>
+  <script src="js/simulation.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

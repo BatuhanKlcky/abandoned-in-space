@@ -155,6 +155,18 @@ class AbandonedInSpaceApp {
       });
     }
 
+    // 3D Mission Simulation Theater Controls
+    const topSimBtn = document.getElementById('btn-top-sim');
+    const drawerSimBtn = document.getElementById('btn-drawer-sim');
+    const triggerSimulation = () => {
+      const art = this.sceneManager.selectedArtifact || (this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
+      if (window.SpaceSimulation) {
+        window.SpaceSimulation.startSimulation(art);
+      }
+    };
+    if (topSimBtn) topSimBtn.addEventListener('click', triggerSimulation);
+    if (drawerSimBtn) drawerSimBtn.addEventListener('click', triggerSimulation);
+
     // Sources Modal Controls
     const sourcesBtn = document.getElementById('btn-sources-toggle');
     const mSourcesBtn = document.getElementById('m-btn-sources');
@@ -262,6 +274,10 @@ class AbandonedInSpaceApp {
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (window.SpaceSimulation && window.SpaceSimulation.isPlaying) {
+          window.SpaceSimulation.stopSimulation();
+          return;
+        }
         if (this.isTourActive) this.endTour();
         this.closeDrawer();
         this.sceneManager.resetView();
@@ -527,6 +543,13 @@ class AbandonedInSpaceApp {
       }
     });
 
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][key]) {
+        el.setAttribute('placeholder', TRANSLATIONS[this.currentLang][key]);
+      }
+    });
+
     this.updateBodyTelemetry();
     this.renderArtifactsList();
 
@@ -554,7 +577,7 @@ class AbandonedInSpaceApp {
         <p class="source-desc">${isTr ? source.desc_tr : source.desc_en}</p>
         <div class="source-link-row">
           <a href="${source.url}" target="_blank" rel="noopener noreferrer" class="source-link">
-            <span>Resmi Arşive Git ↗</span>
+            <span>${isTr ? 'Resmi Arşive Git ↗' : 'Visit Official Archive ↗'}</span>
           </a>
         </div>
       `;
@@ -567,6 +590,7 @@ class AbandonedInSpaceApp {
 const TRANSLATIONS = {
   tr: {
     app_subtitle: "Ay ve Mars'taki Tarihi NASA Kalıntıları ve Hikaye Haritası",
+    btn_sim: "SİMÜLASYON",
     btn_sources: "RESMİ KAYNAKLAR",
     btn_tour: "HİKAYE TURU",
     btn_reset: "GÖRÜNÜMÜ SIFIRLA",
@@ -581,6 +605,7 @@ const TRANSLATIONS = {
     mass_label: "TOPLAM TERK EDİLEN KÜTLE",
     search_placeholder: "Kalıntı veya görev ara...",
     relics_list_header: "TARİHİ EKİPMANLAR LİSTESİ",
+    sim_action_btn: "İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)",
     why_left_label: "NEDEN GERİDE BIRAKILDI?",
     condition_label: "BUGÜNKÜ DURUMU (YILLAR SONRA)",
     discarded_label: "TERK EDİLEN TEÇHİZAT LİSTESİ",
@@ -596,6 +621,7 @@ const TRANSLATIONS = {
   },
   en: {
     app_subtitle: "Historical NASA Artifacts & Storytelling Map on the Moon and Mars",
+    btn_sim: "SIMULATION",
     btn_sources: "OFFICIAL SOURCES",
     btn_tour: "STORY TOUR",
     btn_reset: "RESET VIEW",
@@ -610,6 +636,7 @@ const TRANSLATIONS = {
     mass_label: "TOTAL ABANDONED MASS",
     search_placeholder: "Search relics or missions...",
     relics_list_header: "HISTORICAL ARTIFACTS LIST",
+    sim_action_btn: "WATCH LANDING / IMPACT (3D)",
     why_left_label: "WHY WAS IT LEFT BEHIND?",
     condition_label: "CURRENT CONDITION (DECADES LATER)",
     discarded_label: "DISCARDED EQUIPMENT CHECKLIST",

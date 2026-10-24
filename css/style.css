@@ -736,6 +736,10 @@ body {
   gap: 18px;
 }
 
+.drawer-content > * {
+  flex-shrink: 0;
+}
+
 .drawer-content::-webkit-scrollbar {
   width: 5px;
 }
@@ -1556,26 +1560,22 @@ body {
 
 /* Secret Relic / Easter Egg Box */
 .secret-relic-box {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.75) 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.85) 100%);
   border: 1px solid rgba(245, 158, 11, 0.45);
+  border-left: 4px solid var(--amber-glow);
   border-radius: 8px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.12);
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.15);
+  flex-shrink: 0;
+  min-height: fit-content;
 }
 
-.secret-relic-box::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--amber-glow);
+.relic-header {
+  display: flex;
+  align-items: center;
 }
 
 .relic-badge {
@@ -1585,13 +1585,20 @@ body {
   color: var(--amber-glow);
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 4px;
+  padding: 3px 8px;
+  display: inline-block;
+  line-height: 1.4;
 }
 
 .relic-title {
   font-size: 14px;
   font-weight: 700;
   color: #fff;
-  margin: 0;
+  margin: 2px 0 0 0;
+  line-height: 1.4;
 }
 
 .relic-desc {

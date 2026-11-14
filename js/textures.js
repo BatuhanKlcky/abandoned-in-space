@@ -89,7 +89,7 @@ class CelestialTextureGenerator {
   }
 
   /**
-   * Generates a realistic crinkled Kapton Gold Foil bump/normal map for 3D spacecraft models
+   * Generates a realistic crinkled Kapton Gold Foil bump/normal relief for 3D spacecraft models
    */
   generateKaptonFoilBump(width = 512, height = 512) {
     if (this.cache.kaptonBump) return this.cache.kaptonBump;
@@ -99,51 +99,223 @@ class CelestialTextureGenerator {
     canvas.height = height;
     const ctx = canvas.getContext('2d');
 
+    // Base neutral gray height
     ctx.fillStyle = '#808080';
     ctx.fillRect(0, 0, width, height);
 
-    for (let i = 0; i < 480; i++) {
+    // 1. Organic Voronoi-like faceted crinkles
+    const points = [];
+    const numPoints = 64;
+    for (let i = 0; i < numPoints; i++) {
+      points.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        val: 0.35 + Math.random() * 0.3
+      });
+    }
+
+    // Draw faceted polygons connecting nearby points to mimic crumpled foil sheets
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < Math.min(i + 5, points.length); j++) {
+        const p1 = points[i];
+        const p2 = points[j];
+        const midX = (p1.x + p2.x) / 2 + (Math.random() - 0.5) * 30;
+        const midY = (p1.y + p2.y) / 2 + (Math.random() - 0.5) * 30;
+
+        const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.42)');
+        grad.addColorStop(0.5, 'rgba(30, 30, 30, 0.45)');
+        grad.addColorStop(1, 'rgba(220, 220, 220, 0.35)');
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5 + Math.random() * 3.0;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+        ctx.stroke();
+      }
+    }
+
+    // 2. Fine crumpled micro-creases
+    for (let i = 0; i < 400; i++) {
       const x1 = Math.random() * width;
       const y1 = Math.random() * height;
-      const len = 15 + Math.random() * 55;
+      const len = 10 + Math.random() * 35;
       const ang = Math.random() * Math.PI * 2;
       const x2 = x1 + Math.cos(ang) * len;
       const y2 = y1 + Math.sin(ang) * len;
 
       const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
-      grad.addColorStop(0.5, 'rgba(25, 25, 25, 0.38)');
-      grad.addColorStop(1, 'rgba(220, 220, 220, 0.28)');
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+      grad.addColorStop(0.5, 'rgba(40, 40, 40, 0.35)');
+      grad.addColorStop(1, 'rgba(200, 200, 200, 0.25)');
 
       ctx.strokeStyle = grad;
-      ctx.lineWidth = 1 + Math.random() * 3.5;
+      ctx.lineWidth = 0.8 + Math.random() * 2.0;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(40, 40, 40, 0.45)';
-    ctx.lineWidth = 1.5;
-    const step = 64;
-    for (let x = 0; x <= width; x += step) {
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
+    this.cache.kaptonBump = texture;
+    return texture;
+  }
+
+  /**
+   * Generates a photorealistic aluminized Kapton Gold MLI diffuse/color map
+   */
+  generateKaptonFoilMap(width = 512, height = 512) {
+    if (this.cache.kaptonMap) return this.cache.kaptonMap;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Base rich amber-gold metallic gradient
+    const baseGrad = ctx.createLinearGradient(0, 0, width, height);
+    baseGrad.addColorStop(0, '#f59e0b');
+    baseGrad.addColorStop(0.35, '#d97706');
+    baseGrad.addColorStop(0.7, '#fbbf24');
+    baseGrad.addColorStop(1, '#b45309');
+    ctx.fillStyle = baseGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Layer irregular specular facets
+    for (let i = 0; i < 70; i++) {
+      const cx = Math.random() * width;
+      const cy = Math.random() * height;
+      const r = 25 + Math.random() * 70;
+      const radGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, r);
+      radGrad.addColorStop(0, 'rgba(254, 243, 199, 0.45)');
+      radGrad.addColorStop(0.4, 'rgba(245, 158, 11, 0.18)');
+      radGrad.addColorStop(1, 'rgba(180, 83, 9, 0.0)');
+      ctx.fillStyle = radGrad;
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
     }
-    for (let y = 0; y <= height; y += step) {
+
+    // Thermal tape seam lines (NASA orange/amber acrylic adhesive tape)
+    ctx.strokeStyle = 'rgba(180, 83, 9, 0.75)';
+    ctx.lineWidth = 4;
+    [128, 256, 384].forEach(coord => {
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
+      ctx.moveTo(coord, 0);
+      ctx.lineTo(coord, height);
       ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, coord);
+      ctx.lineTo(width, coord);
+      ctx.stroke();
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
+    this.cache.kaptonMap = texture;
+    return texture;
+  }
+
+  /**
+   * Generates authentic Inconel / Titanium thermal heat shield texture
+   */
+  generateInconelShieldTexture(width = 512, height = 512) {
+    if (this.cache.inconelTex) return this.cache.inconelTex;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, width, height);
+
+    // Brushed metallic grain
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    for (let y = 0; y < height; y += 2) {
+      if (Math.random() > 0.4) {
+        ctx.fillRect(0, y, width, 1);
+      }
+    }
+
+    // Panel perimeter fasteners / rivets
+    ctx.fillStyle = '#475569';
+    const step = 32;
+    for (let x = 8; x < width; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, 12, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, height - 12, 2.2, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(3, 3);
-    this.cache.kaptonBump = texture;
+    this.cache.inconelTex = texture;
+    return texture;
+  }
+
+  /**
+   * Generates high-end procedural studio environment map for realistic PBR reflections
+   */
+  generateStudioEnvMap(width = 1024, height = 512) {
+    if (this.cache.studioEnv) return this.cache.studioEnv;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Neutral dark studio atmosphere gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+    bgGrad.addColorStop(0, '#0a0f18');
+    bgGrad.addColorStop(0.45, '#151e2e');
+    bgGrad.addColorStop(0.55, '#1e293b');
+    bgGrad.addColorStop(1, '#090d16');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Warm Key Softbox Light (overhead left)
+    const keyGrad = ctx.createRadialGradient(width * 0.3, height * 0.28, 10, width * 0.3, height * 0.28, 140);
+    keyGrad.addColorStop(0, 'rgba(255, 250, 240, 0.95)');
+    keyGrad.addColorStop(0.4, 'rgba(254, 243, 199, 0.6)');
+    keyGrad.addColorStop(1, 'rgba(254, 243, 199, 0.0)');
+    ctx.fillStyle = keyGrad;
+    ctx.beginPath();
+    ctx.arc(width * 0.3, height * 0.28, 140, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cool Rim Softbox Light (overhead right)
+    const rimGrad = ctx.createRadialGradient(width * 0.75, height * 0.32, 10, width * 0.75, height * 0.32, 120);
+    rimGrad.addColorStop(0, 'rgba(240, 249, 255, 0.85)');
+    rimGrad.addColorStop(0.5, 'rgba(186, 230, 253, 0.4)');
+    rimGrad.addColorStop(1, 'rgba(186, 230, 253, 0.0)');
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    ctx.arc(width * 0.75, height * 0.32, 120, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Studio horizon reflection strip
+    const horizGrad = ctx.createLinearGradient(0, height * 0.48, 0, height * 0.52);
+    horizGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+    horizGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)');
+    horizGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = horizGrad;
+    ctx.fillRect(0, height * 0.48, width, height * 0.04);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    this.cache.studioEnv = texture;
     return texture;
   }
 

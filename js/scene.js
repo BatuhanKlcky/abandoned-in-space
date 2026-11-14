@@ -422,24 +422,52 @@ class SpaceSceneManager {
   }
 
   /**
-   * Fly camera smoothly to inspect a specific artifact site
+   * Fly camera smoothly to inspect a specific artifact site, centering precisely on the marker pin
    */
   focusOnArtifact(artifact, onComplete = null) {
+    if (!artifact) return;
     this.selectedArtifact = artifact;
     this.isAutoRotating = false;
 
-    const targetPos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, this.sphereRadius);
-    const normal = targetPos.clone().normalize();
+    // 1. Force update matrix world hierarchy to get live global positions
+    this.planetGroup.updateMatrixWorld(true);
 
-    const cameraTarget = normal.clone().multiplyScalar(this.sphereRadius + 45);
-    cameraTarget.add(new THREE.Vector3(10, 15, 10));
+    // 2. Find matching pin mesh to obtain its exact current world coordinates
+    let pinWorldPos = new THREE.Vector3();
+    const targetPin = this.pins.find(p => p.artifact && p.artifact.id === artifact.id);
 
-    this.flyCameraTo(cameraTarget, targetPos, 1400, onComplete);
+    if (targetPin && targetPin.orbMesh) {
+      targetPin.orbMesh.getWorldPosition(pinWorldPos);
+    } else {
+      // Fallback: calculate theoretical world position accounting for current planet rotation
+      const localPos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, this.sphereRadius);
+      pinWorldPos.copy(localPos).applyEuler(this.planetGroup.rotation);
+    }
+
+    if (pinWorldPos.lengthSq() < 0.001) {
+      pinWorldPos.set(0, 0, this.sphereRadius);
+    }
+
+    // 3. Compute true radial surface normal from planet center (0, 0, 0)
+    const normal = pinWorldPos.clone().normalize();
+
+    // 4. Position camera directly along the radial normal vector (pure radial alignment, zero skew)
+    // sphereRadius = 100. Target distance of 148 provides high surface detail and pin prominence
+    const cameraDistance = this.sphereRadius + 48;
+    const cameraTarget = normal.clone().multiplyScalar(cameraDistance);
+
+    // 5. Look directly at the planet center (0, 0, 0) through the pin.
+    // Because pinWorldPos lies directly on the ray between cameraTarget and (0,0,0),
+    // the pin is projected at the absolute center (0, 0) of the camera viewport.
+    const targetLookAt = new THREE.Vector3(0, 0, 0);
+
+    // 6. Smooth orbital flight that preserves spherical altitude around the planet
+    this.flyCameraTo(cameraTarget, targetLookAt, 1200, onComplete);
     if (window.SpaceAudio) window.SpaceAudio.playQuindarTone();
 
     const defaultColor = this.getBodyBeaconColors().main;
     this.pins.forEach(p => {
-      const isMatch = p.artifact.id === artifact.id;
+      const isMatch = p.artifact && p.artifact.id === artifact.id;
       p.orbMesh.scale.setScalar(isMatch ? 1.85 : 1.0);
       p.orbMesh.material.color.setHex(isMatch ? 0xffea00 : defaultColor);
     });
@@ -448,25 +476,60 @@ class SpaceSceneManager {
   }
 
   flyCameraTo(targetCamPos, targetLookAt, duration = 1200, onComplete = null) {
+    if (!this.flightCounter) this.flightCounter = 0;
+    const flightId = ++this.flightCounter;
+    this.activeFlightId = flightId;
+
     const startCamPos = this.camera.position.clone();
     const startLookAt = this.controls.target.clone();
     const startTime = performance.now();
 
+    const startDist = Math.max(120, startCamPos.length());
+    const targetDist = Math.max(120, targetCamPos.length());
+    const startDir = startCamPos.clone().normalize();
+    const targetDir = targetCamPos.clone().normalize();
+    const angle = startDir.angleTo(targetDir);
+
+    let qTarget = new THREE.Quaternion();
+    if (angle > 0.001) {
+      qTarget.setFromUnitVectors(startDir, targetDir);
+    }
+
     const animateFlight = (now) => {
+      if (this.activeFlightId !== flightId) return;
+
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1.0);
 
+      // Smooth cubic ease in-out
       const ease = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
-      this.camera.position.lerpVectors(startCamPos, targetCamPos, ease);
+      if (angle > 0.001) {
+        // Spherical great-circle transfer along the sphere
+        const qInterp = new THREE.Quaternion().identity().slerp(qTarget, ease);
+        const currentDir = startDir.clone().applyQuaternion(qInterp).normalize();
+
+        // Subtle orbital arc that lifts camera smoothly during long transfers
+        // to prevent cutting into terrain or clipping through the planet
+        const arc = Math.sin(progress * Math.PI) * Math.min(35, angle * 18);
+        const currentDist = THREE.MathUtils.lerp(startDist, targetDist, ease) + arc;
+
+        this.camera.position.copy(currentDir).multiplyScalar(currentDist);
+      } else {
+        this.camera.position.lerpVectors(startCamPos, targetCamPos, ease);
+      }
+
       this.controls.target.lerpVectors(startLookAt, targetLookAt, ease);
       this.controls.update();
 
       if (progress < 1.0) {
         requestAnimationFrame(animateFlight);
       } else {
+        this.camera.position.copy(targetCamPos);
+        this.controls.target.copy(targetLookAt);
+        this.controls.update();
         if (onComplete) onComplete();
       }
     };
@@ -1204,7 +1267,19 @@ class SpaceSceneManager {
   bindEvents() {
     window.addEventListener('resize', () => this.onResize());
     this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
-    this.container.addEventListener('click', (e) => this.onClick(e));
+
+    let pointerDownPos = { x: 0, y: 0 };
+    this.container.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    this.container.addEventListener('click', (e) => {
+      const dx = e.clientX - pointerDownPos.x;
+      const dy = e.clientY - pointerDownPos.y;
+      // If user was dragging to orbit the camera, ignore click event on drag release
+      if (Math.hypot(dx, dy) > 6) return;
+      this.onClick(e);
+    });
   }
 
   onResize() {
@@ -1252,6 +1327,11 @@ class SpaceSceneManager {
   }
 
   onClick(e) {
+    if (e && e.clientX !== undefined) {
+      const rect = this.container.getBoundingClientRect();
+      this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    }
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const hitMeshes = [];
     this.pins.forEach(p => {

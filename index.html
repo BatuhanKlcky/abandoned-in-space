@@ -516,6 +516,12 @@
 
         <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
         <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
+          <!-- Compact Game-Mode Pill (Shown when surrounding UI buttons are hidden in VR/Game mode) -->
+          <div class="vr-game-mini-hud" id="vr-game-mini-pill" title="Normal Arayüz Butonlarını Geri Getirmek İçin Tıklayın veya H / TAB / ESC / Meta Quest X Tuşuna Basın">
+            <span id="vr-game-mission-text">🎮 VR OYUN MODU AKTİF • Numune: 0/8</span>
+            <span class="mini-key-badge">[H / TAB / Quest X]: Normal Arayüze Dön</span>
+          </div>
+
           <div class="walk-visor-banner interactive">
             <div class="walk-xr-status" id="walk-xr-status">🚀 HAVADAN İNİŞ AKTİF (KABİN İÇİNDESİNİZ) • İniş Sonrası Kapıya Yürü, Volana Tıkla veya E: Kapağı Açıp Dışarı Çık</div>
             <div class="walk-metrics-row">
@@ -527,6 +533,7 @@
               <button class="walk-sub-btn" id="btn-walk-view-toggle" title="1. Şahıs (Astronot Elleri & Bilek Bilgisayarı) ve 3. Şahıs (Tam Astronot Modeli) Arasında Geçiş Yap (V Tuşu)">👁️ Görünüm: 1. Şahıs (Astronot Elleri)</button>
               <button class="walk-sub-btn active" id="btn-walk-cabin" title="İniş Sonrası Basınçlı EVA Kapağını Açıp Merdivenle Yüzeye Çık veya Kabine Gir (E Tuşu)">🚪 EVA Kapağını Aç & Dışarı Çık (E)</button>
               <button class="walk-sub-btn active" id="btn-walk-torch" title="Sağ Eldeki NASA EVA Fenerini Aç / Kapat (F Tuşu)">🔦 EVA Feneri (F)</button>
+              <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Etraftaki Tüm Butonları Kaldırıp Tam Ekran VR Oyun Moduna Geç (H veya TAB Tuşu)">🎮 Butonları Gizle / Oyun Modu (H)</button>
             </div>
           </div>
 
@@ -686,11 +693,11 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=4.8"></script>
-  <script src="js/textures.js?v=4.8"></script>
-  <script src="js/audio.js?v=4.8"></script>
-  <script src="js/scene.js?v=4.8"></script>
-  <script src="js/simulation.js?v=4.8"></script>
-  <script src="js/app.js?v=4.8"></script>
+  <script src="js/data.js?v=4.9"></script>
+  <script src="js/textures.js?v=4.9"></script>
+  <script src="js/audio.js?v=4.9"></script>
+  <script src="js/scene.js?v=4.9"></script>
+  <script src="js/simulation.js?v=4.9"></script>
+  <script src="js/app.js?v=4.9"></script>
 </body>
 </html>

@@ -62,15 +62,62 @@ class MissionSimulationTheater {
       pitch: 0.05,
       eyeHeight: 1.75,
       isGrounded: true,
+      isInsideCabin: true,
+      isOnLadder: false,
+      isDrivingRover: false,
       keys: { w: false, a: false, s: false, d: false },
       isLooking: false,
       lastMouseX: 0,
       lastMouseY: 0,
       stepPhase: 0,
       lastStepCount: 0,
-      breathPhase: 0
+      breathPhase: 0,
+      collectedSamples: 0,
+      totalSamples: 8,
+      lastActionMsg: ''
     };
     this.xrSession = null;
+    this.vrCleanUI = false;
+    this.xrButtonPrev = { left: [], right: [] };
+    this.xrControllerPrevPos = [new THREE.Vector3(), new THREE.Vector3()];
+    this.xrControllerPosInit = [false, false];
+    this.vrTouchCooldown = 0;
+  }
+
+  setCleanVRGameMode(clean) {
+    this.vrCleanUI = !!clean;
+    if (!this.overlay) this.overlay = document.getElementById('simulation-modal');
+    if (this.overlay) {
+      this.overlay.classList.toggle('vr-game-clean-ui', this.vrCleanUI);
+    }
+    this.updateVRGameMiniPill();
+    setTimeout(() => this.onResize(), 30);
+  }
+
+  toggleCleanVRGameMode() {
+    this.setCleanVRGameMode(!this.vrCleanUI);
+    this.playSwitchClickSound(this.vrCleanUI ? 840 : 620);
+  }
+
+  updateVRGameMiniPill(customMsg = null) {
+    const textEl = document.getElementById('vr-game-mission-text');
+    if (!textEl) return;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const ws = this.walkState;
+    if (customMsg) {
+      ws.lastActionMsg = customMsg;
+    }
+    const loc = ws.isDrivingRover
+      ? (isTr ? '🚙 LRV SÜRÜŞÜ' : '🚙 DRIVING LRV')
+      : ws.isInsideCabin
+        ? (isTr ? '🚀 KOKPİT İÇİ' : '🚀 IN COCKPIT')
+        : ws.isOnLadder
+          ? (isTr ? '🪜 MERDİVEN' : '🪜 ON LADDER')
+          : (isTr ? '🧑🏼‍🚀 YÜZEY EVA' : '🧑🏼‍🚀 SURFACE EVA');
+    const extra = ws.lastActionMsg ? ` • ${ws.lastActionMsg}` : '';
+    textEl.innerText = isTr
+      ? `🎮 VR OYUN MODU (${loc}) • Numune: ${ws.collectedSamples}/${ws.totalSamples}${extra}`
+      : `🎮 VR GAME MODE (${loc}) • Samples: ${ws.collectedSamples}/${ws.totalSamples}${extra}`;
   }
 
   init() {
@@ -91,7 +138,7 @@ class MissionSimulationTheater {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(w, h, true);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.32;
+    this.renderer.toneMappingExposure = 1.18;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.xr.enabled = true;
@@ -156,6 +203,16 @@ class MissionSimulationTheater {
       cabinToggleBtn.addEventListener('click', () => this.toggleCabinInterior());
     }
 
+    const cleanUiBtn = document.getElementById('btn-walk-clean-ui');
+    if (cleanUiBtn) {
+      cleanUiBtn.addEventListener('click', () => this.toggleCleanVRGameMode());
+    }
+
+    const miniPill = document.getElementById('vr-game-mini-pill');
+    if (miniPill) {
+      miniPill.addEventListener('click', () => this.toggleCleanVRGameMode());
+    }
+
     const xrBtn = document.getElementById('btn-sim-webxr');
     if (xrBtn) {
       xrBtn.addEventListener('click', () => this.enterWebXR());
@@ -183,7 +240,20 @@ class MissionSimulationTheater {
         this.toggleFlashlight();
       }
       if (code === 'KeyE') {
-        this.toggleCabinInterior();
+        // First check if looking at an interactive 3D object/sample/rover within reach; otherwise toggle cabin/hatch/rover!
+        const hitObj = this.getHoveredInteractive(this.mouseNDC);
+        if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
+          hitObj.userData.interactive.onClick();
+        } else if (this.walkState.isDrivingRover) {
+          this.toggleRoverDrive();
+        } else {
+          this.toggleCabinInterior();
+        }
+      }
+      if (code === 'KeyH' || code === 'Tab' || code === 'KeyM' || code === 'Escape') {
+        if (code === 'Tab') e.preventDefault();
+        // When in Clean VR Game Mode, pressing H, TAB, M, or ESC restores all normal UI buttons!
+        this.toggleCleanVRGameMode();
       }
     });
 
@@ -494,12 +564,34 @@ class MissionSimulationTheater {
   }
 
   triggerAstronautJump() {
-    if (this.walkState.isGrounded && !this.walkState.isInsideCabin) {
+    if (this.walkState.isGrounded && !this.walkState.isInsideCabin && !this.walkState.isDrivingRover) {
       const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
       const jumpVel = body === 'moon' ? 4.4 : body === 'outer' ? 4.6 : body === 'mars' ? 3.5 : 2.6;
       this.walkState.vy = jumpVel;
       this.walkState.isGrounded = false;
       this.spawnBootDust(this.walkState.x, this.walkState.z, 10);
+    }
+  }
+
+  toggleRoverDrive() {
+    if (!this.lrvPropGroup || this.walkState.isInsideCabin || this.walkState.isOnLadder) return;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const ws = this.walkState;
+    ws.isDrivingRover = !ws.isDrivingRover;
+    this.playSwitchClickSound(ws.isDrivingRover ? 780 : 520);
+
+    if (ws.isDrivingRover) {
+      ws.x = this.lrvPropGroup.position.x;
+      ws.z = this.lrvPropGroup.position.z;
+      ws.y = this.getExactSurfaceHeight(ws.x, ws.z) + 0.35;
+      ws.yaw = this.lrvPropGroup.rotation.y + Math.PI;
+      ws.smoothYaw = ws.yaw;
+      this.updateVRGameMiniPill(isTr ? 'LRV Ay Aracı Sürüşü Aktif!' : 'LRV Rover Driving Active!');
+    } else {
+      ws.x = this.lrvPropGroup.position.x - 1.65;
+      ws.z = this.lrvPropGroup.position.z + 0.8;
+      ws.y = this.getExactSurfaceHeight(ws.x, ws.z);
+      this.updateVRGameMiniPill(isTr ? 'LRV Araçtan İnildi' : 'Dismounted LRV Rover');
     }
   }
 
@@ -514,6 +606,9 @@ class MissionSimulationTheater {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
 
     if (mode === 'walk') {
+      // Automatically enter Clean Full-Screen VR Game Mode (surrounding buttons hidden; press H/TAB/ESC/Quest-X to restore)
+      this.setCleanVRGameMode(true);
+
       // Start the rocket/lander descending from the sky with the astronaut INSIDE the pressurized cabin!
       if (this.simTime > 5.8 && !this.walkDescentPlayed) {
         this.simTime = 0;
@@ -532,6 +627,7 @@ class MissionSimulationTheater {
       // Place the astronaut INSIDE the descending rocket cockpit facing the front windows & DSKY computer!
       this.walkState.isInsideCabin = true;
       this.walkState.isOnLadder = false;
+      this.walkState.isDrivingRover = false;
       this.walkState.x = -0.52;
       this.walkState.z = -0.62;
       this.walkState.y = 4.5 + this.getDescentOffset();
@@ -563,13 +659,16 @@ class MissionSimulationTheater {
       if (walkHud) walkHud.classList.remove('hidden');
       if (walkBtn) walkBtn.classList.add('active');
       if (this.controls) this.controls.enabled = false;
+      this.updateVRGameMiniPill(isTr ? 'Roket İnişte — İniş Sonrası Kapıyı Açın!' : 'Rocket Descending — Open Hatch After Touchdown!');
     } else {
+      this.setCleanVRGameMode(false);
       this.camera.rotation.order = 'XYZ';
       this.camera.rotation.z = 0;
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
       this.walkState.isInsideCabin = false;
       this.walkState.isOnLadder = false;
+      this.walkState.isDrivingRover = false;
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = false;
       if (walkHud) walkHud.classList.add('hidden');
       if (walkBtn) walkBtn.classList.remove('active');
@@ -584,6 +683,7 @@ class MissionSimulationTheater {
   async enterWebXR() {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     this.setCameraMode('walk');
+    this.setCleanVRGameMode(true);
 
     const statusEl = document.getElementById('walk-xr-status');
     if (navigator.xr) {
@@ -602,8 +702,8 @@ class MissionSimulationTheater {
 
           if (statusEl) {
             statusEl.innerText = isTr
-              ? "🥽 WEBXR VR/AR AKTİF: Meta Quest / Vision Pro 1:1 Yüzey Oturumu (Thumbstick ile Yürü)"
-              : "🥽 WEBXR VR/AR ACTIVE: 1:1 Immersive Surface Session (Use Thumbsticks to Walk)";
+              ? "🥽 META QUEST VR OYUN MODU AKTİF: Sol Kol/Kolları Sallama: Yürü • Sağ Kol: Dön • Tetik/Dokunma: Etkileşim • A: Sıçra • B: Kapak/Kabin • X: Arayüz"
+              : "🥽 META QUEST VR GAME ACTIVE: Left Stick/Arm Swing: Walk • Right Stick: Turn • Trigger/Touch: Interact • A: Jump • B: Hatch/Cabin • X: UI";
           }
           session.addEventListener('end', () => {
             this.xrSession = null;
@@ -618,8 +718,8 @@ class MissionSimulationTheater {
 
     if (statusEl) {
       statusEl.innerText = isTr
-        ? "🥽 1:1 ASTRONOT VİZÖR & ELLER MODU AKTİF (WASD: Yürü • Fare Sürükle: 360° Bak • SPACE: Sıçra • V: 1./3. Şahıs • F: Fener)"
-        : "🥽 1:1 ASTRONAUT VISOR & HANDS ACTIVE (WASD: Walk • Drag: Look 360° • SPACE: Jump • V: 1st/3rd Person • F: Torch)";
+        ? "🥽 1:1 VR OYUN MODU AKTİF (WASD/Kollar: Yürü • Sol Tık/E: Etkileşim • SPACE: Sıçra • H/TAB: Arayüzü Göster)"
+        : "🥽 1:1 VR GAME MODE ACTIVE (WASD/Controllers: Walk • Click/E: Interact • SPACE: Jump • H/TAB: Toggle UI)";
     }
   }
 
@@ -631,16 +731,52 @@ class MissionSimulationTheater {
 
   getTerrainHeight(vx, vz) {
     const d = Math.sqrt(vx * vx + vz * vz);
-    let y = Math.sin(vx * 0.055) * Math.cos(vz * 0.055) * 1.9;
-    y += Math.sin(vx * 0.14 + 1.1) * Math.cos(vz * 0.12) * 0.65;
+    // Multi-frequency planetary topography (macro hills + meso undulations + micro regolith hummocks)
+    let y = Math.sin(vx * 0.048) * Math.cos(vz * 0.048) * 1.95;
+    y += Math.sin(vx * 0.125 + 1.1) * Math.cos(vz * 0.115) * 0.68;
+    y += Math.sin(vx * 0.28 - 0.7) * Math.sin(vz * 0.26 + 0.4) * 0.22;
+    y += Math.cos((vx + vz) * 0.52) * 0.07;
+
     if (d < 22) {
-      // Flat landing pad zone around spacecraft so feet & landing pads rest cleanly
-      const blend = Math.max(0, (d - 10) / 12);
-      y *= blend;
-    } else if (d < 42) {
-      const rim = 1 - Math.abs((d - 32) / 10);
-      if (rim > 0) y += rim * 1.6;
+      // Flat landing pad zone around spacecraft so landing pads & ladder rest cleanly at y = 0
+      const blend = Math.max(0, (d - 10.5) / 11.5);
+      y *= blend * blend;
+    } else if (d < 44) {
+      const rim = 1 - Math.abs((d - 33) / 11);
+      if (rim > 0) y += rim * 1.65;
     }
+
+    // Sculpted 3D Walkable Impact Craters (bowl depression + raised ejecta rim)
+    const craters = [
+      { cx: -19.0, cz: -16.0, r: 6.8, depth: 1.45 },
+      { cx:  22.0, cz:  18.0, r: 8.2, depth: 1.75 },
+      { cx: -24.0, cz:  22.0, r: 7.4, depth: 1.55 },
+      { cx:  26.0, cz: -23.0, r: 9.0, depth: 1.90 },
+      { cx:   0.0, cz: -28.0, r: 7.8, depth: 1.65 },
+      { cx:  34.0, cz:   2.0, r: 6.2, depth: 1.30 },
+      { cx: -32.0, cz:  -2.0, r: 8.5, depth: 1.70 }
+    ];
+    for (let i = 0; i < craters.length; i++) {
+      const c = craters[i];
+      const cd = Math.hypot(vx - c.cx, vz - c.cz);
+      if (cd < c.r * 1.45) {
+        const u = cd / c.r;
+        if (u < 1.0) {
+          // Parabolic crater bowl
+          y -= c.depth * (1.0 - u * u);
+          // Inner rim uplift near u = 0.85..1.0
+          if (u > 0.72) {
+            const rimU = (u - 0.72) / 0.28;
+            y += c.depth * 0.32 * Math.sin(rimU * Math.PI * 0.5);
+          }
+        } else {
+          // Outer raised ejecta ramp (u = 1.0..1.45)
+          const ejectaU = 1.0 - (u - 1.0) / 0.45;
+          y += c.depth * 0.32 * ejectaU * ejectaU;
+        }
+      }
+    }
+
     return y;
   }
 
@@ -1322,13 +1458,15 @@ class MissionSimulationTheater {
   }
 
   // ===========================================================================
-  // HIGH-DETAIL LUNAR ROVING VEHICLE (LRV "MOON BUGGY") & SURFACE PROPS
+  // HIGH-DETAIL INTERACTIVE LUNAR ROVING VEHICLE (LRV "MOON BUGGY") & SURFACE PROPS
   // ===========================================================================
   buildLunarRoverProp(x, z) {
     const lrv = new THREE.Group();
     const y = this.getTerrainHeight(x, z);
     lrv.position.set(x, y + 0.38, z);
     lrv.rotation.y = -0.65;
+    this.lrvPropGroup = lrv;
+    this.lrvWheels = [];
 
     const alumMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.82, roughness: 0.28 });
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
@@ -1357,11 +1495,25 @@ class MissionSimulationTheater {
     lrv.add(dishPole, dish);
 
     // Twin Astronaut Folding Seats & T-Bar Hand Controller
+    const roverInteract = {
+      label_tr: '🚙 [SOL TIK / E / VR TETİK] LRV AY ARACINA BİN & YÜZEYDE SÜR (1:1 SÜRÜŞ MODU)',
+      label_en: '🚙 [CLICK / E / VR TRIGGER] MOUNT & DRIVE LRV MOON BUGGY ON SURFACE',
+      onClick: () => {
+        this.toggleRoverDrive();
+      }
+    };
+    chassis.userData.interactive = roverInteract;
+    lcru.userData.interactive = roverInteract;
+    if (this.surfaceInteractables) this.surfaceInteractables.push(chassis, lcru);
+
     for (let s = -1; s <= 1; s += 2) {
       const seatBottom = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.52), seatMat);
       seatBottom.position.set(s * 0.42, 0.12, -0.15);
       const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.58, 0.06), seatMat);
       seatBack.position.set(s * 0.42, 0.40, -0.40);
+      seatBottom.userData.interactive = roverInteract;
+      seatBack.userData.interactive = roverInteract;
+      if (this.surfaceInteractables) this.surfaceInteractables.push(seatBottom, seatBack);
       lrv.add(seatBottom, seatBack);
     }
 
@@ -1378,6 +1530,7 @@ class MissionSimulationTheater {
         fender.rotation.z = Math.PI / 2;
         fender.position.y = 0.05;
         wGroup.add(tire, hub, fender);
+        this.lrvWheels.push(tire);
         lrv.add(wGroup);
       }
     }
@@ -1640,11 +1793,26 @@ class MissionSimulationTheater {
       this.scene.add(new THREE.Points(starGeo, starMat));
     }
 
-    // High-Resolution Cratered Terrain with Procedural Bump & Surface Detail
-    const terrainGeo = new THREE.PlaneGeometry(420, 420, 110, 110);
+    // =========================================================================
+    // ULTRA-HIGH-RESOLUTION 220x220 PBR PLANETARY SURFACE (ALL CELESTIAL BODIES)
+    // =========================================================================
+    this.surfaceInteractables = [];
+    this.walkState.collectedSamples = 0;
+    this.walkState.lastActionMsg = '';
+
+    const surfaceType = isMoon
+      ? 'moon'
+      : isVenus
+        ? 'venus'
+        : isOuter
+          ? (artifact.id === 'cassini-huygens' ? 'titan' : 'comet')
+          : 'mars';
+
+    const terrainGeo = new THREE.PlaneGeometry(420, 420, 220, 220);
     terrainGeo.rotateX(-Math.PI / 2);
 
     const pos = terrainGeo.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
       const vz = pos.getZ(i);
@@ -1655,32 +1823,77 @@ class MissionSimulationTheater {
         y += Math.sin(vx * 0.08) * Math.cos(vz * 0.08) * (edge * 22);
       }
       pos.setY(i, y);
+
+      // Per-vertex ambient occlusion & geological shading (darkens crater bowls & rocket blast zone, brightens ridges)
+      let shade = 0.88 + Math.sin(vx * 0.09 + vz * 0.07) * 0.06;
+      if (y < -0.25) {
+        shade *= Math.max(0.58, 1.0 + y * 0.18); // Crater bowl shadow
+      } else if (y > 0.65) {
+        shade *= Math.min(1.16, 1.0 + (y - 0.65) * 0.07); // Sunlit crater rim / ridge crest
+      }
+      if (d < 5.5) {
+        // Subtle rocket plume scorch under the descent engine
+        shade *= 0.68 + (d / 5.5) * 0.32;
+      }
+      colors[i * 3] = shade;
+      colors[i * 3 + 1] = shade;
+      colors[i * 3 + 2] = shade;
     }
+    terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     terrainGeo.computeVertexNormals();
 
-    let surfaceBump = null;
-    if (window.ProceduralTextures) {
-      surfaceBump = isMoon ? window.ProceduralTextures.generateMoonBump() : window.ProceduralTextures.generateMarsBump();
-      if (surfaceBump) {
-        surfaceBump.wrapS = THREE.RepeatWrapping;
-        surfaceBump.wrapT = THREE.RepeatWrapping;
-        surfaceBump.repeat.set(14, 14);
-      }
+    const maxAniso = this.renderer && this.renderer.capabilities ? this.renderer.capabilities.getMaxAnisotropy() : 8;
+    const texGen = window.CelestialTextures || window.ProceduralTextures;
+    const groundPBR = texGen && texGen.generateSurfaceGroundPBR
+      ? texGen.generateSurfaceGroundPBR(surfaceType, 1024)
+      : null;
+
+    if (groundPBR) {
+      [groundPBR.map, groundPBR.bumpMap, groundPBR.roughnessMap].forEach((t) => {
+        if (t) {
+          t.wrapS = THREE.RepeatWrapping;
+          t.wrapT = THREE.RepeatWrapping;
+          t.repeat.set(24, 24);
+          t.anisotropy = maxAniso;
+        }
+      });
     }
 
-    const terrainColor = isMoon ? 0x828892 : isVenus ? 0x784416 : isOuter ? (artifact.id === 'cassini-huygens' ? 0x855522 : 0x3b4252) : 0xc45c2c;
     const terrainMat = new THREE.MeshStandardMaterial({
-      color: terrainColor,
-      roughness: 0.92,
-      metalness: 0.06,
-      bumpMap: surfaceBump,
-      bumpScale: 0.28
+      color: 0xffffff,
+      vertexColors: true,
+      map: groundPBR ? groundPBR.map : null,
+      bumpMap: groundPBR ? groundPBR.bumpMap : null,
+      bumpScale: 0.62,
+      roughnessMap: groundPBR ? groundPBR.roughnessMap : null,
+      roughness: 0.94,
+      metalness: 0.04
     });
     this.terrain = new THREE.Mesh(terrainGeo, terrainMat);
     this.terrain.receiveShadow = true;
     this.scene.add(this.terrain);
 
-    // 1:1 Scale Holographic Range Rings on Surface
+    // Radial Retro-Rocket Exhaust Blast Zone Decal directly beneath the lander
+    if (texGen && texGen.generateBlastZoneTexture) {
+      const blastTex = texGen.generateBlastZoneTexture(surfaceType);
+      const blastMat = new THREE.MeshStandardMaterial({
+        map: blastTex,
+        transparent: true,
+        opacity: 0.92,
+        roughness: 0.98,
+        metalness: 0.02,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -2
+      });
+      const blastDecal = new THREE.Mesh(new THREE.PlaneGeometry(14.5, 14.5), blastMat);
+      blastDecal.rotation.x = -Math.PI / 2;
+      blastDecal.position.set(0, 0.02, 0);
+      blastDecal.receiveShadow = true;
+      this.scene.add(blastDecal);
+    }
+
+    // 1:1 Scale Holographic Range Rings & VR Teleport Target Ring on Surface
     this.scaleRingsGroup = new THREE.Group();
     this.scaleRingsGroup.position.y = 0.05;
     this.scaleRingsGroup.visible = (this.cameraMode === 'walk');
@@ -1690,31 +1903,58 @@ class MissionSimulationTheater {
       const ringMat = new THREE.MeshBasicMaterial({
         color: idx === 0 ? 0x10b981 : 0x00f0ff,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.28,
         side: THREE.DoubleSide
       });
       this.scaleRingsGroup.add(new THREE.Mesh(ringGeo, ringMat));
     });
     this.scene.add(this.scaleRingsGroup);
 
-    // Scattered Rock Boulders / Venus Basalt Slabs / Titan Ice Cobbles
+    // VR Ground Walk-To / Teleport Reticle Ring (Highlights where controller laser hits the ground)
+    const tpRingGeo = new THREE.RingGeometry(0.38, 0.52, 32);
+    tpRingGeo.rotateX(-Math.PI / 2);
+    this.vrTeleportRing = new THREE.Mesh(
+      tpRingGeo,
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    );
+    this.vrTeleportRing.visible = false;
+    this.scene.add(this.vrTeleportRing);
+
+    // Textured 3D Geological Boulders, Stratified Outcrops & Venus Basalt Slabs
+    const rockPBR = texGen && texGen.generateRockPBR ? texGen.generateRockPBR(surfaceType) : null;
     const rockGeo = isVenus
-      ? new THREE.CylinderGeometry(1.1, 1.3, 0.35, 7)
-      : new THREE.DodecahedronGeometry(0.85, 1);
+      ? new THREE.CylinderGeometry(1.1, 1.35, 0.36, 8)
+      : new THREE.DodecahedronGeometry(0.85, 2);
+    // Perturb vertices of rockGeo so boulders look naturally fractured & organic
+    if (!isVenus) {
+      const rPos = rockGeo.attributes.position;
+      for (let vi = 0; vi < rPos.count; vi++) {
+        const vx = rPos.getX(vi);
+        const vy = rPos.getY(vi);
+        const vz = rPos.getZ(vi);
+        const deform = 1.0 + 0.16 * Math.sin(vx * 4.5 + vy * 3.2) * Math.cos(vz * 4.1);
+        rPos.setXYZ(vi, vx * deform, vy * deform * 0.82, vz * deform);
+      }
+      rockGeo.computeVertexNormals();
+    }
+
     const rockMat = new THREE.MeshStandardMaterial({
-      color: isMoon ? 0x5b616b : isVenus ? 0x45270d : isOuter ? 0x64748b : 0x8a3c1b,
-      roughness: 0.95,
-      metalness: 0.15,
-      flatShading: true
+      color: 0xffffff,
+      map: rockPBR ? rockPBR.map : null,
+      bumpMap: rockPBR ? rockPBR.bumpMap : null,
+      bumpScale: 0.38,
+      roughness: 0.92,
+      metalness: 0.08
     });
-    for (let i = 0; i < 55; i++) {
+
+    for (let i = 0; i < 75; i++) {
       const rock = new THREE.Mesh(rockGeo, rockMat);
       const rx = (Math.random() - 0.5) * 210;
       const rz = (Math.random() - 0.5) * 210;
       if (Math.hypot(rx, rz) > 9.5) {
-        const sc = 0.4 + Math.random() * 2.1;
-        rock.scale.set(sc, isVenus ? 0.5 : sc * (0.5 + Math.random() * 0.5), sc);
-        rock.position.set(rx, this.getTerrainHeight(rx, rz) + sc * 0.22, rz);
+        const sc = 0.35 + Math.random() * 2.2;
+        rock.scale.set(sc, isVenus ? 0.48 : sc * (0.48 + Math.random() * 0.52), sc);
+        rock.position.set(rx, this.getTerrainHeight(rx, rz) + sc * 0.18, rz);
         if (!isVenus) rock.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
         rock.castShadow = true;
         rock.receiveShadow = true;
@@ -1722,9 +1962,73 @@ class MissionSimulationTheater {
       }
     }
 
-    // Authentic Lunar Landing Site Props (Flag, ALSEP, LRV Moon Buggy, Fellow Astronaut)
-    if (isMoon && artifact.category !== 'impact') {
-      // American Flag on lunar regolith
+    // 8 Interactive Collectable Geological Sample Boulders around the Landing Site!
+    const sampleCoords = [
+      { x: -6.8, z: 10.5, mineral_tr: 'İlmenit Bazalt Numunesi #1', mineral_en: 'Ilmenite Basalt Sample #1' },
+      { x:  7.4, z: 11.2, mineral_tr: 'Anortozit Breş Numunesi #2', mineral_en: 'Anorthosite Breccia Sample #2' },
+      { x: -14.2, z: -8.5, mineral_tr: 'Olivin Krater Numunesi #3', mineral_en: 'Olivine Crater Sample #3' },
+      { x:  15.8, z:  4.2, mineral_tr: 'Piroksen Regolit Numunesi #4', mineral_en: 'Pyroxene Regolith Sample #4' },
+      { x: -18.5, z: -15.2, mineral_tr: 'Krater Çukuru Cam Kürecikleri #5', mineral_en: 'Crater Glass Spherules #5' },
+      { x:  21.0, z:  16.8, mineral_tr: 'Volkanik Cüruf & Bazalt #6', mineral_en: 'Vesicular Basalt Core #6' },
+      { x:   1.5, z: -16.5, mineral_tr: 'DerinManto Kayaç Parçası #7', mineral_en: 'Deep Mantle Clast #7' },
+      { x: -11.5, z:  16.0, mineral_tr: 'Kutup Buzul / Mineral Numunesi #8', mineral_en: 'Crystalline Mineral Sample #8' }
+    ];
+    sampleCoords.forEach((scfg, sIdx) => {
+      const sGroup = new THREE.Group();
+      const sy = this.getTerrainHeight(scfg.x, scfg.z);
+      sGroup.position.set(scfg.x, sy + 0.24, scfg.z);
+
+      const sRockMat = rockMat.clone();
+      const sRock = new THREE.Mesh(rockGeo, sRockMat);
+      sRock.scale.set(0.62, 0.48, 0.62);
+      sRock.castShadow = true;
+      sRock.receiveShadow = true;
+      sGroup.add(sRock);
+
+      // Glowing Crystalline Mineral Vein & Holo Marker Ring on Sample Rock
+      const crystalMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+      const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), crystalMat);
+      crystal.position.set(0, 0.34, 0);
+      sGroup.add(crystal);
+
+      const ringMarker = new THREE.Mesh(
+        new THREE.RingGeometry(0.55, 0.68, 24),
+        new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.72 })
+      );
+      ringMarker.rotation.x = -Math.PI / 2;
+      ringMarker.position.y = -0.20;
+      sGroup.add(ringMarker);
+
+      let collected = false;
+      const sampleAction = {
+        label_tr: `💎 [SOL TIK / E / VR DOKUN] JEOLOJİK NUMUNE TOPLA: ${scfg.mineral_tr}`,
+        label_en: `💎 [CLICK / E / VR TOUCH] COLLECT GEOLOGICAL SAMPLE: ${scfg.mineral_en}`,
+        onClick: () => {
+          if (collected) return;
+          collected = true;
+          this.walkState.collectedSamples = Math.min(this.walkState.totalSamples, (this.walkState.collectedSamples || 0) + 1);
+          this.playSwitchClickSound(880);
+          setTimeout(() => this.playSwitchClickSound(1180), 90);
+          this.spawnBootDust(scfg.x, scfg.z, 12);
+          crystal.visible = false;
+          ringMarker.material.color.setHex(0x64748b);
+          ringMarker.material.opacity = 0.2;
+          sRock.scale.set(0.32, 0.22, 0.32);
+          const isTr = window.app ? window.app.currentLang === 'tr' : true;
+          sampleAction.label_tr = `✅ NUMUNE TOPLANDI (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_tr}`;
+          sampleAction.label_en = `✅ SAMPLE COLLECTED (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_en}`;
+          this.updateVRGameMiniPill(isTr ? `${scfg.mineral_tr} Toplandı!` : `${scfg.mineral_en} Collected!`);
+        }
+      };
+      sRock.userData.interactive = sampleAction;
+      crystal.userData.interactive = sampleAction;
+      this.surfaceInteractables.push(sRock, crystal);
+      this.scene.add(sGroup);
+    });
+
+    // Authentic Lunar / Planetary Landing Site Interactive Props (Flag, ALSEP Laser, LRV Moon Buggy)
+    if (artifact.category !== 'impact') {
+      // Interactive Mission Flag on regolith
       const flagGroup = new THREE.Group();
       flagGroup.position.set(9.2, this.getTerrainHeight(9.2, 6.2), 6.2);
 
@@ -1758,10 +2062,23 @@ class MissionSimulationTheater {
       );
       flagMesh.position.set(0.67, 2.12, 0);
       flagMesh.castShadow = true;
+      flagMesh.userData.interactive = {
+        label_tr: '🚩 [SOL TIK / E / VR TETİK] GÖREV BAYRAĞINI SELAMLA & TELSİZ KAYDINI DİNLE',
+        label_en: '🚩 [CLICK / E / VR TRIGGER] SALUTE MISSION FLAG & PLAY RADIO TRANSMISSION',
+        onClick: () => {
+          this.playSwitchClickSound(720);
+          if (window.SpaceAudio && this.currentArtifact) {
+            window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || this.currentArtifact.quote_en || '');
+          }
+          const isTr = window.app ? window.app.currentLang === 'tr' : true;
+          this.updateVRGameMiniPill(isTr ? 'Görev Bayrağı & Telsiz Kaydı Aktif!' : 'Mission Flag & Radio Transmission Active!');
+        }
+      };
+      this.surfaceInteractables.push(flagMesh);
       flagGroup.add(flagMesh);
       this.scene.add(flagGroup);
 
-      // ALSEP Scientific Instrument Station + Laser Retroreflector (LRRR)
+      // Interactive ALSEP Scientific Instrument Station + Laser Retroreflector (LRRR)
       const alsepY = this.getTerrainHeight(-10.5, 8.5);
       const alsepBox = new THREE.Mesh(
         new THREE.BoxGeometry(1.1, 0.8, 1.1),
@@ -1771,6 +2088,30 @@ class MissionSimulationTheater {
       alsepBox.castShadow = true;
       this.scene.add(alsepBox);
 
+      // 300m Earth-Ranging Green Laser Beam (toggled by clicking/touching ALSEP!)
+      const laserBeamGeo = new THREE.CylinderGeometry(0.08, 0.18, 280, 12);
+      const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.78 });
+      const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
+      alsepLaserBeam.position.set(-10.5, alsepY + 140.4, 8.5);
+      alsepLaserBeam.visible = false;
+      this.scene.add(alsepLaserBeam);
+
+      alsepBox.userData.interactive = {
+        label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP SİSMOMETRE & DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR)',
+        label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP EARTH LASER RETROREFLECTOR & SEISMOMETER',
+        onClick: () => {
+          alsepLaserBeam.visible = !alsepLaserBeam.visible;
+          this.playSwitchClickSound(alsepLaserBeam.visible ? 1040 : 540);
+          const isTr = window.app ? window.app.currentLang === 'tr' : true;
+          this.updateVRGameMiniPill(
+            alsepLaserBeam.visible
+              ? (isTr ? 'ALSEP Lazer Yansıtıcı (532nm) Ateşlendi!' : 'ALSEP 532nm Earth Laser Fired!')
+              : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
+          );
+        }
+      };
+      this.surfaceInteractables.push(alsepBox);
+
       const rtgCask = new THREE.Mesh(
         new THREE.CylinderGeometry(0.28, 0.28, 0.75, 12),
         new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
@@ -1779,7 +2120,7 @@ class MissionSimulationTheater {
       rtgCask.castShadow = true;
       this.scene.add(rtgCask);
 
-      // Lunar Roving Vehicle (LRV "Moon Buggy") parked on the lunar surface
+      // Interactive Driveable Lunar Roving Vehicle (LRV "Moon Buggy") parked on the surface
       this.buildLunarRoverProp(13.5, -7.5);
     }
 
@@ -1792,10 +2133,10 @@ class MissionSimulationTheater {
       this.spawnFootprint(0, trailZ, 0, s % 2 === 0);
     }
 
-    // Dynamic Sun Light with Crisp Soft Shadows
+    // Balanced Physically-Based Planetary Sunlight & Crisp Relief Shadows (Zero Overexposure!)
     const sunColor = isVenus ? 0xffb74d : isOuter ? 0xffe0b2 : 0xfffaed;
-    const sunLight = new THREE.DirectionalLight(sunColor, isMoon ? 2.8 : isVenus ? 1.9 : 2.4);
-    sunLight.position.set(100, 150, 75);
+    const sunLight = new THREE.DirectionalLight(sunColor, isMoon ? 2.05 : isVenus ? 1.55 : 1.85);
+    sunLight.position.set(130, 88, 65);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
@@ -1808,10 +2149,10 @@ class MissionSimulationTheater {
     sunLight.shadow.bias = -0.0004;
     this.scene.add(sunLight);
 
-    const ambLight = new THREE.AmbientLight(isMoon ? 0x384454 : isVenus ? 0x6b3810 : 0x553222, 1.35);
+    const ambLight = new THREE.AmbientLight(isMoon ? 0x384454 : isVenus ? 0x6b3810 : 0x553222, 0.58);
     this.scene.add(ambLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, isMoon ? 0x222630 : 0x3d1c14, 0.85);
+    const hemiLight = new THREE.HemisphereLight(0xdbeafe, isMoon ? 0x1e242d : 0x3d1c14, 0.44);
     this.scene.add(hemiLight);
 
     // =========================================================================
@@ -2191,39 +2532,209 @@ class MissionSimulationTheater {
   }
 
   // ===========================================================================
-  // WEBXR VR LASER POINTER CONTROLLERS & 3D INTERACTIVE CABIN RAYCASTER
+  // WEBXR META QUEST TOUCH CONTROLLERS, 3D EVA GLOVES, HAPTICS & WRIST HOLO-HUD
   // ===========================================================================
+  pulseXRHaptics(intensity = 0.65, durationMs = 45) {
+    if (!this.xrSession || !this.xrSession.inputSources) return;
+    for (const source of this.xrSession.inputSources) {
+      if (source.gamepad && source.gamepad.hapticActuators && source.gamepad.hapticActuators.length > 0) {
+        try {
+          source.gamepad.hapticActuators[0].pulse(intensity, durationMs);
+        } catch (_) {}
+      }
+    }
+  }
+
+  updateVRWristCanvas(promptText = '') {
+    if (!this.vrWristCanvas) {
+      this.vrWristCanvas = document.createElement('canvas');
+      this.vrWristCanvas.width = 512;
+      this.vrWristCanvas.height = 256;
+      this.vrWristTexture = new THREE.CanvasTexture(this.vrWristCanvas);
+    }
+    const ctx = this.vrWristCanvas.getContext('2d');
+    const ws = this.walkState;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+
+    ctx.fillStyle = '#040b18';
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(4, 4, 504, 248);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText(
+      isTr
+        ? `🥽 NASA EVA BİLEK BİLGİSAYARI | NUMUNE: ${ws.collectedSamples}/${ws.totalSamples}`
+        : `🥽 NASA EVA WRIST COMPUTER | SAMPLES: ${ws.collectedSamples}/${ws.totalSamples}`,
+      18,
+      36
+    );
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 18px monospace';
+    const locLabel = ws.isDrivingRover
+      ? (isTr ? 'KONUM: 🚙 LRV AY ARACI SÜRÜŞÜ' : 'STATE: 🚙 DRIVING LRV ROVER')
+      : ws.isInsideCabin
+        ? (isTr ? 'KONUM: 🚀 KOKPİT İÇİ' : 'STATE: 🚀 INSIDE COCKPIT')
+        : ws.isOnLadder
+          ? (isTr ? 'KONUM: 🪜 EVA MERDİVENİ' : 'STATE: 🪜 ON EVA LADDER')
+          : (isTr ? 'KONUM: 🧑🏼‍🚀 YÜZEY YÜRÜYÜŞÜ' : 'STATE: 🧑🏼‍🚀 SURFACE WALK');
+    ctx.fillText(locLabel, 18, 72);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(
+      isTr
+        ? 'Sol Kol / Kolları Sallama: Yürü | Sağ Kol: Dön'
+        : 'Left Stick / Arm Swing: Walk | Right Stick: Turn',
+      18,
+      106
+    );
+    ctx.fillText(
+      isTr
+        ? 'Tetik/Dokun: Etkileşim/Yürü | A: Sıçra | B: Kapak/LRV | X: UI'
+        : 'Trigger/Touch: Interact/Walk | A: Jump | B: Hatch/LRV | X: UI',
+      18,
+      134
+    );
+
+    // Highlight active target prompt on the wrist computer
+    ctx.fillStyle = promptText ? 'rgba(16, 185, 129, 0.25)' : 'rgba(15, 23, 42, 0.9)';
+    ctx.fillRect(14, 152, 484, 86);
+    ctx.strokeStyle = promptText ? '#10b981' : '#334155';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(14, 152, 484, 86);
+
+    ctx.fillStyle = promptText ? '#a7f3d0' : '#94a3b8';
+    ctx.font = 'bold 17px monospace';
+    const cleanPrompt = promptText
+      ? promptText.slice(0, 44)
+      : (ws.lastActionMsg || (isTr ? 'Hedefe Lazer Tutun veya Elinizle Dokunun' : 'Aim Laser or Touch Any 3D Control'));
+    ctx.fillText(cleanPrompt, 26, 192);
+    if (promptText && promptText.length > 44) {
+      ctx.fillText(promptText.slice(44, 88), 26, 220);
+    }
+
+    if (this.vrWristTexture) this.vrWristTexture.needsUpdate = true;
+  }
+
   setupXRControllers() {
     if (!this.renderer || !this.renderer.xr || this.xrControllersSetup) return;
     this.xrControllersSetup = true;
     this.xrControllers = [];
+    this.xrLaserLines = [];
 
     const laserGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -4.5)
+      new THREE.Vector3(0, 0, -6.5)
     ]);
-    const laserMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.85 });
+
+    const gloveMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.48, metalness: 0.22 });
+    const cuffBlue = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.25, metalness: 0.85 });
+    const cuffRed = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.25, metalness: 0.85 });
 
     for (let i = 0; i < 2; i++) {
       const controller = this.renderer.xr.getController(i);
+      const laserMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.88 });
       const laserLine = new THREE.Line(laserGeo, laserMat);
       controller.add(laserLine);
+      this.xrLaserLines.push(laserLine);
 
-      // 3D VR Hand / Controller Grip Mesh
-      const gripMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.055, 0.055, 0.16),
-        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.25 })
+      // Sculpted 3D NASA EVA Astronaut Glove on each VR Controller!
+      const handGroup = new THREE.Group();
+      const palm = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.042, 0.115), gloveMat);
+      palm.position.set(0, 0, 0.02);
+      const wristRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.052, 0.011, 10, 20),
+        i === 0 ? cuffBlue : cuffRed
       );
-      controller.add(gripMesh);
+      wristRing.position.set(0, 0, 0.085);
+      handGroup.add(palm, wristRing);
 
+      for (let f = 0; f < 4; f++) {
+        const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.012, 0.065, 8), gloveMat);
+        finger.rotation.x = Math.PI / 2;
+        finger.position.set(-0.027 + f * 0.018, 0, -0.055);
+        handGroup.add(finger);
+      }
+
+      // Attach 3D Holographic EVA Wrist Computer Screen to Controller 0 (Left Hand)
+      if (i === 0) {
+        this.updateVRWristCanvas('');
+        const wristHudMat = new THREE.MeshBasicMaterial({
+          map: this.vrWristTexture,
+          side: THREE.DoubleSide
+        });
+        this.vrWristMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.12), wristHudMat);
+        this.vrWristMesh.position.set(0, 0.065, 0.04);
+        this.vrWristMesh.rotation.x = -Math.PI / 3;
+        handGroup.add(this.vrWristMesh);
+      }
+
+      controller.add(handGroup);
+
+      // Trigger ('selectstart'): Interact with 3D object OR walk/teleport to surface point!
       controller.addEventListener('selectstart', () => {
         if (this.cameraMode === 'walk') {
-          this.triggerCabinInteraction(null, controller);
+          this.handleXRControllerTrigger(controller);
+        }
+      });
+
+      // Grip ('squeezestart'): Open Hatch / Enter-Exit Cabin / Mount-Dismount Rover!
+      controller.addEventListener('squeezestart', () => {
+        if (this.cameraMode === 'walk') {
+          this.pulseXRHaptics(0.6, 40);
+          if (this.walkState.isDrivingRover) {
+            this.toggleRoverDrive();
+          } else {
+            this.toggleCabinInterior();
+          }
         }
       });
 
       this.cameraRig.add(controller);
       this.xrControllers.push(controller);
+    }
+  }
+
+  handleXRControllerTrigger(controller) {
+    // 1. Check if pointing at an interactive 3D button/switch/hatch/sample/rover/ALSEP
+    const hitObj = this.getHoveredInteractive(null, controller, 16.0);
+    if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
+      this.pulseXRHaptics(0.75, 50);
+      hitObj.userData.interactive.onClick();
+      return;
+    }
+
+    // 2. If inside cabin and hatch isn't open yet, pressing trigger near rear opens the hatch!
+    if (this.walkState.isInsideCabin && !this.cabinState.hatchOpen && this.simTime >= 5.5) {
+      this.pulseXRHaptics(0.75, 50);
+      this.triggerOpenHatch(true);
+      return;
+    }
+
+    // 3. If outside on the planetary surface, raycast against terrain for Point-and-Walk / Teleport!
+    if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && this.terrain) {
+      const tempMatrix = new THREE.Matrix4();
+      tempMatrix.identity().extractRotation(controller.matrixWorld);
+      this.interactRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+      this.interactRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+      const groundHits = this.interactRaycaster.intersectObject(this.terrain, false);
+      if (groundHits && groundHits.length > 0 && groundHits[0].distance <= 28.0) {
+        const pt = groundHits[0].point;
+        const distFromCenter = Math.hypot(pt.x, pt.z);
+        if (distFromCenter > 4.5 && distFromCenter < 115) {
+          this.pulseXRHaptics(0.5, 35);
+          this.walkState.x = pt.x;
+          this.walkState.z = pt.z;
+          this.walkState.y = pt.y;
+          this.spawnFootprint(pt.x, pt.z, this.walkState.smoothYaw, true);
+          this.spawnFootprint(pt.x, pt.z, this.walkState.smoothYaw, false);
+          this.spawnBootDust(pt.x, pt.z, 8);
+        }
+      }
     }
   }
 
@@ -2531,7 +3042,7 @@ class MissionSimulationTheater {
       this.scene.remove(this.walkableInteriorGroup);
     }
     this.walkableInteriorGroup = new THREE.Group();
-    this.interactables = [];
+    this.interactables = this.surfaceInteractables ? [...this.surfaceInteractables] : [];
 
     // Live Interactive Cabin State
     this.cabinState = {
@@ -3420,8 +3931,8 @@ class MissionSimulationTheater {
     this.scene.add(this.walkableInteriorGroup);
   }
 
-  // Raycast against interactive 3D cabin buttons/switches from cursor or center visor reticle
-  getHoveredInteractive(ndcVec = null, xrController = null) {
+  // Raycast against interactive 3D cabin buttons, switches, hatch, samples, LRV & ALSEP from cursor, reticle, or VR controllers
+  getHoveredInteractive(ndcVec = null, xrController = null, maxDist = 7.5) {
     if (!this.interactRaycaster || !this.interactables || this.interactables.length === 0) return null;
 
     if (xrController) {
@@ -3429,25 +3940,98 @@ class MissionSimulationTheater {
       tempMatrix.identity().extractRotation(xrController.matrixWorld);
       this.interactRaycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
       this.interactRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-    } else {
-      const coords = ndcVec || this.mouseNDC || new THREE.Vector2(0, 0);
-      this.interactRaycaster.setFromCamera(coords, this.camera);
+      const hits = this.interactRaycaster.intersectObjects(this.interactables, false);
+      if (hits && hits.length > 0 && hits[0].distance <= maxDist) {
+        return hits[0].object;
+      }
+      return null;
     }
 
+    // If inside WebXR VR session without a specific controller passed, check both VR controllers first!
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers) {
+      for (let i = 0; i < this.xrControllers.length; i++) {
+        const ctrl = this.xrControllers[i];
+        if (!ctrl) continue;
+        const tempMatrix = new THREE.Matrix4();
+        tempMatrix.identity().extractRotation(ctrl.matrixWorld);
+        this.interactRaycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+        this.interactRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        const vrHits = this.interactRaycaster.intersectObjects(this.interactables, false);
+        if (vrHits && vrHits.length > 0 && vrHits[0].distance <= 14.0) {
+          return vrHits[0].object;
+        }
+      }
+    }
+
+    const coords = ndcVec || this.mouseNDC || new THREE.Vector2(0, 0);
+    this.interactRaycaster.setFromCamera(coords, this.camera);
+
     const hits = this.interactRaycaster.intersectObjects(this.interactables, false);
-    if (hits && hits.length > 0 && hits[0].distance <= 5.5) {
+    if (hits && hits.length > 0 && hits[0].distance <= maxDist) {
       return hits[0].object;
     }
 
     // Fallback to center visor reticle (0, 0) if cursor isn't directly over a button
-    if (!xrController && ndcVec) {
+    if (ndcVec) {
       this.interactRaycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
       const centerHits = this.interactRaycaster.intersectObjects(this.interactables, false);
-      if (centerHits && centerHits.length > 0 && centerHits[0].distance <= 5.5) {
+      if (centerHits && centerHits.length > 0 && centerHits[0].distance <= maxDist) {
         return centerHits[0].object;
       }
     }
     return null;
+  }
+
+  checkVRHandProximityTouch(dt) {
+    if (this.vrTouchCooldown > 0) {
+      this.vrTouchCooldown = Math.max(0, this.vrTouchCooldown - dt);
+    }
+    if (!this.renderer || !this.renderer.xr || !this.renderer.xr.isPresenting || !this.xrControllers) return;
+
+    const handWorldPos = new THREE.Vector3();
+    const objWorldPos = new THREE.Vector3();
+
+    // 1. Check if either 3D VR Hand physically touches any 3D button/switch/hatch/sample (within 0.24m)
+    if (this.vrTouchCooldown <= 0 && this.interactables && this.interactables.length > 0) {
+      for (let c = 0; c < this.xrControllers.length; c++) {
+        const ctrl = this.xrControllers[c];
+        if (!ctrl) continue;
+        ctrl.getWorldPosition(handWorldPos);
+
+        for (let j = 0; j < this.interactables.length; j++) {
+          const obj = this.interactables[j];
+          if (!obj || !obj.visible || !obj.userData || !obj.userData.interactive) continue;
+          obj.getWorldPosition(objWorldPos);
+          if (handWorldPos.distanceTo(objWorldPos) < 0.24) {
+            this.vrTouchCooldown = 0.55;
+            this.pulseXRHaptics(0.85, 55);
+            obj.userData.interactive.onClick();
+            return;
+          }
+        }
+      }
+    }
+
+    // 2. Update VR Ground Walk/Teleport Reticle Ring when outside on the planetary surface
+    if (this.vrTeleportRing) {
+      if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && this.terrain && this.xrControllers[1]) {
+        const rightCtrl = this.xrControllers[1];
+        const tempMatrix = new THREE.Matrix4();
+        tempMatrix.identity().extractRotation(rightCtrl.matrixWorld);
+        this.interactRaycaster.ray.origin.setFromMatrixPosition(rightCtrl.matrixWorld);
+        this.interactRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        const groundHits = this.interactRaycaster.intersectObject(this.terrain, false);
+        if (groundHits && groundHits.length > 0 && groundHits[0].distance <= 28.0) {
+          const pt = groundHits[0].point;
+          this.vrTeleportRing.position.set(pt.x, pt.y + 0.04, pt.z);
+          this.vrTeleportRing.visible = true;
+        } else {
+          this.vrTeleportRing.visible = false;
+        }
+      } else {
+        this.vrTeleportRing.visible = false;
+      }
+    }
   }
 
   updateInteractiveReticle() {
@@ -3457,22 +4041,34 @@ class MissionSimulationTheater {
     const promptEl = document.getElementById('walk-interact-prompt');
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
 
+    let promptStr = '';
     if (hitObj && hitObj.userData && hitObj.userData.interactive) {
+      promptStr = isTr
+        ? hitObj.userData.interactive.label_tr
+        : hitObj.userData.interactive.label_en;
       if (dotEl) dotEl.classList.add('active-target');
       if (promptEl) {
         promptEl.classList.remove('hidden');
-        promptEl.innerText = isTr
-          ? hitObj.userData.interactive.label_tr
-          : hitObj.userData.interactive.label_en;
+        promptEl.innerText = promptStr;
+      }
+      if (this.xrLaserLines) {
+        this.xrLaserLines.forEach((l) => l.material.color.setHex(0x10b981));
       }
     } else {
       if (dotEl) dotEl.classList.remove('active-target');
       if (promptEl) promptEl.classList.add('hidden');
+      if (this.xrLaserLines) {
+        this.xrLaserLines.forEach((l) => l.material.color.setHex(0x00f0ff));
+      }
+    }
+
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
+      this.updateVRWristCanvas(promptStr);
     }
   }
 
   triggerCabinInteraction(ndcVec = null, xrController = null) {
-    const hitObj = this.getHoveredInteractive(ndcVec, xrController);
+    const hitObj = this.getHoveredInteractive(ndcVec, xrController, 9.5);
     if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
       hitObj.userData.interactive.onClick();
     }
@@ -3817,12 +4413,12 @@ class MissionSimulationTheater {
   }
 
   // ===========================================================================
-  // REALISTIC ASTRONAUT WALKING, LADDER CLIMBING, CABIN INTERIOR & YXZ CAMERA
+  // REALISTIC ASTRONAUT WALKING, META QUEST CONTROLLERS, ARM-SWING & ROVER DRIVE
   // ===========================================================================
   updateAstronautWalk(dt) {
     const ws = this.walkState;
     ws.breathPhase += dt * 1.65;
-    const speed = ws.isInsideCabin ? 2.6 : 4.8; // Careful indoor cabin movement vs. EVA surface stride
+    const speed = ws.isDrivingRover ? 10.5 : (ws.isInsideCabin ? 2.6 : 4.8);
     let moveForward = 0;
     let moveRight = 0;
 
@@ -3831,17 +4427,119 @@ class MissionSimulationTheater {
     if (ws.keys.d) moveRight += 1;
     if (ws.keys.a) moveRight -= 1;
 
-    // Also poll WebXR VR Controller Gamepad Thumbsticks if inside an XR headset!
+    // Poll Meta Quest / WebXR VR Controller Gamepad Thumbsticks, Buttons & Arm-Swing Locomotion!
+    let gripHeld = false;
     if (this.xrSession && this.xrSession.inputSources) {
+      let idx = 0;
       for (const source of this.xrSession.inputSources) {
-        if (source.gamepad && source.gamepad.axes && source.gamepad.axes.length >= 4) {
-          const axX = source.gamepad.axes[2] || 0;
-          const axY = source.gamepad.axes[3] || 0;
-          if (Math.abs(axY) > 0.15) moveForward -= axY;
-          if (Math.abs(axX) > 0.15) moveRight += axX;
+        const gp = source.gamepad;
+        const hand = source.handedness || (idx === 0 ? 'left' : 'right');
+        const prevBtns = this.xrButtonPrev[hand] || [];
+
+        if (gp) {
+          // 1. Thumbstick Axes (supports both xr-standard axes[2..3] and fallback axes[0..1])
+          const axX = (gp.axes && gp.axes.length >= 4 && (Math.abs(gp.axes[2]) > 0.05 || Math.abs(gp.axes[3]) > 0.05))
+            ? gp.axes[2]
+            : (gp.axes && gp.axes.length >= 2 ? gp.axes[0] : 0);
+          const axY = (gp.axes && gp.axes.length >= 4 && (Math.abs(gp.axes[2]) > 0.05 || Math.abs(gp.axes[3]) > 0.05))
+            ? gp.axes[3]
+            : (gp.axes && gp.axes.length >= 2 ? gp.axes[1] : 0);
+
+          if (hand === 'left') {
+            if (Math.abs(axY) > 0.14) moveForward -= axY;
+            if (Math.abs(axX) > 0.14) moveRight += axX;
+          } else {
+            // Right Controller Stick: X rotates yaw smoothly; Y also walks forward/back!
+            if (Math.abs(axX) > 0.18) {
+              ws.yaw -= axX * 2.15 * dt;
+            }
+            if (Math.abs(axY) > 0.18) {
+              moveForward -= axY;
+            }
+          }
+
+          // 2. Meta Quest Controller Buttons (Edge-Triggered)
+          // buttons[0]: Trigger | buttons[1]: Grip/Squeeze | buttons[3]: Stick Press | buttons[4]: X/A | buttons[5]: Y/B
+          const btns = gp.buttons || [];
+          const isPressed = (bIdx) => btns[bIdx] && (btns[bIdx].pressed || btns[bIdx].value > 0.65);
+          const justPressed = (bIdx) => isPressed(bIdx) && !prevBtns[bIdx];
+
+          if (isPressed(1)) {
+            gripHeld = true;
+          }
+
+          // Button 3 (Thumbstick Click): Toggle EVA Flashlight
+          if (justPressed(3)) {
+            this.pulseXRHaptics(0.5, 35);
+            this.toggleFlashlight();
+          }
+
+          // Button 4 (A on Right / X on Left):
+          if (justPressed(4)) {
+            this.pulseXRHaptics(0.65, 45);
+            if (hand === 'right') {
+              // A Button: Low-Gravity Astronaut Jump (or interact if inside cabin)
+              if (ws.isInsideCabin) {
+                const ctrl = this.xrControllers && this.xrControllers[1] ? this.xrControllers[1] : null;
+                this.handleXRControllerTrigger(ctrl);
+              } else {
+                this.triggerAstronautJump();
+              }
+            } else {
+              // X Button: Toggle Clean VR Game UI / Normal UI!
+              this.toggleCleanVRGameMode();
+            }
+          }
+
+          // Button 5 (B on Right / Y on Left):
+          if (justPressed(5)) {
+            this.pulseXRHaptics(0.65, 45);
+            if (hand === 'right') {
+              // B Button: Open Hatch / Enter-Exit Cabin / Mount-Dismount Rover
+              if (ws.isDrivingRover) {
+                this.toggleRoverDrive();
+              } else {
+                this.toggleCabinInterior();
+              }
+            } else {
+              // Y Button: Toggle 1st-Person / 3rd-Person Perspective
+              this.toggleWalkPerspective();
+            }
+          }
+
+          this.xrButtonPrev[hand] = btns.map((_, bIdx) => isPressed(bIdx));
         }
+        idx++;
       }
     }
+
+    // 3. Physical Arm-Swing Locomotion in VR ("kollarla hareket edilebilsin"):
+    // Swinging the left & right Meta Quest controllers up and down propels the astronaut forward!
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers) {
+      let totalArmSwingVel = 0;
+      for (let i = 0; i < 2; i++) {
+        const ctrl = this.xrControllers[i];
+        if (!ctrl) continue;
+        if (!this.xrControllerPosInit[i]) {
+          this.xrControllerPrevPos[i].copy(ctrl.position);
+          this.xrControllerPosInit[i] = true;
+        } else {
+          const dy = Math.abs(ctrl.position.y - this.xrControllerPrevPos[i].y);
+          const dz = Math.abs(ctrl.position.z - this.xrControllerPrevPos[i].z);
+          this.xrControllerPrevPos[i].copy(ctrl.position);
+          totalArmSwingVel += (dy + dz * 0.6) / Math.max(0.008, dt);
+        }
+      }
+      // If user is swinging arms (> 0.55 m/s, or > 0.25 m/s while holding Grip), walk forward smoothly!
+      const swingThreshold = gripHeld ? 0.22 : 0.62;
+      if (totalArmSwingVel > swingThreshold) {
+        const swingBoost = Math.min(1.25, (totalArmSwingVel - swingThreshold) * 0.85);
+        moveForward += swingBoost;
+      }
+    }
+
+    // Check physical 3D VR hand proximity touch against all cabin buttons, hatch wheel & rock samples
+    this.checkVRHandProximityTouch(dt);
 
     // Smoothly damp mouse-look rotation without any angle wrapping or gimbal lock
     if (ws.smoothYaw === undefined) ws.smoothYaw = ws.yaw;
@@ -3852,10 +4550,20 @@ class MissionSimulationTheater {
     // Guarantee pitch stays within safe human neck range (±58 deg)
     ws.smoothPitch = Math.max(-1.01, Math.min(1.01, ws.smoothPitch));
 
-    const forwardX = -Math.sin(ws.smoothYaw);
-    const forwardZ = -Math.cos(ws.smoothYaw);
-    const rightX = Math.cos(ws.smoothYaw);
-    const rightZ = -Math.sin(ws.smoothYaw);
+    // In WebXR VR Headset, align movement forward/right vectors with actual VR Headset Gaze Direction!
+    let effectiveMoveYaw = ws.smoothYaw;
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
+      const xrCam = this.renderer.xr.getCamera(this.camera);
+      if (xrCam) {
+        const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(xrCam.quaternion);
+        effectiveMoveYaw = Math.atan2(-lookDir.x, -lookDir.z);
+      }
+    }
+
+    const forwardX = -Math.sin(effectiveMoveYaw);
+    const forwardZ = -Math.cos(effectiveMoveYaw);
+    const rightX = Math.cos(effectiveMoveYaw);
+    const rightZ = -Math.sin(effectiveMoveYaw);
 
     const isMoving = (Math.abs(moveForward) > 0.01 || Math.abs(moveRight) > 0.01);
 
@@ -3928,6 +4636,7 @@ class MissionSimulationTheater {
             cabinBtn.classList.remove('active');
             cabinBtn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
           }
+          this.updateVRGameMiniPill(isTr ? 'Merdivene Çıkıldı — Yüzeye İnin!' : 'Stepped Onto Ladder — Climb Down!');
         } else {
           // Constrain smoothly within cabin walls & around center pedestal (radius 0.72m at z = -0.42)
           const maxCabinZ = hatchReadyToStepOut ? 2.26 : 1.78;
@@ -3936,6 +4645,23 @@ class MissionSimulationTheater {
           if (Math.hypot(clampedX, clampedZ + 0.42) > 0.72) {
             ws.x = clampedX;
             ws.z = clampedZ;
+          }
+        }
+      } else if (ws.isDrivingRover) {
+        // Driving the LRV Moon Buggy across the planetary surface!
+        if (candidateDist > 5.8 && candidateDist < 125) {
+          ws.x = candidateX;
+          ws.z = candidateZ;
+          if (this.lrvPropGroup) {
+            const ry = this.getExactSurfaceHeight(ws.x, ws.z);
+            this.lrvPropGroup.position.set(ws.x, ry + 0.38, ws.z);
+            this.lrvPropGroup.rotation.y = Math.atan2(nx, nz);
+          }
+          if (this.lrvWheels) {
+            this.lrvWheels.forEach((w) => { w.rotation.x += speed * dt * 2.2; });
+          }
+          if (Math.random() < 0.55) {
+            this.spawnBootDust(ws.x - nx * 1.4, ws.z - nz * 1.4, 3);
           }
         }
       } else {
@@ -3956,8 +4682,12 @@ class MissionSimulationTheater {
               cabinBtn.classList.add('active');
               cabinBtn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
             }
+            this.updateVRGameMiniPill(isTr ? 'Kabin İçine Girildi' : 'Entered Spacecraft Cabin');
           }
         } else {
+          if (ws.isOnLadder) {
+            this.updateVRGameMiniPill(isTr ? 'Gezegen Yüzeyine İnildi — Numuneleri Toplayın!' : 'On Planetary Surface — Collect Samples!');
+          }
           ws.isOnLadder = false;
           // Standard surface movement outside central lander hull (radius 4.4m)
           if (candidateDist > 4.4 && candidateDist < 120) {
@@ -3972,18 +4702,18 @@ class MissionSimulationTheater {
       // Spawn ribbed lunar footprint & dust puff on every surface footfall (when on planetary regolith)
       const stepInterval = Math.PI * 0.72;
       const stepIndex = Math.floor(ws.stepPhase / stepInterval);
-      if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isInsideCabin && !ws.isOnLadder) {
+      if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isInsideCabin && !ws.isOnLadder && !ws.isDrivingRover) {
         ws.lastStepCount = stepIndex;
         const isLeftFoot = (stepIndex % 2 === 0);
         const strideBack = -0.10;
         const footX = ws.x + forwardX * strideBack;
         const footZ = ws.z + forwardZ * strideBack;
-        this.spawnFootprint(footX, footZ, ws.smoothYaw, isLeftFoot);
+        this.spawnFootprint(footX, footZ, effectiveMoveYaw, isLeftFoot);
         this.spawnBootDust(footX, footZ, 4);
       }
     }
 
-    // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Planetary Surface Gravity
+    // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Rover vs. Planetary Surface Gravity
     const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
     const gravity = body === 'moon' ? 3.2 : body === 'outer' ? 2.8 : body === 'mars' ? 5.5 : 9.8;
     const groundY = this.getExactSurfaceHeight(ws.x, ws.z);
@@ -3994,6 +4724,10 @@ class MissionSimulationTheater {
         ? (Math.sin(this.simTime * 46) * 0.011 + Math.cos(this.simTime * 31) * 0.008)
         : 0;
       ws.y = cabinFloorY + descentOffset + engineVib;
+      ws.vy = 0;
+      ws.isGrounded = true;
+    } else if (ws.isDrivingRover) {
+      ws.y = groundY + 0.38 + (isMoving ? Math.sin(this.simTime * 18) * 0.025 : 0);
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isOnLadder) {
@@ -4009,8 +4743,8 @@ class MissionSimulationTheater {
         ws.y = groundY;
         ws.vy = 0;
         ws.isGrounded = true;
-        this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, true);
-        this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, false);
+        this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, true);
+        this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, false);
         this.spawnBootDust(ws.x, ws.z, 10);
       }
     } else {

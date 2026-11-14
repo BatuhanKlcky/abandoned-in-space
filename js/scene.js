@@ -112,35 +112,60 @@ class SpaceSceneManager {
   }
 
   initPlanets() {
-    const sphereGeo = new THREE.SphereGeometry(this.sphereRadius, 96, 64);
+    const sphereGeo = new THREE.SphereGeometry(this.sphereRadius, 112, 80);
     const textureLoader = new THREE.TextureLoader();
+    const maxAniso = this.renderer && this.renderer.capabilities ? this.renderer.capabilities.getMaxAnisotropy() : 8;
 
-    // 1. Moon Materials with Real NASA Photographic Texture
-    const moonTex = textureLoader.load('assets/moon.jpg');
-    const moonBump = textureLoader.load('assets/moon_bump.jpg');
+    // 1. Moon Materials with Real NASA Photographic Texture + High-Detail Procedural Fallback
+    const procMoonTex = window.CelestialTextures ? window.CelestialTextures.generateMoonTexture() : null;
+    const procMoonBump = window.CelestialTextures ? window.CelestialTextures.generateMoonBump() : null;
+    if (procMoonTex) procMoonTex.anisotropy = maxAniso;
 
     this.moonMaterial = new THREE.MeshStandardMaterial({
-      map: moonTex,
-      bumpMap: moonBump,
-      bumpScale: 0.85,
-      roughness: 0.90,
+      map: procMoonTex,
+      bumpMap: procMoonBump,
+      bumpScale: 1.05,
+      roughness: 0.88,
       metalness: 0.05,
+    });
+
+    textureLoader.load('assets/moon.jpg', (tex) => {
+      tex.anisotropy = maxAniso;
+      this.moonMaterial.map = tex;
+      this.moonMaterial.needsUpdate = true;
+    });
+    textureLoader.load('assets/moon_bump.jpg', (bump) => {
+      bump.anisotropy = maxAniso;
+      this.moonMaterial.bumpMap = bump;
+      this.moonMaterial.needsUpdate = true;
     });
 
     this.moonMesh = new THREE.Mesh(sphereGeo, this.moonMaterial);
     this.moonMesh.rotation.x = THREE.MathUtils.degToRad(1.5);
     this.planetGroup.add(this.moonMesh);
 
-    // 2. Mars Materials with Real NASA Photographic Texture
-    const marsTex = textureLoader.load('assets/mars.jpg');
-    const marsBump = textureLoader.load('assets/mars_bump.jpg');
+    // 2. Mars Materials with Real NASA Photographic Texture + High-Detail Procedural Fallback
+    const procMarsTex = window.CelestialTextures ? window.CelestialTextures.generateMarsTexture() : null;
+    const procMarsBump = window.CelestialTextures ? window.CelestialTextures.generateMarsBump() : null;
+    if (procMarsTex) procMarsTex.anisotropy = maxAniso;
 
     this.marsMaterial = new THREE.MeshStandardMaterial({
-      map: marsTex,
-      bumpMap: marsBump,
-      bumpScale: 1.1,
+      map: procMarsTex,
+      bumpMap: procMarsBump,
+      bumpScale: 1.25,
       roughness: 0.82,
       metalness: 0.08,
+    });
+
+    textureLoader.load('assets/mars.jpg', (tex) => {
+      tex.anisotropy = maxAniso;
+      this.marsMaterial.map = tex;
+      this.marsMaterial.needsUpdate = true;
+    });
+    textureLoader.load('assets/mars_bump.jpg', (bump) => {
+      bump.anisotropy = maxAniso;
+      this.marsMaterial.bumpMap = bump;
+      this.marsMaterial.needsUpdate = true;
     });
 
     this.marsMesh = new THREE.Mesh(sphereGeo, this.marsMaterial);
@@ -148,14 +173,16 @@ class SpaceSceneManager {
     this.marsMesh.visible = false;
     this.planetGroup.add(this.marsMesh);
 
-    // 3. Venus Materials (Magellan Radar + Sulfuric Cloud Bands)
-    const venusTex = window.CelestialTextures ? window.CelestialTextures.generateVenusTexture() : moonTex;
-    const venusBump = window.CelestialTextures ? window.CelestialTextures.generateVenusBump() : moonBump;
+    // 3. Venus Materials (Magellan SAR Radar + Sulfuric Cloud Bands)
+    const venusTex = window.CelestialTextures ? window.CelestialTextures.generateVenusTexture() : procMoonTex;
+    const venusBump = window.CelestialTextures ? window.CelestialTextures.generateVenusBump() : procMoonBump;
+    if (venusTex) venusTex.anisotropy = maxAniso;
+    if (venusBump) venusBump.anisotropy = maxAniso;
 
     this.venusMaterial = new THREE.MeshStandardMaterial({
       map: venusTex,
       bumpMap: venusBump,
-      bumpScale: 0.95,
+      bumpScale: 1.15,
       roughness: 0.72,
       metalness: 0.12,
     });
@@ -165,13 +192,17 @@ class SpaceSceneManager {
     this.venusMesh.visible = false;
     this.planetGroup.add(this.venusMesh);
 
-    // 4. Titan & Outer System Materials (Cassini Radar + Hydrocarbon Seas + Subtle Distant Ring Ring-Halo)
-    const titanTex = window.CelestialTextures ? window.CelestialTextures.generateTitanTexture() : marsTex;
+    // 4. Titan & Outer System Materials (Cassini Radar + Hydrocarbon Seas + Subtle Distant Ring-Halo)
+    const titanTex = window.CelestialTextures ? window.CelestialTextures.generateTitanTexture() : procMarsTex;
+    const titanBump = window.CelestialTextures ? window.CelestialTextures.generateTitanBump() : venusBump;
+    if (titanTex) titanTex.anisotropy = maxAniso;
+    if (titanBump) titanBump.anisotropy = maxAniso;
+
     this.outerMaterial = new THREE.MeshStandardMaterial({
       map: titanTex,
-      bumpMap: venusBump,
-      bumpScale: 0.65,
-      roughness: 0.78,
+      bumpMap: titanBump,
+      bumpScale: 0.95,
+      roughness: 0.76,
       metalness: 0.1,
     });
 

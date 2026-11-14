@@ -2831,3 +2831,59 @@ body {
   max-height: 290px;
   overflow-y: auto;
 }
+
+/* ==========================================================================
+   V4.9 IMMERSIVE VR GAME MODE (CLEAN UI WITH SINGLE-KEY RESTORE)
+   Hides surrounding buttons/bars when in VR/Walk Game Mode; pressing H/TAB/ESC
+   or clicking the compact corner pill restores all normal UI controls.
+   ========================================================================== */
+
+.vr-game-mini-hud {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 40;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(4, 10, 22, 0.78);
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 12px rgba(16, 185, 129, 0.25);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: var(--trans-smooth);
+}
+
+.vr-game-mini-hud:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  color: #fff;
+}
+
+.vr-game-mini-hud .mini-key-badge {
+  background: rgba(0, 240, 255, 0.18);
+  border: 1px solid rgba(0, 240, 255, 0.55);
+  color: #00f0ff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.sim-modal-overlay.vr-game-clean-ui .sim-top-bar,
+.sim-modal-overlay.vr-game-clean-ui .sim-hud-overlay,
+.sim-modal-overlay.vr-game-clean-ui .walk-visor-banner,
+.sim-modal-overlay.vr-game-clean-ui .walk-dpad-container {
+  display: none !important;
+}
+
+.sim-modal-overlay.vr-game-clean-ui .vr-game-mini-hud {
+  display: inline-flex;
+}
+

@@ -689,6 +689,7 @@ class MissionSimulationTheater {
       ws.smoothYaw = ws.yaw;
       this.updateVRGameMiniPill(isTr ? 'LRV Ay Aracı Sürüşü Aktif!' : 'LRV Rover Driving Active!');
     } else {
+      if (window.SpaceAudio) window.SpaceAudio.setRoverMotorHum(false);
       const rYaw = this.lrvPropGroup.rotation.y;
       // Step off to the left side of the LRV driver's seat based on rover orientation
       ws.x = this.lrvPropGroup.position.x - Math.cos(rYaw) * 1.55;
@@ -1218,6 +1219,9 @@ class MissionSimulationTheater {
     if (window.speechSynthesis) {
       try { window.speechSynthesis.cancel(); } catch (_) {}
     }
+    if (window.SpaceAudio) {
+      window.SpaceAudio.setRoverMotorHum(false);
+    }
     this.walkState.keys = { w: false, a: false, s: false, d: false };
     this.walkState.isLooking = false;
     this.walkState.isDrivingRover = false;
@@ -1602,14 +1606,20 @@ class MissionSimulationTheater {
       upperArm.castShadow = true;
       shoulderGroup.add(upperArm);
 
-      // Commander Red Armband & Mission Patch
+      // Commander Red Armband & YİĞİDO ORBİT Team Mission Patch on Left Shoulder
       const armBand = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.081, 0.042, 16), redCommander);
       armBand.position.y = -0.12;
       shoulderGroup.add(armBand);
 
+      if (!this.teamLogoTexture) {
+        this.teamLogoTexture = new THREE.TextureLoader().load('assets/yigido-orbit-logo.jpg');
+      }
+      const patchMat = isLeft
+        ? new THREE.MeshStandardMaterial({ map: this.teamLogoTexture, roughness: 0.55, metalness: 0.12 })
+        : redCommander;
       const patch = new THREE.Mesh(
-        new THREE.BoxGeometry(0.015, 0.055, 0.075),
-        isLeft ? blueAnodized : redCommander
+        new THREE.BoxGeometry(0.015, 0.058, 0.078),
+        patchMat
       );
       patch.position.set(sign * 0.078, -0.06, 0);
       shoulderGroup.add(patch);
@@ -1877,6 +1887,23 @@ class MissionSimulationTheater {
         this.lrvWheels.push(tire);
         lrv.add(wGroup);
       }
+    }
+
+    // Dual Forward LRV Headlights & Dynamic Terrain SpotLight Beams
+    for (let hSide = -1; hSide <= 1; hSide += 2) {
+      const lampCase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 14), alumMat);
+      lampCase.rotation.x = Math.PI / 2;
+      lampCase.position.set(hSide * 0.52, 0.28, 1.48);
+      const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.075, 14), new THREE.MeshBasicMaterial({ color: 0xfffbeb }));
+      lampLens.position.set(hSide * 0.52, 0.28, 1.542);
+      lrv.add(lampCase, lampLens);
+
+      const roverLight = new THREE.SpotLight(0xfff7ed, 3.2, 45, Math.PI / 4.5, 0.45, 1.2);
+      roverLight.position.set(hSide * 0.52, 0.28, 1.55);
+      const lightTarget = new THREE.Object3D();
+      lightTarget.position.set(hSide * 0.52, -0.4, 25);
+      lrv.add(roverLight, lightTarget);
+      roverLight.target = lightTarget;
     }
 
     this.scene.add(lrv);
@@ -2406,15 +2433,23 @@ class MissionSimulationTheater {
       }
       fabricGeo.computeVertexNormals();
 
+      if (!this.teamLogoTexture) {
+        this.teamLogoTexture = new THREE.TextureLoader().load('assets/yigido-orbit-logo.jpg');
+      }
       const flagMesh = new THREE.Mesh(
         fabricGeo,
-        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.8, side: THREE.DoubleSide })
+        new THREE.MeshStandardMaterial({
+          map: this.teamLogoTexture,
+          roughness: 0.65,
+          metalness: 0.12,
+          side: THREE.DoubleSide
+        })
       );
       flagMesh.position.set(0.67, 2.12, 0);
       flagMesh.castShadow = true;
       flagMesh.userData.interactive = {
-        label_tr: '🚩 [SOL TIK / E / VR TETİK] GÖREV BAYRAĞINI SELAMLA & TELSİZ KAYDINI DİNLE',
-        label_en: '🚩 [CLICK / E / VR TRIGGER] SALUTE MISSION FLAG & PLAY RADIO TRANSMISSION',
+        label_tr: '🚩 [SOL TIK / E / VR TETİK] YİĞİDO ORBİT GÖREV BAYRAĞINI SELAMLA & TELSİZİ DİNLE',
+        label_en: '🚩 [CLICK / E / VR TRIGGER] SALUTE YİĞİDO ORBİT MISSION FLAG & PLAY RADIO',
         onClick: () => {
           this.playSwitchClickSound(720);
           if (window.SpaceAudio && this.currentArtifact) {
@@ -2438,24 +2473,47 @@ class MissionSimulationTheater {
       alsepBox.castShadow = true;
       this.scene.add(alsepBox);
 
-      // 300m Earth-Ranging Green Laser Beam (toggled by clicking/touching ALSEP!)
-      const laserBeamGeo = new THREE.CylinderGeometry(0.08, 0.18, 280, 12);
-      const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.78 });
+      // 372m Earth-Ranging Green Laser Beam (532nm) aimed directly from ALSEP to Earth in the sky!
+      const pAlsep = new THREE.Vector3(-10.5, alsepY + 0.4, 8.5);
+      const pEarth = new THREE.Vector3(-180, 95, -310);
+      const beamDist = pAlsep.distanceTo(pEarth);
+      const beamDir = new THREE.Vector3().subVectors(pEarth, pAlsep).normalize();
+      const beamMid = new THREE.Vector3().addVectors(pAlsep, pEarth).multiplyScalar(0.5);
+
+      const laserBeamGeo = new THREE.CylinderGeometry(0.09, 0.42, beamDist, 16);
+      const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.88 });
       const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
-      alsepLaserBeam.position.set(-10.5, alsepY + 140.4, 8.5);
+      alsepLaserBeam.position.copy(beamMid);
+      alsepLaserBeam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamDir);
       alsepLaserBeam.visible = false;
       this.scene.add(alsepLaserBeam);
 
+      // Green target retroreflector pulse ring at Earth
+      const earthTargetRing = new THREE.Mesh(
+        new THREE.RingGeometry(2.5, 4.6, 28),
+        new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+      );
+      earthTargetRing.position.set(-180, 95, -310);
+      earthTargetRing.lookAt(pAlsep);
+      earthTargetRing.visible = false;
+      this.scene.add(earthTargetRing);
+
       alsepBox.userData.interactive = {
-        label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP SİSMOMETRE & DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR)',
-        label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP EARTH LASER RETROREFLECTOR & SEISMOMETER',
+        label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR 532nm)',
+        label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP LUNAR LASER RETROREFLECTOR (532nm LRRR)',
         onClick: () => {
           alsepLaserBeam.visible = !alsepLaserBeam.visible;
-          this.playSwitchClickSound(alsepLaserBeam.visible ? 1040 : 540);
+          earthTargetRing.visible = alsepLaserBeam.visible;
+          this.playSwitchClickSound(alsepLaserBeam.visible ? 1120 : 540);
+          if (alsepLaserBeam.visible && window.SpaceAudio) {
+            window.SpaceAudio.playTelemetryPing(1480, 0.15);
+          }
           const isTr = window.app ? window.app.currentLang === 'tr' : true;
           this.updateVRGameMiniPill(
             alsepLaserBeam.visible
-              ? (isTr ? 'ALSEP Lazer Yansıtıcı (532nm) Ateşlendi!' : 'ALSEP 532nm Earth Laser Fired!')
+              ? (isTr
+                  ? '📡 ALSEP LRRR LAZERİ: 384,402 km (Işık Gidiş-Dönüş: 2.56s • Yılda +3.8cm)'
+                  : '📡 ALSEP LRRR LASER: 384,402 km (Light RTT: 2.56s • Drift: +3.8cm/yr)')
               : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
           );
         }
@@ -5405,6 +5463,7 @@ class MissionSimulationTheater {
           if (Math.random() < 0.55) {
             this.spawnBootDust(ws.x - nx * 1.4, ws.z - nz * 1.4, 3);
           }
+          if (window.SpaceAudio) window.SpaceAudio.setRoverMotorHum(true, 1.0);
         }
       } else {
         // 2. Check if astronaut is in the Exterior Boarding Ladder & Flat EVA Porch Corridor (|x| < 0.90, z between 2.65 and 6.95)
@@ -5475,6 +5534,8 @@ class MissionSimulationTheater {
           this.spawnBootDust(footX, footZ, 4);
         }
       }
+    } else if (ws.isDrivingRover && window.SpaceAudio) {
+      window.SpaceAudio.setRoverMotorHum(false);
     }
 
     // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Rover vs. Planetary Surface Gravity

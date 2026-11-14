@@ -447,6 +447,39 @@ class SpaceAudioEngine {
       }
     } catch (_) {}
   }
+
+  /**
+   * Electric Lunar Rover (LRV) Dual-Traction Motor Hum (dynamic pitch & gain)
+   */
+  setRoverMotorHum(active = false, speed = 1.0) {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      if (active) {
+        if (!this.roverOsc) {
+          this.roverOsc = this.ctx.createOscillator();
+          this.roverGain = this.ctx.createGain();
+          this.roverFilter = this.ctx.createBiquadFilter();
+          this.roverFilter.type = 'lowpass';
+          this.roverFilter.frequency.setValueAtTime(260, now);
+          this.roverOsc.type = 'sawtooth';
+          this.roverOsc.frequency.setValueAtTime(85, now);
+          this.roverGain.gain.setValueAtTime(0.001, now);
+          this.roverOsc.connect(this.roverFilter);
+          this.roverFilter.connect(this.roverGain);
+          this.roverGain.connect(this.ctx.destination);
+          this.roverOsc.start(now);
+        }
+        const targetPitch = 70 + Math.min(1.0, speed) * 85;
+        this.roverOsc.frequency.setTargetAtTime(targetPitch, now, 0.08);
+        this.roverGain.gain.setTargetAtTime(0.055, now, 0.1);
+      } else if (this.roverGain) {
+        this.roverGain.gain.setTargetAtTime(0.0001, now, 0.15);
+      }
+    } catch (_) {}
+  }
 }
 
 window.SpaceAudio = new SpaceAudioEngine();

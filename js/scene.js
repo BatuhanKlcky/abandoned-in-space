@@ -1148,6 +1148,18 @@ class SpaceSceneManager {
       model.add(bridle);
     }
 
+    model.traverse((obj) => {
+      if (obj.isMesh || obj.isLine) {
+        obj.frustumCulled = false;
+      }
+      if (obj.isMesh && obj.material) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((m) => {
+          m.side = THREE.DoubleSide;
+        });
+      }
+    });
+
     this.miniModelGroup.add(model);
     this.currentMiniModel = model;
 

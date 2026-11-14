@@ -98,7 +98,7 @@ class MissionSimulationTheater {
 
     this.scene = new THREE.Scene();
 
-    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.08, 2500);
+    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.04, 3000);
     this.cameraRig = new THREE.Group();
     this.cameraRig.add(this.camera);
 
@@ -387,10 +387,12 @@ class MissionSimulationTheater {
       if (this.simTime < 6.8) {
         this.simTime = 7.0;
       }
-      if (this.spacecraft && this.currentArtifact && this.currentArtifact.category === 'impact') {
+      if (this.spacecraft) {
         this.spacecraft.visible = true;
-        this.spacecraft.position.set(0, 2.2, 0);
-        this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
+        if (this.currentArtifact && this.currentArtifact.category === 'impact') {
+          this.spacecraft.position.set(-8.2, 2.3, -2.5);
+          this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
+        }
       }
       this.camera.rotation.order = 'YXZ';
       this.walkState.x = 0;
@@ -1937,14 +1939,15 @@ class MissionSimulationTheater {
       this.exhaustPlume.position.y = -5.0;
       this.spacecraft.add(this.exhaustPlume);
 
+      this.dummyAscentSolidGroup = new THREE.Group();
       const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.8, 2.4, 3.8), silverAlum);
       cabin.position.y = 2.6;
       cabin.castShadow = true;
-      this.spacecraft.add(cabin);
+      this.dummyAscentSolidGroup.add(cabin);
 
       const porch = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 1.6), silverAlum);
       porch.position.set(0, 1.4, 2.5);
-      this.spacecraft.add(porch);
+      this.dummyAscentSolidGroup.add(porch);
 
       const winMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
       const winL = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.1), winMat);
@@ -1953,7 +1956,8 @@ class MissionSimulationTheater {
       const winR = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.1), winMat);
       winR.position.set(1.0, 3.0, 1.95);
       winR.rotation.y = -0.2;
-      this.spacecraft.add(winL, winR);
+      this.dummyAscentSolidGroup.add(winL, winR);
+      this.spacecraft.add(this.dummyAscentSolidGroup);
 
       const dish = new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.4), silverAlum);
       dish.position.set(-2.2, 4.4, -1.8);
@@ -2013,6 +2017,22 @@ class MissionSimulationTheater {
 
     // Build 1:1 Climbable Boarding Ladder & Detailed Walk-In Spacecraft / Rocket / Satellite Interior Cabin
     this.buildWalkableLadderAndInterior(artifact);
+
+    // Disable frustum culling & backface culling across the entire 3D scene so no rocket/lander part ever disappears at any camera angle!
+    this.scene.traverse((obj) => {
+      if (obj.isMesh || obj.isLine || obj.isPoints) {
+        obj.frustumCulled = false;
+      }
+      if (obj.isMesh && obj.material) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((m) => {
+          m.side = THREE.DoubleSide;
+          if (m.transparent) {
+            m.depthWrite = false;
+          }
+        });
+      }
+    });
 
     this.camera.position.set(30, 32, 65);
     this.camera.lookAt(0, 16, 0);
@@ -2624,27 +2644,96 @@ class MissionSimulationTheater {
     }
 
     // =========================================================================
-    // 3. FORWARD FLIGHT DECK (-Z WALL): 3D DSKY KEYS, 3D SWITCHES, KNOBS, ACA JOYSTICK
+    // 3. FORWARD FLIGHT DECK (-Z WALL): SOLID EXTERIOR HULL + 3D FRAMED WINDOWS
     // =========================================================================
-    const frontLowerWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.15, 0.16), isogridWallMat);
-    frontLowerWall.position.set(0, 0.58, -2.18);
-    const frontTopWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.72, 0.16), isogridWallMat);
-    frontTopWall.position.set(0, 2.74, -2.18);
-    const frontCenterPillar = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.38, 0.18), charcoalRack);
-    frontCenterPillar.position.set(0, 1.80, -2.12);
-    cabinGroup.add(frontLowerWall, frontTopWall, frontCenterPillar);
+    const frontLowerWall = new THREE.Mesh(new THREE.BoxGeometry(4.48, 1.34, 0.18), isogridWallMat);
+    frontLowerWall.position.set(0, 0.67, -2.18);
+    const frontTopWall = new THREE.Mesh(new THREE.BoxGeometry(4.48, 0.84, 0.18), isogridWallMat);
+    frontTopWall.position.set(0, 2.68, -2.18);
+
+    // Solid exterior Isogrid aluminum center bulkhead skin + interior charcoal instrument rack
+    const frontCenterHullWall = new THREE.Mesh(new THREE.BoxGeometry(1.56, 1.12, 0.14), isogridWallMat);
+    frontCenterHullWall.position.set(0, 1.80, -2.21);
+    const frontCenterPillar = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.26, 0.12), charcoalRack);
+    frontCenterPillar.position.set(0, 1.80, -2.09);
+
+    // Solid left & right outer corner bulkhead walls so the cabin exterior is 100% enclosed at all angles!
+    const frontLeftOuterWall = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.12, 0.18), isogridWallMat);
+    frontLeftOuterWall.position.set(-1.88, 1.80, -2.18);
+    const frontRightOuterWall = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.12, 0.18), isogridWallMat);
+    frontRightOuterWall.position.set(1.88, 1.80, -2.18);
+
+    cabinGroup.add(
+      frontLowerWall,
+      frontTopWall,
+      frontCenterHullWall,
+      frontCenterPillar,
+      frontLeftOuterWall,
+      frontRightOuterWall
+    );
+
+    // 3D Beveled Observation Window Frames + Double-Sided Tinted Solar-Shield Glass Panes
+    const windowGlassMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      transparent: true,
+      opacity: 0.38,
+      roughness: 0.12,
+      metalness: 0.85,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
 
     for (let side = -1; side <= 1; side += 2) {
-      const winGlass = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 1.18), glassMat);
-      winGlass.position.set(side * 1.42, 1.76, -2.16);
+      const wx = side * 1.15;
+      const wy = 1.80;
+      const wz = -2.18;
+
+      const winGlass = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.92, 0.03), windowGlassMat);
+      winGlass.position.set(wx, wy, wz);
       cabinGroup.add(winGlass);
 
+      // 3D Metallic Bezel Frame around each observation window
+      const topFrame = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.07, 0.22), goldKapton);
+      topFrame.position.set(wx, wy + 0.46, wz);
+      const botFrame = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.07, 0.22), goldKapton);
+      botFrame.position.set(wx, wy - 0.46, wz);
+      const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.96, 0.22), isogridAlum);
+      leftFrame.position.set(wx - 0.39, wy, wz);
+      const rightFrame = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.96, 0.22), isogridAlum);
+      rightFrame.position.set(wx + 0.39, wy, wz);
+      cabinGroup.add(topFrame, botFrame, leftFrame, rightFrame);
+
       if (side === -1) {
-        for (let tick = -4; tick <= 4; tick++) {
-          const tickBar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.006, 0.004), amberGlow);
-          tickBar.position.set(-1.42, 1.76 + tick * 0.09, -2.14);
+        for (let tick = -3; tick <= 3; tick++) {
+          const tickBar = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.006, 0.006), amberGlow);
+          tickBar.position.set(wx, wy + tick * 0.09, -2.13);
           cabinGroup.add(tickBar);
         }
+      }
+    }
+
+    // Exterior Ascent Stage Thermal Kapton Collar & 4 Corner RCS Thruster Quad Assemblies
+    const extLowerBandFront = new THREE.Mesh(new THREE.BoxGeometry(4.56, 0.48, 0.06), goldKapton);
+    extLowerBandFront.position.set(0, 0.26, -2.28);
+    const extLowerBandLeft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.56), goldKapton);
+    extLowerBandLeft.position.set(-2.28, 0.26, 0);
+    const extLowerBandRight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.56), goldKapton);
+    extLowerBandRight.position.set(2.28, 0.26, 0);
+    cabinGroup.add(extLowerBandFront, extLowerBandLeft, extLowerBandRight);
+
+    for (let cx = -1; cx <= 1; cx += 2) {
+      for (let cz = -1; cz <= 1; cz += 2) {
+        const rcsPod = new THREE.Group();
+        rcsPod.position.set(cx * 2.34, 2.25, cz * 1.95);
+        const podBox = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.32), isogridAlum);
+        rcsPod.add(podBox);
+        const nozUp = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 12, 1, true), charcoalRack);
+        nozUp.position.y = 0.28;
+        const nozDown = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 12, 1, true), charcoalRack);
+        nozDown.position.y = -0.28;
+        nozDown.rotation.x = Math.PI;
+        rcsPod.add(nozUp, nozDown);
+        cabinGroup.add(rcsPod);
       }
     }
 
@@ -3244,15 +3333,20 @@ class MissionSimulationTheater {
   updateSimulationPhysics(t, dt) {
     const artifact = this.currentArtifact;
     if (!artifact || !this.spacecraft) return;
+    const showWalkCabin = (this.cameraMode === 'walk' || t >= 6.4);
     if (this.walkableInteriorGroup) {
-      this.walkableInteriorGroup.visible = (this.cameraMode === 'walk' || t >= 6.4);
+      this.walkableInteriorGroup.visible = showWalkCabin;
+    }
+    if (this.dummyAscentSolidGroup) {
+      this.dummyAscentSolidGroup.visible = !showWalkCabin;
     }
 
     if (artifact.category === 'impact') {
       if (t < 3.2) {
         const progress = t / 3.2;
-        this.spacecraft.position.x = -75 + progress * 75;
-        this.spacecraft.position.y = 100 - progress * 100;
+        this.spacecraft.position.x = -75 + progress * 66.8;
+        this.spacecraft.position.y = 100 - progress * 97.7;
+        this.spacecraft.position.z = -2.5;
 
         if (Math.random() < 0.9) {
           this.createParticle(
@@ -3264,9 +3358,10 @@ class MissionSimulationTheater {
         }
       } else if (t >= 3.2 && !this.impactTriggered) {
         this.impactTriggered = true;
-        if (this.cameraMode !== 'walk') {
-          this.spacecraft.visible = false;
-        }
+        // Keep the impacted rocket stage visible resting in the impact crater at all camera angles!
+        this.spacecraft.visible = true;
+        this.spacecraft.position.set(-8.2, 2.3, -2.5);
+        this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
         this.shakeIntensity = 4.0;
 
         const flashLight = new THREE.PointLight(0xfffaed, 18, 120);
@@ -3637,10 +3732,13 @@ class MissionSimulationTheater {
       ws.y = groundY;
     }
 
-    // Automatically cut away solid exterior hull blocks when climbing into or standing inside the cabin
+    // Keep the exterior spacecraft / rocket / descent stage visible at all elevations and angles;
+    // only hide the solid dummy ascent block so the walkable interior cabin is unobstructed!
     if (this.spacecraft) {
-      const showExteriorShell = !ws.isInsideCabin && ws.y < 2.1;
-      this.spacecraft.visible = showExteriorShell;
+      this.spacecraft.visible = true;
+    }
+    if (this.dummyAscentSolidGroup) {
+      this.dummyAscentSolidGroup.visible = false;
     }
 
     // Smooth C2-continuous sinusoidal EVA stride bob & natural weight-transfer sway

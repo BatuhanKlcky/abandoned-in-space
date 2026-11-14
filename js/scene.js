@@ -1,15 +1,17 @@
 /**
- * Three.js 3D Celestial Engine, Beacons, Starfield, and Holographic Artifact Mini-Viewer
+ * Three.js 3D Celestial Engine, Beacons, Starfield, and Museum-Grade Holographic Artifact Reconstructor
+ * Supports: Moon, Mars, Venus, and Titan & Outer Solar System
  */
 
 class SpaceSceneManager {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
-    this.currentBody = 'moon'; // 'moon' or 'mars'
+    this.currentBody = 'moon'; // 'moon', 'mars', 'venus', 'outer'
     this.artifacts = [];
     this.pins = [];
     this.selectedArtifact = null;
     this.hoveredArtifact = null;
+    this.isMiniWireframe = false;
 
     this.sphereRadius = 100;
     this.isAutoRotating = true;
@@ -126,7 +128,7 @@ class SpaceSceneManager {
     });
 
     this.moonMesh = new THREE.Mesh(sphereGeo, this.moonMaterial);
-    this.moonMesh.rotation.x = THREE.MathUtils.degToRad(1.5); // Moon axial tilt
+    this.moonMesh.rotation.x = THREE.MathUtils.degToRad(1.5);
     this.planetGroup.add(this.moonMesh);
 
     // 2. Mars Materials with Real NASA Photographic Texture
@@ -142,29 +144,79 @@ class SpaceSceneManager {
     });
 
     this.marsMesh = new THREE.Mesh(sphereGeo, this.marsMaterial);
-    this.marsMesh.rotation.z = THREE.MathUtils.degToRad(-25.19); // Mars axial tilt ~25.2 deg
+    this.marsMesh.rotation.z = THREE.MathUtils.degToRad(-25.19);
     this.marsMesh.visible = false;
     this.planetGroup.add(this.marsMesh);
+
+    // 3. Venus Materials (Magellan Radar + Sulfuric Cloud Bands)
+    const venusTex = window.CelestialTextures ? window.CelestialTextures.generateVenusTexture() : moonTex;
+    const venusBump = window.CelestialTextures ? window.CelestialTextures.generateVenusBump() : moonBump;
+
+    this.venusMaterial = new THREE.MeshStandardMaterial({
+      map: venusTex,
+      bumpMap: venusBump,
+      bumpScale: 0.95,
+      roughness: 0.72,
+      metalness: 0.12,
+    });
+
+    this.venusMesh = new THREE.Mesh(sphereGeo, this.venusMaterial);
+    this.venusMesh.rotation.z = THREE.MathUtils.degToRad(177.3); // Retrograde axial tilt
+    this.venusMesh.visible = false;
+    this.planetGroup.add(this.venusMesh);
+
+    // 4. Titan & Outer System Materials (Cassini Radar + Hydrocarbon Seas + Subtle Distant Ring Ring-Halo)
+    const titanTex = window.CelestialTextures ? window.CelestialTextures.generateTitanTexture() : marsTex;
+    this.outerMaterial = new THREE.MeshStandardMaterial({
+      map: titanTex,
+      bumpMap: venusBump,
+      bumpScale: 0.65,
+      roughness: 0.78,
+      metalness: 0.1,
+    });
+
+    this.outerMesh = new THREE.Mesh(sphereGeo, this.outerMaterial);
+    this.outerMesh.rotation.z = THREE.MathUtils.degToRad(-26.7); // Saturn/Titan system tilt
+    this.outerMesh.visible = false;
+
+    // Subtle Outer System Planetary Ring Accent (Saturn/Outer System aesthetic)
+    const ringGeo = new THREE.RingGeometry(132, 185, 96);
+    const ringPos = ringGeo.attributes.position;
+    const ringUvs = ringGeo.attributes.uv;
+    for (let i = 0; i < ringPos.count; i++) {
+      const vx = ringPos.getX(i);
+      const vy = ringPos.getY(i);
+      const r = Math.sqrt(vx * vx + vy * vy);
+      ringUvs.setXY(i, (r - 132) / (185 - 132), 0.5);
+    }
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xeab308,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.18,
+    });
+    this.outerRingMesh = new THREE.Mesh(ringGeo, ringMat);
+    this.outerRingMesh.rotation.x = Math.PI * 0.42;
+    this.outerRingMesh.rotation.y = 0.22;
+    this.outerMesh.add(this.outerRingMesh);
+
+    this.planetGroup.add(this.outerMesh);
   }
 
   initLighting() {
-    // Distant Sun directional light
     this.sunLight = new THREE.DirectionalLight(0xfffaed, 2.0);
     this.sunLight.position.set(400, 120, 300);
     this.scene.add(this.sunLight);
 
-    // Subtle space ambient fill
     this.ambientLight = new THREE.AmbientLight(0x181e28, 0.45);
     this.scene.add(this.ambientLight);
 
-    // Soft rim back-light for dark side silhouette visibility
     this.rimLight = new THREE.DirectionalLight(0x223355, 0.25);
     this.rimLight.position.set(-300, -50, -300);
     this.scene.add(this.rimLight);
   }
 
   initAtmosphere() {
-    // Atmospheric glow halo (specially for Mars)
     const haloGeo = new THREE.SphereGeometry(this.sphereRadius * 1.045, 64, 48);
     const haloMat = new THREE.ShaderMaterial({
       vertexShader: `
@@ -185,8 +237,8 @@ class SpaceSceneManager {
         }
       `,
       uniforms: {
-        glowColor: { value: new THREE.Color(0xdd6633) },
-        intensity: { value: 0.0 }
+        glowColor: { value: new THREE.Color(0x88aacc) },
+        intensity: { value: 0.25 }
       },
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
@@ -205,30 +257,44 @@ class SpaceSceneManager {
     if (this.currentBody === bodyName) return;
     this.currentBody = bodyName;
 
-    window.SpaceAudio.playWarpTransition();
+    if (window.SpaceAudio) window.SpaceAudio.playWarpTransition();
 
-    const isMars = bodyName === 'mars';
-    this.moonMesh.visible = !isMars;
-    this.marsMesh.visible = isMars;
+    this.moonMesh.visible = (bodyName === 'moon');
+    this.marsMesh.visible = (bodyName === 'mars');
+    this.venusMesh.visible = (bodyName === 'venus');
+    this.outerMesh.visible = (bodyName === 'outer');
 
-    // Atmospheric glow update
-    if (isMars) {
+    if (bodyName === 'mars') {
       this.atmosphereMesh.material.uniforms.glowColor.value.setHex(0xdd6633);
       this.atmosphereMesh.material.uniforms.intensity.value = 1.2;
       this.ambientLight.color.setHex(0x2a1a15);
-      this.sunLight.intensity = 1.7; // Sun is slightly dimmer at Mars
+      this.sunLight.intensity = 1.7;
+    } else if (bodyName === 'venus') {
+      this.atmosphereMesh.material.uniforms.glowColor.value.setHex(0xf59e0b);
+      this.atmosphereMesh.material.uniforms.intensity.value = 1.65;
+      this.ambientLight.color.setHex(0x2d1e0b);
+      this.sunLight.intensity = 2.2;
+    } else if (bodyName === 'outer') {
+      this.atmosphereMesh.material.uniforms.glowColor.value.setHex(0x38bdf8);
+      this.atmosphereMesh.material.uniforms.intensity.value = 1.45;
+      this.ambientLight.color.setHex(0x1e2430);
+      this.sunLight.intensity = 1.45;
     } else {
       this.atmosphereMesh.material.uniforms.glowColor.value.setHex(0x88aacc);
-      this.atmosphereMesh.material.uniforms.intensity.value = 0.25; // Subtle lunar exosphere rim
+      this.atmosphereMesh.material.uniforms.intensity.value = 0.25;
       this.ambientLight.color.setHex(0x181e28);
       this.sunLight.intensity = 2.0;
     }
 
-    // Refresh beacon pins
     this.updatePins();
-
-    // Reset camera position smoothly
     this.flyCameraTo(new THREE.Vector3(30, 15, 290), new THREE.Vector3(0, 0, 0), 1000);
+  }
+
+  getBodyBeaconColors() {
+    if (this.currentBody === 'mars') return { main: 0xff7043, accent: 0xffab91 };
+    if (this.currentBody === 'venus') return { main: 0xfbbf24, accent: 0xfde68a };
+    if (this.currentBody === 'outer') return { main: 0x38bdf8, accent: 0xbae6fd };
+    return { main: 0x00e5ff, accent: 0x76ffff };
   }
 
   /**
@@ -254,7 +320,6 @@ class SpaceSceneManager {
   }
 
   updatePins(filteredIds = null) {
-    // Clear old pins
     while (this.pinsGroup.children.length > 0) {
       const obj = this.pinsGroup.children[0];
       this.pinsGroup.remove(obj);
@@ -267,8 +332,9 @@ class SpaceSceneManager {
       return matchesBody && matchesFilter;
     });
 
-    const bodyColor = this.currentBody === 'moon' ? 0x00e5ff : 0xff7043;
-    const bodyAccent = this.currentBody === 'moon' ? 0x76ffff : 0xffab91;
+    const colors = this.getBodyBeaconColors();
+    const bodyColor = colors.main;
+    const bodyAccent = colors.accent;
 
     activeArtifacts.forEach(artifact => {
       const pos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, this.sphereRadius);
@@ -278,7 +344,6 @@ class SpaceSceneManager {
       pinGroup.position.copy(pos);
       pinGroup.userData = { artifact };
 
-      // 1. Beacon Stem (thin line reaching upward from ground)
       const stemHeight = 4.5;
       const stemGeo = new THREE.CylinderGeometry(0.2, 0.2, stemHeight, 8);
       const stemMat = new THREE.MeshBasicMaterial({ color: bodyAccent, transparent: true, opacity: 0.85 });
@@ -286,16 +351,12 @@ class SpaceSceneManager {
       stemMesh.position.y = stemHeight / 2;
       stemMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
 
-      // 2. Glowing Beacon Orb
       const orbRadius = 1.35;
       const orbGeo = new THREE.SphereGeometry(orbRadius, 16, 16);
-      const orbMat = new THREE.MeshBasicMaterial({
-        color: bodyColor,
-      });
+      const orbMat = new THREE.MeshBasicMaterial({ color: bodyColor });
       const orbMesh = new THREE.Mesh(orbGeo, orbMat);
       orbMesh.position.copy(normal.clone().multiplyScalar(stemHeight));
 
-      // 3. Ground Pulse Ring
       const ringGeo = new THREE.RingGeometry(1.2, 2.2, 32);
       const ringMat = new THREE.MeshBasicMaterial({
         color: bodyColor,
@@ -307,8 +368,7 @@ class SpaceSceneManager {
       ringMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
       ringMesh.userData = { isPulseRing: true, baseScale: 1.0, phase: Math.random() * Math.PI * 2 };
 
-      // Hit area for easier clicking
-      const hitGeo = new THREE.SphereGeometry(3.5, 8, 8);
+      const hitGeo = new THREE.SphereGeometry(3.8, 8, 8);
       const hitMat = new THREE.MeshBasicMaterial({ visible: false });
       const hitMesh = new THREE.Mesh(hitGeo, hitMat);
       hitMesh.position.copy(normal.clone().multiplyScalar(stemHeight));
@@ -337,31 +397,25 @@ class SpaceSceneManager {
     this.selectedArtifact = artifact;
     this.isAutoRotating = false;
 
-    // Calculate surface position in world space
     const targetPos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, this.sphereRadius);
     const normal = targetPos.clone().normalize();
 
-    // Position camera just above the site, angled slightly
     const cameraTarget = normal.clone().multiplyScalar(this.sphereRadius + 45);
     cameraTarget.add(new THREE.Vector3(10, 15, 10));
 
     this.flyCameraTo(cameraTarget, targetPos, 1400, onComplete);
-    window.SpaceAudio.playQuindarTone();
+    if (window.SpaceAudio) window.SpaceAudio.playQuindarTone();
 
-    // Highlight selected pin
+    const defaultColor = this.getBodyBeaconColors().main;
     this.pins.forEach(p => {
       const isMatch = p.artifact.id === artifact.id;
-      p.orbMesh.scale.setScalar(isMatch ? 1.8 : 1.0);
-      p.orbMesh.material.color.setHex(isMatch ? 0xffea00 : (this.currentBody === 'moon' ? 0x00e5ff : 0xff7043));
+      p.orbMesh.scale.setScalar(isMatch ? 1.85 : 1.0);
+      p.orbMesh.material.color.setHex(isMatch ? 0xffea00 : defaultColor);
     });
 
-    // Update mini 3D viewer
-    this.updateMiniModel(artifact.modelType);
+    this.updateMiniModel(artifact.modelType, artifact);
   }
 
-  /**
-   * Camera animation helper using simple easing
-   */
   flyCameraTo(targetCamPos, targetLookAt, duration = 1200, onComplete = null) {
     const startCamPos = this.camera.position.clone();
     const startLookAt = this.controls.target.clone();
@@ -371,7 +425,6 @@ class SpaceSceneManager {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1.0);
 
-      // Smooth step easing (smooth in/out)
       const ease = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -394,13 +447,16 @@ class SpaceSceneManager {
     this.selectedArtifact = null;
     this.isAutoRotating = true;
     this.flyCameraTo(new THREE.Vector3(30, 15, 290), new THREE.Vector3(0, 0, 0), 1000);
+    const defaultColor = this.getBodyBeaconColors().main;
     this.pins.forEach(p => {
       p.orbMesh.scale.setScalar(1.0);
-      p.orbMesh.material.color.setHex(this.currentBody === 'moon' ? 0x00e5ff : 0xff7043);
+      p.orbMesh.material.color.setHex(defaultColor);
     });
   }
 
-  // --- Secondary 3D Holographic Artifact Mini-Viewer ---
+  // =========================================================================
+  // MUSEUM-GRADE 3D HOLOGRAPHIC SPECIMEN RECONSTRUCTION VIEWER
+  // =========================================================================
   initMiniViewer() {
     const canvas = document.getElementById('mini-model-canvas');
     if (!canvas) return;
@@ -408,10 +464,10 @@ class SpaceSceneManager {
     this.miniScene = new THREE.Scene();
 
     const initialW = canvas.clientWidth || 400;
-    const initialH = canvas.clientHeight || 180;
+    const initialH = canvas.clientHeight || 195;
 
-    this.miniCamera = new THREE.PerspectiveCamera(38, initialW / initialH, 0.1, 100);
-    this.miniCamera.position.set(0, 2.2, 8.5);
+    this.miniCamera = new THREE.PerspectiveCamera(36, initialW / initialH, 0.1, 100);
+    this.miniCamera.position.set(0, 2.3, 8.6);
     this.miniCamera.lookAt(0, -0.1, 0);
 
     this.miniRenderer = new THREE.WebGLRenderer({
@@ -422,47 +478,43 @@ class SpaceSceneManager {
     });
     this.miniRenderer.setSize(initialW, initialH, false);
     this.miniRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.miniRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.miniRenderer.toneMappingExposure = 1.25;
 
-    // Studio & Museum Holographic Lighting
-    const amb = new THREE.AmbientLight(0xffffff, 0.9);
+    const amb = new THREE.AmbientLight(0xffffff, 0.95);
     this.miniScene.add(amb);
 
-    // Warm Key Light (brings out gold foil and metallic details)
-    const keyLight = new THREE.DirectionalLight(0xfffaed, 2.2);
-    keyLight.position.set(5, 8, 6);
+    const keyLight = new THREE.DirectionalLight(0xfffaed, 2.4);
+    keyLight.position.set(6, 9, 7);
     this.miniScene.add(keyLight);
 
-    // Sci-Fi Hologram Cyan Rim Light (silhouette edge glow)
-    const rimLight = new THREE.DirectionalLight(0x00f0ff, 1.8);
+    const rimLight = new THREE.DirectionalLight(0x00f0ff, 1.9);
     rimLight.position.set(-6, 5, -6);
     this.miniScene.add(rimLight);
 
-    // Subtle upward fill light
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.7);
-    fillLight.position.set(0, -6, 3);
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.85);
+    fillLight.position.set(0, -6, 4);
     this.miniScene.add(fillLight);
 
-    // Holographic grid projection disk beneath model
-    const grid = new THREE.PolarGridHelper(3.8, 16, 8, 32, 0x00f0ff, 0x0284c7);
+    // Holographic Polar Grid Pedestal
+    const grid = new THREE.PolarGridHelper(3.8, 16, 8, 48, 0x00f0ff, 0x0284c7);
     grid.position.y = -2.1;
     this.miniScene.add(grid);
 
-    // Interactive 360 OrbitControls with smooth auto-rotation
     if (typeof THREE.OrbitControls !== 'undefined') {
       this.miniControls = new THREE.OrbitControls(this.miniCamera, canvas);
       this.miniControls.enableDamping = true;
       this.miniControls.dampingFactor = 0.06;
       this.miniControls.autoRotate = true;
-      this.miniControls.autoRotateSpeed = 1.8;
-      this.miniControls.enableZoom = false; // keep drawer scrollable on mobile
-      this.miniControls.enablePan = false;  // keep specimen strictly centered
+      this.miniControls.autoRotateSpeed = 1.9;
+      this.miniControls.enableZoom = false;
+      this.miniControls.enablePan = false;
       this.miniControls.target.set(0, -0.1, 0);
     }
 
     this.miniModelGroup = new THREE.Group();
     this.miniScene.add(this.miniModelGroup);
 
-    // Initial load
     this.updateMiniModel('lander');
     this.resizeMiniViewer();
   }
@@ -473,7 +525,7 @@ class SpaceSceneManager {
 
     const parent = canvas.parentElement;
     const w = (parent ? parent.clientWidth : canvas.clientWidth) || 420;
-    const h = (parent ? parent.clientHeight : canvas.clientHeight) || 180;
+    const h = (parent ? parent.clientHeight : canvas.clientHeight) || 195;
 
     if (w > 0 && h > 0) {
       this.miniCamera.aspect = w / h;
@@ -486,332 +538,612 @@ class SpaceSceneManager {
     }
   }
 
-  updateMiniModel(type) {
+  toggleMiniWireframe() {
+    this.isMiniWireframe = !this.isMiniWireframe;
+    if (this.currentMiniModel) {
+      this.currentMiniModel.traverse(child => {
+        if (child.isMesh && child.material) {
+          child.material.wireframe = this.isMiniWireframe;
+        }
+      });
+    }
+    return this.isMiniWireframe;
+  }
+
+  updateMiniModel(type, artifact = null) {
     if (!this.miniModelGroup) return;
 
-    // Clear old model
     while (this.miniModelGroup.children.length > 0) {
       this.miniModelGroup.remove(this.miniModelGroup.children[0]);
     }
 
-    // High-fidelity materials
+    const kaptonBump = window.CelestialTextures ? window.CelestialTextures.generateKaptonFoilBump() : null;
+    const solarTex = window.CelestialTextures ? window.CelestialTextures.generateSolarPanelTexture() : null;
+
     const goldMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
-      metalness: 0.88,
-      roughness: 0.22
+      metalness: 0.9,
+      roughness: 0.24,
+      bumpMap: kaptonBump,
+      bumpScale: 0.08,
+      wireframe: this.isMiniWireframe
+    });
+    const amberFoilMat = new THREE.MeshStandardMaterial({
+      color: 0xd97706,
+      metalness: 0.85,
+      roughness: 0.28,
+      bumpMap: kaptonBump,
+      bumpScale: 0.06,
+      wireframe: this.isMiniWireframe
     });
     const silverMat = new THREE.MeshStandardMaterial({
       color: 0xe2e8f0,
-      metalness: 0.9,
-      roughness: 0.2
+      metalness: 0.92,
+      roughness: 0.18,
+      wireframe: this.isMiniWireframe
+    });
+    const titaniumMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.88,
+      roughness: 0.26,
+      wireframe: this.isMiniWireframe
     });
     const whiteMat = new THREE.MeshStandardMaterial({
       color: 0xf8fafc,
-      metalness: 0.15,
-      roughness: 0.45
+      metalness: 0.2,
+      roughness: 0.42,
+      wireframe: this.isMiniWireframe
     });
     const darkMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
-      metalness: 0.6,
-      roughness: 0.55
+      metalness: 0.65,
+      roughness: 0.48,
+      wireframe: this.isMiniWireframe
+    });
+    const solarMat = new THREE.MeshStandardMaterial({
+      map: solarTex,
+      color: 0x3b82f6,
+      metalness: 0.8,
+      roughness: 0.15,
+      wireframe: this.isMiniWireframe
     });
     const cyanAccentMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
       metalness: 0.5,
-      roughness: 0.3,
-      emissive: 0x003344,
-      emissiveIntensity: 0.4
+      roughness: 0.25,
+      emissive: 0x004455,
+      emissiveIntensity: 0.5,
+      wireframe: this.isMiniWireframe
     });
     const copperEngineMat = new THREE.MeshStandardMaterial({
       color: 0xb45309,
-      metalness: 0.85,
-      roughness: 0.3
+      metalness: 0.88,
+      roughness: 0.28,
+      wireframe: this.isMiniWireframe
     });
 
     const model = new THREE.Group();
 
     if (type === 'lander') {
-      // --- Apollo Lunar Module Descent Stage & Viking Lander ---
-      // Octagonal golden descent stage core
-      const baseGeo = new THREE.CylinderGeometry(2.1, 2.5, 1.4, 8);
+      // =====================================================================
+      // HIGH-PRECISION APOLLO LUNAR MODULE / VIKING LANDER RECONSTRUCTION
+      // =====================================================================
+      // 1. Octagonal Descent Stage Core with alternating Kapton & Black Thermal Panels
+      const baseGeo = new THREE.CylinderGeometry(1.95, 2.25, 1.35, 8);
       const base = new THREE.Mesh(baseGeo, goldMat);
-      base.position.y = -0.2;
+      base.position.y = -0.35;
       model.add(base);
 
-      // Top silver equipment bulkhead plate
-      const topPlateGeo = new THREE.CylinderGeometry(1.85, 1.85, 0.15, 8);
-      const topPlate = new THREE.Mesh(topPlateGeo, silverMat);
-      topPlate.position.y = 0.55;
-      model.add(topPlate);
+      // Cross-quadrant black thermal shielding panels
+      const shield1 = new THREE.Mesh(new THREE.BoxGeometry(4.0, 1.25, 1.15), darkMat);
+      shield1.position.y = -0.35;
+      model.add(shield1);
 
-      // Central Descent Propulsion Engine (DPS) bell
-      const bellGeo = new THREE.ConeGeometry(0.85, 1.3, 18, 1, true);
+      // Top Ascent Stage Launch Deck & Ring
+      const deck = new THREE.Mesh(new THREE.CylinderGeometry(1.75, 1.85, 0.14, 8), silverMat);
+      deck.position.y = 0.36;
+      model.add(deck);
+
+      // MESA Equipment Stowage Bay & Forward EVA Porch + 9-Rung Ladder
+      const mesa = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.45), amberFoilMat);
+      mesa.position.set(0.8, -0.3, 1.75);
+      model.add(mesa);
+
+      const porch = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.08, 0.7), silverMat);
+      porch.position.set(0, 0.4, 1.85);
+      model.add(porch);
+
+      // Aerojet DPS Descent Rocket Engine Bell with cooling ridges
+      const bellGeo = new THREE.ConeGeometry(0.82, 1.35, 24, 3, true);
       const bell = new THREE.Mesh(bellGeo, copperEngineMat);
-      bell.position.y = -1.2;
+      bell.position.y = -1.25;
       bell.rotation.x = Math.PI;
       model.add(bell);
 
-      // 4 Outrigger landing gear assemblies with footpads
+      // 4 Outrigger Truss Landing Gear Assemblies + Secondary Struts + Concave Footpads + Contact Probes
       for (let i = 0; i < 4; i++) {
         const angle = (i * Math.PI) / 2 + Math.PI / 4;
         const legGroup = new THREE.Group();
         legGroup.rotation.y = angle;
 
-        // Primary compression strut
-        const strutGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.9);
-        const strut = new THREE.Mesh(strutGeo, silverMat);
-        strut.position.set(2.0, -0.65, 0);
-        strut.rotation.z = Math.PI / 4;
-        legGroup.add(strut);
+        // Primary shock-absorbing telescopic strut
+        const primaryStrut = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 2.75, 12), silverMat);
+        primaryStrut.position.set(2.0, -0.75, 0);
+        primaryStrut.rotation.z = Math.PI / 4.2;
+        legGroup.add(primaryStrut);
 
-        // Circular landing dish footpad
-        const padGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.08, 16);
-        const pad = new THREE.Mesh(padGeo, goldMat);
-        pad.position.set(3.05, -1.75, 0);
+        // Dual A-frame secondary support braces
+        for (let s = -1; s <= 1; s += 2) {
+          const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.65, 8), titaniumMat);
+          brace.position.set(1.75, -0.7, s * 0.38);
+          brace.rotation.z = Math.PI / 2.8;
+          brace.rotation.y = s * 0.22;
+          legGroup.add(brace);
+        }
+
+        // Honeycombed Gold Circular Footpad
+        const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.45, 0.1, 20), goldMat);
+        pad.position.set(2.92, -1.72, 0);
         legGroup.add(pad);
 
-        // Lunar surface contact sensor probe needle
-        const probeGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.9);
-        const probe = new THREE.Mesh(probeGeo, cyanAccentMat);
-        probe.position.set(3.05, -2.15, 0);
+        // Lunar Surface Sensing Probe extending below footpad
+        const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.75), cyanAccentMat);
+        probe.position.set(2.92, -2.08, 0);
         legGroup.add(probe);
+
+        // Forward Leg EVA Ladder with 9 Rungs (on leg 0)
+        if (i === 0) {
+          for (let r = 0; r < 8; r++) {
+            const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.36), silverMat);
+            rung.rotation.x = Math.PI / 2;
+            rung.position.set(1.25 + r * 0.19, 0.22 - r * 0.21, 0);
+            legGroup.add(rung);
+          }
+        }
 
         model.add(legGroup);
       }
 
-      // 4 Modular propellant/helium spherical tanks around the perimeter
+      // 4 Internal Helium/Propellant Tanks & ALSEP Scientific Package on Top Deck
       for (let i = 0; i < 4; i++) {
         const angle = (i * Math.PI) / 2;
-        const tankGeo = new THREE.SphereGeometry(0.42, 14, 14);
-        const tank = new THREE.Mesh(tankGeo, silverMat);
-        tank.position.set(Math.cos(angle) * 1.5, -0.2, Math.sin(angle) * 1.5);
+        const tank = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), titaniumMat);
+        tank.position.set(Math.cos(angle) * 1.35, 0.55, Math.sin(angle) * 1.35);
         model.add(tank);
       }
 
+      // S-Band Erectable Dish Antenna & Plume Deflectors
+      const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.08, 0.22, 20, 1, true), silverMat);
+      dish.position.set(-0.6, 1.25, -0.5);
+      dish.rotation.x = 0.35;
+      model.add(dish);
+      const dishMast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9), silverMat);
+      dishMast.position.set(-0.6, 0.8, -0.5);
+      model.add(dishMast);
+
     } else if (type === 'rover') {
-      // --- Mars Exploration Rover / Lunar Rover (Curiosity / Opportunity) ---
-      // Main chassis equipment box
-      const bodyGeo = new THREE.BoxGeometry(2.4, 0.9, 3.2);
-      const body = new THREE.Mesh(bodyGeo, whiteMat);
-      body.position.y = -0.1;
-      model.add(body);
+      // =====================================================================
+      // 6-WHEELED NASA MARS / LUNAR ROVER (Rocker-Bogie, Robotic Arm, MMRTG)
+      // =====================================================================
+      // Warm Electronics Box (WEB) Chassis in Gold Kapton & White Thermal Deck
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.82, 2.8), goldMat);
+      chassis.position.y = -0.05;
+      model.add(chassis);
 
-      // Solar panel decking on top
-      const solarGeo = new THREE.BoxGeometry(2.6, 0.06, 3.4);
-      const solar = new THREE.Mesh(solarGeo, darkMat);
-      solar.position.y = 0.4;
-      model.add(solar);
+      const topDeck = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.12, 2.95), whiteMat);
+      topDeck.position.y = 0.42;
+      model.add(topDeck);
 
-      // Camera Mast (Pancam / Navcam)
-      const mastGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.0);
-      const mast = new THREE.Mesh(mastGeo, silverMat);
-      mast.position.set(0.7, 1.4, 0.9);
+      // Rear MMRTG Finned Nuclear Power Generator (Curiosity/Perseverance signature)
+      const rtgGroup = new THREE.Group();
+      rtgGroup.position.set(0, 0.25, -1.75);
+      rtgGroup.rotation.x = -0.35;
+      const rtgCore = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.15, 16), whiteMat);
+      rtgCore.rotation.x = Math.PI / 2;
+      rtgGroup.add(rtgCore);
+      for (let f = 0; f < 8; f++) {
+        const fAng = (f * Math.PI) / 4;
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.78, 1.05), titaniumMat);
+        fin.rotation.z = fAng;
+        rtgGroup.add(fin);
+      }
+      model.add(rtgGroup);
+
+      // Remote Sensing Mast (RSM) + SuperCam Cyclops Laser + Mastcam-Z Stereo Eyes
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 1.75, 12), titaniumMat);
+      mast.position.set(0.68, 1.25, 0.95);
       model.add(mast);
 
-      // Stereo Camera Head
-      const headGeo = new THREE.BoxGeometry(0.65, 0.32, 0.4);
-      const head = new THREE.Mesh(headGeo, goldMat);
-      head.position.set(0.7, 2.35, 0.9);
-      model.add(head);
+      const camHead = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.38, 0.42), whiteMat);
+      camHead.position.set(0.68, 2.15, 0.95);
+      model.add(camHead);
 
-      // High-gain dish antenna
-      const dishGeo = new THREE.CylinderGeometry(0.5, 0.1, 0.2, 16);
-      const dish = new THREE.Mesh(dishGeo, silverMat);
-      dish.position.set(-0.7, 0.75, -0.8);
-      dish.rotation.x = -Math.PI / 6;
-      model.add(dish);
+      const superCamEye = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.46, 16), cyanAccentMat);
+      superCamEye.rotation.x = Math.PI / 2;
+      superCamEye.position.set(0.68, 2.2, 0.98);
+      model.add(superCamEye);
 
-      // 6 All-terrain aluminum wheels on suspension
-      const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 16);
-      const wheelPositions = [
-        [-1.6, -0.9, -1.2], [-1.6, -0.9, 0], [-1.6, -0.9, 1.2],
-        [1.6, -0.9, -1.2],  [1.6, -0.9, 0],  [1.6, -0.9, 1.2]
-      ];
-      wheelPositions.forEach(pos => {
-        const wheel = new THREE.Mesh(wheelGeo, darkMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(...pos);
-        model.add(wheel);
+      // 5-DOF Articulated Front Robotic Arm + Coring Drill Turret (PIXL/SHERLOC)
+      const armBoom1 = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 1.25), titaniumMat);
+      armBoom1.position.set(-0.45, 0.1, 1.75);
+      armBoom1.rotation.x = Math.PI / 3;
+      model.add(armBoom1);
 
-        // Silver hubcap
-        const hubGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.38, 12);
-        const hub = new THREE.Mesh(hubGeo, silverMat);
-        hub.rotation.z = Math.PI / 2;
-        hub.position.set(...pos);
-        model.add(hub);
-      });
+      const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.35, 12), silverMat);
+      turret.position.set(-0.45, -0.25, 2.25);
+      turret.rotation.z = Math.PI / 2;
+      model.add(turret);
+
+      // High-Gain Hexagonal Dish & UHF Antenna
+      const hga = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.08, 6), goldMat);
+      hga.position.set(-0.65, 0.72, -0.75);
+      hga.rotation.x = 0.25;
+      model.add(hga);
+
+      const uhf = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 10), darkMat);
+      uhf.position.set(-0.75, 0.9, -1.1);
+      model.add(uhf);
+
+      // Rocker-Bogie Articulated Suspension Tubes + 6 Cleated Aluminum Wheels
+      for (let side = -1; side <= 1; side += 2) {
+        const rocker = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.5), silverMat);
+        rocker.rotation.x = Math.PI / 2;
+        rocker.position.set(side * 1.25, -0.35, 0);
+        model.add(rocker);
+
+        [-1.25, 0, 1.25].forEach(wz => {
+          const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.75), titaniumMat);
+          strut.position.set(side * 1.38, -0.68, wz);
+          model.add(strut);
+
+          // Cleated wheel rim
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.38, 20), darkMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(side * 1.52, -1.02, wz);
+          model.add(wheel);
+
+          // Titanium wheel hub & spokes
+          const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.41, 12), cyanAccentMat);
+          hub.rotation.z = Math.PI / 2;
+          hub.position.set(side * 1.52, -1.02, wz);
+          model.add(hub);
+        });
+      }
 
     } else if (type === 'helicopter') {
-      // --- Ingenuity Mars Helicopter ('Ginny') ---
-      // Gold Mylar fuselage cube
-      const fuseGeo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
-      const fuse = new THREE.Mesh(fuseGeo, goldMat);
-      fuse.position.y = -0.3;
+      // =====================================================================
+      // INGENUITY MARS HELICOPTER ('GINNY') WITH WRIGHT FLYER SWATCH
+      // =====================================================================
+      // Kapton Gold Foil Avionics Cube
+      const fuse = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.15, 1.05), goldMat);
+      fuse.position.y = -0.35;
       model.add(fuse);
 
-      // Main rotor mast
-      const mastGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.2);
-      const mast = new THREE.Mesh(mastGeo, darkMat);
+      // Downward Navigation Camera & Garmin Lidar Lens
+      const navLens = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), cyanAccentMat);
+      navLens.position.set(0, -0.92, 0.25);
+      model.add(navLens);
+
+      // Coaxial Carbon-Fiber Rotor Mast + Upper/Lower Swashplates
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.35, 16), darkMat);
       mast.position.y = 0.9;
       model.add(mast);
 
-      // Solar panel roof on top
-      const solarGeo = new THREE.BoxGeometry(1.2, 0.04, 1.2);
-      const solar = new THREE.Mesh(solarGeo, darkMat);
+      [0.85, 1.45].forEach(sy => {
+        const swash = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.12, 16), silverMat);
+        swash.position.y = sy;
+        model.add(swash);
+      });
+
+      // Wright Brothers 1903 Flyer Muslin Swatch Band (Highlighted Golden Relic Ring under Solar Panel)
+      const wrightBand = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.16, 16), cyanAccentMat);
+      wrightBand.position.y = 1.82;
+      model.add(wrightBand);
+
+      // Rectangular Photovoltaic Solar Panel Array
+      const solar = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 1.15), solarMat);
       solar.position.y = 2.02;
       model.add(solar);
 
-      // Twin counter-rotating carbon fiber rotor blades
-      const bladeGeo = new THREE.BoxGeometry(4.4, 0.03, 0.26);
-      const blade1 = new THREE.Mesh(bladeGeo, silverMat);
-      blade1.position.y = 1.05;
-      const blade2 = new THREE.Mesh(bladeGeo, silverMat);
-      blade2.position.y = 1.5;
-      blade2.rotation.y = Math.PI / 2;
+      // Sculpted Counter-Rotating Carbon-Fiber Airfoil Blades (2,400 RPM)
+      const bladeGeo = new THREE.BoxGeometry(4.6, 0.035, 0.34);
+      const blade1 = new THREE.Mesh(bladeGeo, darkMat);
+      blade1.position.y = 1.02;
+      blade1.rotation.x = 0.12;
+      const blade2 = new THREE.Mesh(bladeGeo, darkMat);
+      blade2.position.y = 1.55;
+      blade2.rotation.y = Math.PI / 2.2;
+      blade2.rotation.z = -0.12;
       model.add(blade1);
       model.add(blade2);
 
-      // 4 Carbon-composite angled landing legs
+      // 4 Ultra-Light Carbon-Composite Landing Legs with Foot Dampers
       for (let i = 0; i < 4; i++) {
-        const legGeo = new THREE.CylinderGeometry(0.03, 0.03, 2.1);
-        const leg = new THREE.Mesh(legGeo, silverMat);
         const angle = (i * Math.PI) / 2 + Math.PI / 4;
-        leg.position.set(Math.cos(angle) * 0.9, -1.25, Math.sin(angle) * 0.9);
-        leg.rotation.x = Math.sin(angle) * 0.38;
-        leg.rotation.z = -Math.cos(angle) * 0.38;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.022, 2.25, 10), titaniumMat);
+        leg.position.set(Math.cos(angle) * 0.95, -1.25, Math.sin(angle) * 0.95);
+        leg.rotation.x = Math.sin(angle) * 0.42;
+        leg.rotation.z = -Math.cos(angle) * 0.42;
         model.add(leg);
+
+        const foot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), cyanAccentMat);
+        foot.position.set(Math.cos(angle) * 1.38, -2.02, Math.sin(angle) * 1.38);
+        model.add(foot);
+      }
+
+    } else if (type === 'venera') {
+      // =====================================================================
+      // SOVIET VENERA 7 / VENERA 13 HIGH-PRESSURE VENUS LANDER
+      // =====================================================================
+      // 1. Spherical Titanium Pressure Hull (90-bar rated)
+      const sphereHull = new THREE.Mesh(new THREE.SphereGeometry(1.15, 28, 24), titaniumMat);
+      sphereHull.position.y = -0.25;
+      model.add(sphereHull);
+
+      // 2. Wide Aerodynamic Disk Brake Ring (Aerobraking Collar)
+      const aeroRing = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 1.85, 0.22, 28, 1, false), goldMat);
+      aeroRing.position.y = 0.45;
+      model.add(aeroRing);
+
+      // Serrated Turbulator Zigzag Rim on Aerobraking Disk
+      const rimTorus = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.08, 12, 32), silverMat);
+      rimTorus.rotation.x = Math.PI / 2;
+      rimTorus.position.y = 0.45;
+      model.add(rimTorus);
+
+      // 3. Tall Cylindrical Top Coiled Helical Antenna Tower
+      const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.35, 20), silverMat);
+      tower.position.y = 1.2;
+      model.add(tower);
+
+      const helix = new THREE.Mesh(new THREE.TorusKnotGeometry(0.28, 0.035, 48, 8, 2, 5), cyanAccentMat);
+      helix.position.y = 1.95;
+      model.add(helix);
+
+      // 4. Shock-Absorbing Bottom Torus Landing Ring + Support Struts
+      const landingRing = new THREE.Mesh(new THREE.TorusGeometry(1.55, 0.16, 14, 28), darkMat);
+      landingRing.rotation.x = Math.PI / 2;
+      landingRing.position.y = -1.65;
+      model.add(landingRing);
+
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.15), silverMat);
+        strut.position.set(Math.cos(a) * 1.25, -1.15, Math.sin(a) * 1.25);
+        strut.rotation.z = -Math.cos(a) * 0.35;
+        strut.rotation.x = Math.sin(a) * 0.35;
+        model.add(strut);
+      }
+
+      // 5. Deployed GZU Soil Drill Arm & Ejected Titanium Camera Lens Cap on Floor!
+      const drillArm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.18, 0.24), copperEngineMat);
+      drillArm.position.set(1.45, -1.35, 0);
+      drillArm.rotation.z = -0.35;
+      model.add(drillArm);
+
+      const lensCap = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.12, 16, 1, false, 0, Math.PI), whiteMat);
+      lensCap.position.set(0.8, -1.75, 1.35);
+      model.add(lensCap);
+
+    } else if (type === 'huygens') {
+      // =====================================================================
+      // ESA/NASA HUYGENS TITAN ATMOSPHERIC & SURFACE PROBE
+      // =====================================================================
+      // 1. Saucer-Shaped Aluminum Honeycomb Descent Module Kernel
+      const domeTop = new THREE.Mesh(new THREE.SphereGeometry(1.45, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), goldMat);
+      domeTop.position.y = -0.2;
+      model.add(domeTop);
+
+      // 2. Aerodynamic Decelerator Skirt Collar
+      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(2.35, 1.55, 0.55, 32), silverMat);
+      skirt.position.y = -0.35;
+      model.add(skirt);
+
+      // 3. Top Aft Cover & Parachute Mortar Deployment Box
+      const topBox = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 0.45, 20), whiteMat);
+      topBox.position.y = 0.85;
+      model.add(topBox);
+
+      // 3 Parachute Bridle Suspension Ribs
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI * 2) / 3;
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2), cyanAccentMat);
+        rib.position.set(Math.cos(a) * 0.65, 1.35, Math.sin(a) * 0.65);
+        rib.rotation.z = Math.cos(a) * 0.35;
+        rib.rotation.x = -Math.sin(a) * 0.35;
+        model.add(rib);
+      }
+
+      // 4. DISR Optical Imager & Surface Lamp Pod + Bottom SSP Penetrometer Spike
+      const disrPod = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.38, 0.45), darkMat);
+      disrPod.position.set(1.42, -0.35, 0);
+      model.add(disrPod);
+
+      const penetrometer = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.02, 0.85, 12), cyanAccentMat);
+      penetrometer.position.set(0, -1.25, 0);
+      model.add(penetrometer);
+
+    } else if (type === 'philae') {
+      // =====================================================================
+      // ESA/NASA PHILAE COMET 67P LANDER (Tripod Ice-Screw Gear & Solar Hood)
+      // =====================================================================
+      // 1. Hexagonal Carbon-Fiber Instrument Body + Photovoltaic Solar Hood
+      const bodyCore = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 1.35, 6), goldMat);
+      bodyCore.position.y = 0.25;
+      model.add(bodyCore);
+
+      const solarHood = new THREE.Mesh(new THREE.CylinderGeometry(1.22, 1.22, 1.15, 6, 1, true, 0, Math.PI * 1.5), solarMat);
+      solarHood.position.y = 0.32;
+      model.add(solarHood);
+
+      // Top Cold-Gas ADS Thruster Nozzle & CONSERT Antennas
+      const adsNozzle = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.45, 14), silverMat);
+      adsNozzle.position.y = 1.15;
+      model.add(adsNozzle);
+
+      // SD2 Comet Surface Drill Tower on Open Balcony
+      const sd2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.65, 12), copperEngineMat);
+      sd2.position.set(0.75, 0.15, 0.65);
+      model.add(sd2);
+
+      // 3 Long Articulated Tripod Landing Gear Legs with Twin Ice-Screw Footpads
+      const girderRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 10, 20), titaniumMat);
+      girderRing.rotation.x = Math.PI / 2;
+      girderRing.position.y = -0.55;
+      model.add(girderRing);
+
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI * 2) / 3;
+        const legGroup = new THREE.Group();
+        legGroup.rotation.y = a;
+
+        const legBoom = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 2.65, 10), darkMat);
+        legBoom.position.set(1.55, -1.15, 0);
+        legBoom.rotation.z = Math.PI / 3.2;
+        legGroup.add(legBoom);
+
+        // Twin circular ice-screw pads per foot
+        for (let p = -1; p <= 1; p += 2) {
+          const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.12, 14), silverMat);
+          pad.position.set(2.55, -1.78, p * 0.28);
+          legGroup.add(pad);
+
+          const screw = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 8), cyanAccentMat);
+          screw.rotation.x = Math.PI;
+          screw.position.set(2.55, -1.92, p * 0.28);
+          legGroup.add(screw);
+        }
+
+        model.add(legGroup);
       }
 
     } else if (type === 'skycrane') {
-      // --- Curiosity Sky Crane Rocket Descent Stage ---
-      // Structural octagonal chassis ring
-      const frameGeo = new THREE.CylinderGeometry(2.3, 2.3, 0.4, 8);
-      const frame = new THREE.Mesh(frameGeo, silverMat);
-      frame.position.y = 0.2;
+      // =====================================================================
+      // MARS SCIENCE LABORATORY / PERSEVERANCE SKY CRANE DESCENT STAGE
+      // =====================================================================
+      const frame = new THREE.Mesh(new THREE.CylinderGeometry(2.25, 2.25, 0.45, 8), silverMat);
+      frame.position.y = 0.25;
       model.add(frame);
 
-      // Central hydrazine propellant spherical tanks
       for (let i = 0; i < 3; i++) {
         const angle = (i * Math.PI * 2) / 3;
-        const tankGeo = new THREE.SphereGeometry(0.55, 14, 14);
-        const tank = new THREE.Mesh(tankGeo, goldMat);
-        tank.position.set(Math.cos(angle) * 0.9, 0.3, Math.sin(angle) * 0.9);
+        const tank = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 18), goldMat);
+        tank.position.set(Math.cos(angle) * 0.92, 0.35, Math.sin(angle) * 0.92);
         model.add(tank);
       }
 
-      // 4 Canted Mars Landing Engine (MLE) thruster pods
+      // 4 Outrigger Thruster Pods with 8 Canted Mars Landing Engines (MLE)
       for (let i = 0; i < 4; i++) {
         const angle = (i * Math.PI) / 2;
-        const podGeo = new THREE.BoxGeometry(0.6, 0.5, 0.6);
-        const pod = new THREE.Mesh(podGeo, darkMat);
-        pod.position.set(Math.cos(angle) * 2.2, -0.05, Math.sin(angle) * 2.2);
+        const pod = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.55, 0.7), darkMat);
+        pod.position.set(Math.cos(angle) * 2.2, 0.0, Math.sin(angle) * 2.2);
         model.add(pod);
 
-        // Twin canted copper nozzles per pod
         for (let j = -1; j <= 1; j += 2) {
-          const nozzleGeo = new THREE.ConeGeometry(0.22, 0.7, 12, 1, true);
-          const nozzle = new THREE.Mesh(nozzleGeo, copperEngineMat);
+          const nozzle = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.78, 14, 1, true), copperEngineMat);
           nozzle.position.set(
-            Math.cos(angle) * 2.2 + (angle === 0 || angle === Math.PI ? 0 : j * 0.2),
-            -0.6,
-            Math.sin(angle) * 2.2 + (angle === 0 || angle === Math.PI ? j * 0.2 : 0)
+            Math.cos(angle) * 2.2 + (angle === 0 || angle === Math.PI ? 0 : j * 0.22),
+            -0.62,
+            Math.sin(angle) * 2.2 + (angle === 0 || angle === Math.PI ? j * 0.22 : 0)
           );
-          nozzle.rotation.z = Math.cos(angle) * 0.35;
-          nozzle.rotation.x = -Math.sin(angle) * 0.35;
+          nozzle.rotation.z = Math.cos(angle) * 0.38;
+          nozzle.rotation.x = -Math.sin(angle) * 0.38;
           model.add(nozzle);
         }
       }
 
+      // Bridle Reel Housing & Triple Nylon Umbilical Tethers
+      const reel = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.35, 16), cyanAccentMat);
+      reel.position.y = -0.15;
+      model.add(reel);
+
     } else if (type === 'stage') {
-      // --- Saturn V S-IVB Third Stage Rocket (Apollo 13 S-IVB) ---
-      // Ribbed white rocket cylinder
-      const stageGeo = new THREE.CylinderGeometry(1.7, 1.7, 3.2, 24);
-      const stage = new THREE.Mesh(stageGeo, whiteMat);
-      stage.position.y = 0.2;
+      // =====================================================================
+      // SATURN V S-IVB / CENTAUR UPPER ROCKET STAGE
+      // =====================================================================
+      const stage = new THREE.Mesh(new THREE.CylinderGeometry(1.62, 1.62, 3.1, 32), whiteMat);
+      stage.position.y = 0.25;
       model.add(stage);
 
-      // Instrument Unit & Black Roll-Pattern Interstage Band
-      const bandGeo = new THREE.CylinderGeometry(1.73, 1.73, 0.45, 24);
-      const band = new THREE.Mesh(bandGeo, darkMat);
-      band.position.y = -0.7;
-      model.add(band);
+      // Authentic Black Roll-Pattern Quadrant Band & Aft Interstage
+      const band1 = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.55, 32), darkMat);
+      band1.position.y = -0.65;
+      model.add(band1);
 
-      // Forward dome
-      const domeGeo = new THREE.SphereGeometry(1.68, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.35);
-      const dome = new THREE.Mesh(domeGeo, silverMat);
+      const band2 = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.35, 32), goldMat);
+      band2.position.y = 1.45;
+      model.add(band2);
+
+      // Forward Hemispherical Liquid Hydrogen Tank Dome
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(1.6, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.38), silverMat);
       dome.position.y = 1.75;
       model.add(dome);
 
-      // Massive J-2 rocket engine nozzle
-      const j2Geo = new THREE.ConeGeometry(1.05, 1.5, 20, 1, true);
-      const j2 = new THREE.Mesh(j2Geo, copperEngineMat);
-      j2.position.y = -1.9;
+      // Rocketdyne J-2 Cryogenic Engine Bell + LOX Feedline Ducts + APS Thruster Pods
+      const j2 = new THREE.Mesh(new THREE.ConeGeometry(1.02, 1.55, 24, 2, true), copperEngineMat);
+      j2.position.y = -1.85;
       j2.rotation.x = Math.PI;
       model.add(j2);
 
+      for (let p = -1; p <= 1; p += 2) {
+        const aps = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.75, 0.35), darkMat);
+        aps.position.set(p * 1.68, -0.85, 0);
+        model.add(aps);
+      }
+
     } else if (type === 'probe') {
-      // --- Lunar / Planetary Probe (Surveyor 1, Luna 9) ---
-      // Triangular mast base
-      const bodyGeo = new THREE.CylinderGeometry(1.2, 1.5, 1.2, 3);
-      const body = new THREE.Mesh(bodyGeo, goldMat);
-      body.position.y = -0.3;
-      model.add(body);
+      // =====================================================================
+      // DEEP SPACE ASTEROID / LUNAR ORBITER & LANDER (NEAR Shoemaker / Prospector)
+      // =====================================================================
+      const bus = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 1.55, 8), goldMat);
+      bus.position.y = -0.15;
+      model.add(bus);
 
-      // Solar panel mast
-      const mastGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.0);
-      const mast = new THREE.Mesh(mastGeo, silverMat);
-      mast.position.set(0, 0.9, 0);
-      model.add(mast);
-
-      // Planar solar array
-      const panelGeo = new THREE.BoxGeometry(1.5, 0.04, 0.9);
-      const panel = new THREE.Mesh(panelGeo, darkMat);
-      panel.position.set(0, 1.7, 0);
-      panel.rotation.x = Math.PI / 4;
-      model.add(panel);
-
-      // High-gain dish antenna
-      const dishGeo = new THREE.CylinderGeometry(0.65, 0.1, 0.25, 16);
-      const dish = new THREE.Mesh(dishGeo, silverMat);
-      dish.position.set(0.6, 1.3, -0.4);
-      dish.rotation.z = Math.PI / 3;
+      // High-Gain 1.5m Parabolic Dish Antenna on Top
+      const dish = new THREE.Mesh(new THREE.SphereGeometry(1.15, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.35), whiteMat);
+      dish.rotation.x = Math.PI;
+      dish.position.y = 1.05;
       model.add(dish);
 
-      // 3 Tripod landing legs
-      for (let i = 0; i < 3; i++) {
-        const angle = (i * Math.PI * 2) / 3;
-        const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 2.2);
-        const leg = new THREE.Mesh(legGeo, silverMat);
-        leg.position.set(Math.cos(angle) * 1.5, -1.1, Math.sin(angle) * 1.5);
-        leg.rotation.x = Math.sin(angle) * 0.45;
-        leg.rotation.z = -Math.cos(angle) * 0.45;
-        model.add(leg);
+      const feedHorn = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.12, 0.65, 12), cyanAccentMat);
+      feedHorn.position.y = 1.15;
+      model.add(feedHorn);
 
-        const footGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 12);
-        const foot = new THREE.Mesh(footGeo, goldMat);
-        foot.position.set(Math.cos(angle) * 2.2, -1.8, Math.sin(angle) * 2.2);
-        model.add(foot);
+      // 4 Cruciform Gallium-Arsenide Solar Panel Wings (NEAR Shoemaker architecture)
+      for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI) / 2 + Math.PI / 4;
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 0.92), solarMat);
+        wing.position.set(Math.cos(a) * 1.85, 0.35, Math.sin(a) * 1.85);
+        wing.rotation.y = -a;
+        wing.rotation.z = 0.22;
+        model.add(wing);
+      }
+
+      // 3 Instrument / Magnetometer Booms (Lunar Prospector & XGRS)
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI * 2) / 3;
+        const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.8), silverMat);
+        boom.position.set(Math.cos(a) * 1.35, -0.95, Math.sin(a) * 1.35);
+        boom.rotation.z = -Math.cos(a) * 0.52;
+        boom.rotation.x = Math.sin(a) * 0.52;
+        model.add(boom);
       }
 
     } else {
-      // --- Shield & Backshell (Perseverance / Curiosity) ---
-      // Aerodynamic conical backshell
-      const backshellGeo = new THREE.ConeGeometry(2.3, 1.6, 24);
-      const backshell = new THREE.Mesh(backshellGeo, whiteMat);
-      backshell.position.y = 0.3;
+      // =====================================================================
+      // PLANETARY AEROSHELL, BACKSHELL & ABLATIVE HEAT SHIELD (Perseverance / Galileo)
+      // =====================================================================
+      const backshell = new THREE.Mesh(new THREE.ConeGeometry(2.25, 1.55, 32), whiteMat);
+      backshell.position.y = 0.35;
       model.add(backshell);
 
-      // Curved ablative heat shield base
-      const heatShieldGeo = new THREE.SphereGeometry(2.35, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.32);
-      const heatShield = new THREE.Mesh(heatShieldGeo, darkMat);
-      heatShield.position.y = -0.5;
+      const heatShield = new THREE.Mesh(new THREE.SphereGeometry(2.3, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.34), copperEngineMat);
+      heatShield.position.y = -0.45;
       heatShield.rotation.x = Math.PI;
       model.add(heatShield);
 
-      // Supersonic parachute attachment bridle ring
-      const bridleGeo = new THREE.TorusGeometry(0.3, 0.05, 8, 16);
-      const bridle = new THREE.Mesh(bridleGeo, cyanAccentMat);
-      bridle.position.y = 1.15;
+      const bridle = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.06, 12, 24), cyanAccentMat);
+      bridle.position.y = 1.18;
       bridle.rotation.x = Math.PI / 2;
       model.add(bridle);
     }
@@ -819,7 +1151,6 @@ class SpaceSceneManager {
     this.miniModelGroup.add(model);
     this.currentMiniModel = model;
 
-    // Reset controls target & camera orientation
     if (this.miniControls) {
       this.miniControls.target.set(0, -0.1, 0);
       this.miniControls.update();
@@ -829,8 +1160,6 @@ class SpaceSceneManager {
   // --- Interaction & Events ---
   bindEvents() {
     window.addEventListener('resize', () => this.onResize());
-
-    // Raycast Pin Hover & Click
     this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
     this.container.addEventListener('click', (e) => this.onClick(e));
   }
@@ -850,7 +1179,6 @@ class SpaceSceneManager {
     this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-    // Raycast on pins
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const hitMeshes = [];
     this.pins.forEach(p => {
@@ -866,7 +1194,7 @@ class SpaceSceneManager {
       if (match && this.hoveredArtifact !== match.pin.artifact) {
         this.hoveredArtifact = match.pin.artifact;
         this.container.style.cursor = 'pointer';
-        window.SpaceAudio.playTelemetryPing(1400, 0.04);
+        if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1400, 0.04);
         if (window.onArtifactHover) {
           window.onArtifactHover(this.hoveredArtifact, e.clientX, e.clientY);
         }
@@ -904,12 +1232,10 @@ class SpaceSceneManager {
   animate() {
     requestAnimationFrame(() => this.animate());
 
-    // Auto slow planet rotation if idle
     if (this.isAutoRotating) {
       this.planetGroup.rotation.y += this.autoRotateSpeed;
     }
 
-    // Pulse animation on beacon rings
     const time = performance.now() * 0.003;
     this.pins.forEach(p => {
       p.group.children.forEach(child => {
@@ -921,7 +1247,6 @@ class SpaceSceneManager {
       });
     });
 
-    // Animate holographic mini-viewer model & controls
     if (this.miniControls) {
       this.miniControls.update();
     } else if (this.currentMiniModel) {

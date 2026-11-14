@@ -1,3 +1,12 @@
+/**
+ * Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment across the Solar System
+ * Verified Historical Database — Enriched with NASA History Series Monographs:
+ * - NASA SP-2024-4559 (Governing the Moon: A History)
+ * - NASA SP-2026-4239 (NASA's Discovery Program)
+ * - NASA SP-2022-4235 (A History of Near-Earth Objects Research)
+ * - NASA SP-2021-4705 (50 Years of Solar System Exploration)
+ */
+
 const ARTIFACTS = [
   {
     "id": "apollo-11",
@@ -22,8 +31,8 @@ const ARTIFACTS = [
     "quote_tr": "İnsan için küçük, insanlık için dev bir adım.",
     "quote_en": "That's one small step for man, one giant leap for mankind.",
     "quoteAuthor": "Neil Armstrong",
-    "story_tr": "20 Temmuz 1969'da Neil Armstrong ve Buzz Aldrin, 'Eagle' (Kartal) Ay Modülü ile Sessizlik Denizi'ne indi. Ay yüzeyinde 21 saat 36 dakika kaldılar ve 2 saat 31 dakika süren tarihi bir yürüyüş gerçekleştirdiler.\n\nDünya'ya geri dönebilmek için Ay Modülü iki parçaya ayrılacak şekilde tasarlanmıştı: Üstte astronotların bulunduğu Yükseliş Kademesi (Ascent Stage) ve alttaki İniş Kademesi (Descent Stage). İniş kademesi, roket motoru ve altın yaldızlı iniş ayaklarıyla birlikte yüzeyde kaldı ve yükseliş kademesi için bir fırlatma platformu işlevi gördü.\n\nAyrıca astronotların Yükseliş Kademesi'ni mümkün olduğunca hafifletmesi gerekiyordu. Ay'dan topladıkları paha biçilemez 21.5 kg taş ve regolit örneğine yer açmak ve yakıt tasarrufu sağlamak için kask kameralarını, taşınabilir yaşam destek sırt çantalarını (PLSS), ay botlarını (overshoes) ve dışkı/idrar torbalarını doğrudan ay yüzeyine fırlattılar.",
-    "story_en": "On July 20, 1969, Neil Armstrong and Buzz Aldrin landed in the Sea of Tranquility. To return home, the Eagle Lunar Module separated into two: the Ascent Stage blasted off, using the Descent Stage and its gold-foiled landing gear as a launch platform.\n\nTo offset the weight of 21.5 kg of lunar soil and rock samples, every spare gram had to be jettisoned. The astronauts tossed their portable life-support backpacks (PLSS), overshoes, Hasselblad film cameras, and waste bags directly onto the lunar dust before sealing the hatch.",
+    "story_tr": "20 Temmuz 1969'da Neil Armstrong ve Buzz Aldrin, 'Eagle' (Kartal) Ay Modülü ile Sessizlik Denizi'ne indi. Ay yüzeyinde 21 saat 36 dakika kaldılar ve 2 saat 31 dakika süren tarihi bir yürüyüş gerçekleştirdiler.\n\nDünya'ya geri dönebilmek için Ay Modülü iki parçaya ayrılacak şekilde tasarlanmıştı: Üstte astronotların bulunduğu Yükseliş Kademesi (Ascent Stage) ve alttaki İniş Kademesi (Descent Stage). İniş kademesi, roket motoru ve altın yaldızlı iniş ayaklarıyla birlikte yüzeyde kaldı ve yükseliş kademesi için bir fırlatma platformu işlevi gördü.\n\nAyrıca astronotların Yükseliş Kademesi'ni mümkün olduğunca hafifletmesi gerekiyordu. Ay'dan topladıkları paha biçilemez 21.5 kg taş ve regolit örneğine yer açmak ve yakıt tasarrufu sağlamak için kask kameralarını, taşınabilir yaşam destek sırt çantalarını (PLSS), ay botlarını (overshoes) ve dışkı/idrar torbalarını doğrudan ay yüzeyine fırlattılar.\n\n[Resmi Kaynak Notu — NASA SP-2024-4559 \"Governing the Moon\"]: 31 Aralık 2020 tarihinde yasalaşan \"One Small Step to Protect Human Heritage in Space Act\" ve Artemis Anlaşmaları (Bölüm 9) kapsamında, Sessizlik Denizi'ndeki Apollo 11 iniş kademesi, bilimsel deney paketleri ve ayak izleri insanlığın dokunulmaz kültür mirası koruma bölgesi ilan edilmiştir.",
+    "story_en": "On July 20, 1969, Neil Armstrong and Buzz Aldrin landed in the Sea of Tranquility. To return home, the Eagle Lunar Module separated into two: the Ascent Stage blasted off, using the Descent Stage and its gold-foiled landing gear as a launch platform.\n\nTo offset the weight of 21.5 kg of lunar soil and rock samples, every spare gram had to be jettisoned. The astronauts tossed their portable life-support backpacks (PLSS), overshoes, Hasselblad film cameras, and waste bags directly onto the lunar dust before sealing the hatch.\n\n[Official Monograph Citation — NASA SP-2024-4559 \"Governing the Moon\"]: Under the \"One Small Step to Protect Human Heritage in Space Act\" (2020) and Section 9 of the Artemis Accords, Tranquility Base and its discarded Apollo 11 hardware are legally designated as protected outer space heritage zones.",
     "whyAbandoned_tr": "Yörüngeye dönüş mekaniği gereği: Yükseliş kademesinin yerçekimini yenip komuta modülüyle kenetlenebilmesi için ağır iniş motoru, iniş ayakları, yakıt tankları ve fazla ekipmanlar feda edilmek zorundaydı.",
     "whyAbandoned_en": "Orbital mechanics constraint: The ascent stage needed to shed mass to escape lunar gravity and dock with Columbia. Heavy landing engines, legs, and spent tanks acted as a sacrificial launchpad.",
     "currentCondition_tr": "Ay'da rüzgar, su veya atmosferik erozyon bulunmadığı için metal iskelet ve iniş ayakları sapasağlam duruyor. Ancak 55 yılı aşkın süredir Güneş'in filtresiz morötesi (UV) ışınımı ve kozmik radyasyon nedeniyle altın yalıtım folyoları (Kapton) solmuş ve mikrometeorit çarpmalarıyla delinmiş durumda.",
@@ -483,8 +492,8 @@ const ARTIFACTS = [
     "quote_tr": "Ay'a gidip onu kendi çekicimle inceleyememek hayatımın en büyük hayal kırıklığıydı.",
     "quote_en": "Not going to the Moon and banging on it with my own hammer has been the biggest disappointment in life.",
     "quoteAuthor": "Dr. Eugene Shoemaker (Gökbilimci)",
-    "story_tr": "Dr. Eugene Shoemaker, Dünya'daki kraterlerin meteor çarpmalarıyla oluştuğunu kanıtlayan ve Apollo astronotlarına jeoloji eğitimi veren efsanevi bilim insanıydı. En büyük hayali Ay'a bizzat ayak basmaktı, ancak Addison hastalığı nedeniyle astronot seçilemedi. 1997'de Avustralya'da bir göktaşı krateri araştırırken trafik kazasında hayatını kaybetti.\n\nNASA ve Celestis şirketi, onun mirasını onurlandırmak için küçük bir pirinç kapsül içerisine Shoemaker'ın yakılmış küllerinden 28 gram (1 ons) yerleştirdi. Kapsülün üzerine Hale-Bopp kuyruklu yıldızının resmi ve Shakespeare'in Romeo ve Juliet'inden dizeler kazındı.\n\nBu kapsül, Ay'ın kutuplarında su buzu arayan Lunar Prospector uzay aracına monte edildi. 31 Temmuz 1999'da araç, görevini tamamlayarak Güney Kutbu'ndaki karanlık bir kratere saatte 6.000 km hızla çarptırıldı. Bugün o krater 'Shoemaker Krateri' olarak anılmakta ve Dr. Shoemaker Ay'da yatan ilk ve tek insan olma unvanını taşımaktadır.",
-    "story_en": "Dr. Eugene Shoemaker trained Apollo astronauts in field geology. Barred from spaceflight due to medical conditions, he dreamed of reaching the Moon. After his untimely death in 1997, 28 grams of his cremated ashes were placed aboard NASA's Lunar Prospector inside a brass capsule inscribed with verses from Romeo and Juliet. On July 31, 1999, the craft was deliberately crashed into a permanently shadowed south pole crater—now named Shoemaker Crater. He remains the only human buried on the Moon.",
+    "story_tr": "Dr. Eugene Shoemaker, Dünya'daki kraterlerin meteor çarpmalarıyla oluştuğunu kanıtlayan ve Apollo astronotlarına jeoloji eğitimi veren efsanevi bilim insanıydı. En büyük hayali Ay'a bizzat ayak basmaktı, ancak Addison hastalığı nedeniyle astronot seçilemedi. 1997'de Avustralya'da bir göktaşı krateri araştırırken trafik kazasında hayatını kaybetti.\n\nNASA ve Celestis şirketi, onun mirasını onurlandırmak için küçük bir pirinç kapsül içerisine Shoemaker'ın yakılmış küllerinden 28 gram (1 ons) yerleştirdi. Kapsülün üzerine Hale-Bopp kuyruklu yıldızının resmi ve Shakespeare'in Romeo ve Juliet'inden dizeler kazındı.\n\nBu kapsül, Ay'ın kutuplarında su buzu arayan Lunar Prospector uzay aracına monte edildi. 31 Temmuz 1999'da araç, görevini tamamlayarak Güney Kutbu'ndaki karanlık bir kratere saatte 6.000 km hızla çarptırıldı. Bugün o krater 'Shoemaker Krateri' olarak anılmakta ve Dr. Shoemaker Ay'da yatan ilk ve tek insan olma unvanını taşımaktadır.\n\n[Resmi Kaynak Notu — NASA SP-2022-4235 \"A History of Near-Earth Objects Research\" & SP-2026-4239 \"Discovery Program\"]: NASA'nın 3. Discovery görevi olan Lunar Prospector, gezegen jeolojisinin kurucusu ve Apollo astronotlarının eğitmeni Dr. Eugene Shoemaker'ın küllerini taşıyan polikarbonat kapsülle birlikte 31 Temmuz 1999'da Shoemaker Krateri'ne çarptırılmıştır.",
+    "story_en": "Dr. Eugene Shoemaker trained Apollo astronauts in field geology. Barred from spaceflight due to medical conditions, he dreamed of reaching the Moon. After his untimely death in 1997, 28 grams of his cremated ashes were placed aboard NASA's Lunar Prospector inside a brass capsule inscribed with verses from Romeo and Juliet. On July 31, 1999, the craft was deliberately crashed into a permanently shadowed south pole crater—now named Shoemaker Crater. He remains the only human buried on the Moon.\n\n[Official Monograph Citation — NASA SP-2022-4235 & SP-2026-4239]: Selected as NASA's third Discovery Program mission, Lunar Prospector carried a polycarbonate capsule containing the ashes of astrogeology founder Dr. Eugene Shoemaker into Shoemaker Crater on July 31, 1999.",
     "whyAbandoned_tr": "Kutup kraterlerindeki gölgeli buz tabakasından buhar bulutu çıkarmak ve spektrometrelerle su aramak için kontrollü çarpma gerçekleştirildi.",
     "whyAbandoned_en": "Controlled suicide impact into a permanently shadowed crater to liberate potential water-ice plumes for Earth-based spectroscopy.",
     "currentCondition_tr": "Araç ve pirinç kapsül çarpma anında parçalanmıştır; küller Shoemaker Krateri'nin ebedi gölgesinde lunar regolit ile karışmıştır.",
@@ -631,8 +640,8 @@ const ARTIFACTS = [
     "quote_tr": "Mars'ta tekerlek izleri bırakan ilk insanlar değiliz belki, ama ilk makineler biziz.",
     "quote_en": "Sojourner is driving across the red dirt... the first mobile vehicle on another planet.",
     "quoteAuthor": "Donna Shirley (NASA Mars Keşif Program Müdürü)",
-    "story_tr": "4 Temmuz 1997 Amerikan Bağımsızlık Günü'nde Mars Pathfinder, dev hava yastıklarıyla Ares Vallis'e zıplayarak indi. İniş platformunun açılan yaprakları içinden 10.6 kilogram ağırlığında, altı tekerlekli minicik bir robot çıktı: Sojourner (adını kölelik karşıtı kadın hakları savunucusu Sojourner Truth'tan almıştır).\n\nSojourner, başka bir gezegende hareket eden İLK tekerlekli araç oldu. Etrafındaki kayalara 'Yogi', 'Barnacle Bill' ve 'Scooby-Doo' gibi eğlenceli isimler vererek alfa proton röntgen spektrometresiyle kimyasal analizler yaptı.\n\nİstasyon, ünlü gökbilimci Carl Sagan'ın anısına 'Carl Sagan Hatıra İstasyonu' olarak adlandırıldı. 83 gün sonra ana istasyonun bataryası Mars kışının dondurucu soğuğunda tükendi. Ana istasyon sustuğunda Sojourner'ın otonom acil durum protokolünü devreye sokarak yardım beklemek üzere istasyonun etrafında dönüp durduğu tahmin edilmektedir.",
-    "story_en": "Mars Pathfinder bounced onto Ares Vallis cushioned by giant airbags on July 4, 1997. It released Sojourner, a 10.6 kg microwave-sized rover that became the first wheeled vehicle to drive on another planet. After 83 days of science that captured global headlines, the lander's battery expired during the freezing martian winter, leaving Sojourner circling its silent mothership.",
+    "story_tr": "4 Temmuz 1997 Amerikan Bağımsızlık Günü'nde Mars Pathfinder, dev hava yastıklarıyla Ares Vallis'e zıplayarak indi. İniş platformunun açılan yaprakları içinden 10.6 kilogram ağırlığında, altı tekerlekli minicik bir robot çıktı: Sojourner (adını kölelik karşıtı kadın hakları savunucusu Sojourner Truth'tan almıştır).\n\nSojourner, başka bir gezegende hareket eden İLK tekerlekli araç oldu. Etrafındaki kayalara 'Yogi', 'Barnacle Bill' ve 'Scooby-Doo' gibi eğlenceli isimler vererek alfa proton röntgen spektrometresiyle kimyasal analizler yaptı.\n\nİstasyon, ünlü gökbilimci Carl Sagan'ın anısına 'Carl Sagan Hatıra İstasyonu' olarak adlandırıldı. 83 gün sonra ana istasyonun bataryası Mars kışının dondurucu soğuğunda tükendi. Ana istasyon sustuğunda Sojourner'ın otonom acil durum protokolünü devreye sokarak yardım beklemek üzere istasyonun etrafında dönüp durduğu tahmin edilmektedir.\n\n[Resmi Kaynak Notu — NASA SP-2026-4239 \"NASA's Discovery Program\"]: NASA Yöneticisi Daniel Goldin'in \"Daha Hızlı, Daha İyi, Daha Ucuz\" (Faster, Better, Cheaper) vizyonuyla başlatılan Discovery Programı'nın ilk fırlatılan görevi olan Mars Pathfinder, 24 loblu dev hava yastıklarıyla Ares Vallis taşkın yatağına inerek gezegen keşfinde yeni bir çağ açmıştır.",
+    "story_en": "Mars Pathfinder bounced onto Ares Vallis cushioned by giant airbags on July 4, 1997. It released Sojourner, a 10.6 kg microwave-sized rover that became the first wheeled vehicle to drive on another planet. After 83 days of science that captured global headlines, the lander's battery expired during the freezing martian winter, leaving Sojourner circling its silent mothership.\n\n[Official Monograph Citation — NASA SP-2026-4239 \"NASA's Discovery Program\"]: As the pioneering flight of NASA's Discovery Program, Mars Pathfinder validated the 24-lobe airbag landing architecture in Ares Vallis and deployed the 10.6 kg Sojourner microrover.",
     "whyAbandoned_tr": "Düşük maliyetli teknoloji gösteri aracıydı; şarj edilebilir pilleri derin Mars kışında donarak iflas etti.",
     "whyAbandoned_en": "Technology demonstration mission; battery succumbed to repeated cryogenic thermal cycles during martian winter.",
     "currentCondition_tr": "Pathfinder'ın hava yastığı kalıntıları ve Sojourner roverı Ares Vallis taşkın ovasında 'Yogi' kayasının yakınlarında donmuş vaziyettedir.",
@@ -978,7 +987,7 @@ const ARTIFACTS = [
         "desc_tr": "Ingenuity 26. uçuşunda, Perseverance'ın Mars atmosferine giriş sırasında saatte binlerce km hızla ayrılan sırt kapağının ve süpersonik paraşütünün parçalanmış enkazını gökyüzünden fotoğrafladı.",
         "desc_en": "Ingenuity captured detailed aerial reconnaissance of Perseverance's shattered backshell and supersonic parachute wreckage during Flight 26."
       }
-    ],
+    ]
   },
   {
     "id": "ingenuity-helicopter",
@@ -1041,6 +1050,442 @@ const ARTIFACTS = [
       "desc_tr": "Ingenuity'nin güneş panelinin altındaki kablolara, Orville ve Wilbur Wright'ın 1903 yılında uçurduğu tarihin ilk motorlu uçağı 'Flyer'ın kanadından bir kumaş parçacığı bantlanmıştı. Bu kumaş bugün Mars'ın Valinor Tepeleri'nde ebediyen durmaktadır.",
       "desc_en": "Taped beneath Ingenuity's solar panel is a postage-stamp-sized swatch of muslin fabric from the wing of the 1903 Wright Brothers Flyer, uniting the first powered flight on Earth with the first powered flight on Mars."
     }
+  },
+  {
+    "id": "venera-7",
+    "body": "venus",
+    "name_tr": "Venera 7 İniş Sondası: Başka Bir Gezegene Tarihin İlk Yumuşak İnişi",
+    "name_en": "Venera 7 Descent Capsule: Humanity's First Soft Landing on Another Planet",
+    "mission": "Venera 7 (SSCB / IKI)",
+    "date": "15 Aralık 1970",
+    "date_en": "December 15, 1970",
+    "decade": "1970",
+    "category": "lander",
+    "category_tr": "Yüksek Basınç Sondası",
+    "category_en": "High-Pressure Capsule",
+    "coords": {
+      "lat": -5,
+      "lng": 351
+    },
+    "locationName": "Guinevere Planitia (Venüs Ekvator Düzlüğü)",
+    "modelType": "venera",
+    "headline_tr": "90 Atmosfer Basınç ve 475°C Cehennemden Dünya'ya Gönderilen İlk Yüzey Sinyali",
+    "headline_en": "The First Radio Signal Transmitted from Another Planet's Surface Under 90 Atmospheres",
+    "quote_tr": "Venüs yüzeyi kurşunu eritecek kadar sıcak ve bir denizaltıyı 900 metre derinde ezecek kadar ağır bir atmosfere sahip.",
+    "quote_en": "The surface of Venus is hot enough to melt lead, with a crushing pressure equivalent to 900 meters beneath Earth's oceans.",
+    "quoteAuthor": "NASA SP-2021-4705 (50 Years of Solar System Exploration)",
+    "story_tr": "Önceki Venera 4, 5 ve 6 sondaları Venüs'ün korkunç atmosfer basıncı nedeniyle henüz yere değmeden ezilmişti. Bunun üzerine mühendisler Venera 7'yi 180 atmosfer basınca ve 540°C sıcaklığa dayanabilecek küresel titanyum zırhla ürettiler.\n\n15 Aralık 1970'te Venera 7, sülfürik asit bulutlarını yarıp geçti. İnişin son anlarında paraşütü kısmen yırtıldı ve yüzeye 16.5 m/s hızla sertçe çarparak yan yattı. İlk başta sustuğu sanıldı; ancak manyetik bantların detaylı analizinde sondanın yüzeyden 23 dakika boyunca zayıf bir sıcaklık telemetrisi gönderdiği keşfedildi (475°C ± 20°C). Bu, insanlığın başka bir gezegenin yüzeyinden aldığı İLK veriydi.",
+    "story_en": "After earlier probes were crushed mid-air, Venera 7 was forged from a solid titanium pressure hull rated to 180 bar. On December 15, 1970, its reefed parachute partially tore during final descent, causing a 16.5 m/s impact in Guinevere Planitia. Rolling onto its side, its antenna transmitted a faint signal for 23 minutes—recording a surface temperature of 475°C and marking humanity's first soft landing on another planet.",
+    "whyAbandoned_tr": "Tek yönlü atmosferik dalış sondası olarak tasarlandı; aşırı yüksek sıcaklık (475°C) nedeniyle iç elektronik devreleri ve gümüş-çinko pilleri 23 dakika sonra eriyerek sustu.",
+    "whyAbandoned_en": "One-way atmospheric entry capsule; extreme 475°C ambient heat overwhelmed its internal thermal insulation after 23 minutes on the surface.",
+    "currentCondition_tr": "Küresel titanyum basınç gövdesi erime noktası (1,668°C) Venüs sıcaklığının çok üzerinde olduğu için hala Guinevere Planitia bazaltlarında yan yatmış halde durmaktadır; dış yalıtım ve paraşüt kalıntıları süperkritik karbondioksit atmosferinde kömürleşmiştir.",
+    "currentCondition_en": "Its spherical titanium pressure vessel (melting point 1,668°C) remains intact on its side in Guinevere Planitia, though external cabling and parachute fabric carbonized immediately.",
+    "discardedItems": [
+      "Venera 7 Küresel Titanyum Basınç Kapsülü (490 kg)",
+      "Darbe Emişli Alt Halka ve Kırılmış Helisel Anten",
+      "Kömürleşmiş Fiberglas-Nitron Fren Paraşütü Kalıntıları",
+      "Platin Dirençli Termometre ve Aneroid Barometre Sensörleri"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "490 kg (iniş kapsülü)",
+      "powerSource": "Kurşun-Çinko Akümülatör (önceden şarjlı)",
+      "activeDuration": "35 dk atmosfer + 23 dk yüzey yayını",
+      "coordinatesReadable": "5°00' G, 351°00' D"
+    },
+    "audioSnippet": "[Venera 7 Faint Carrier Telemetry — 475 Degrees Celsius Confirmed]",
+    "realPhotos": [
+      {
+        "title_tr": "NASA Magellan Radar Haritasında Venüs Yüzeyi",
+        "title_en": "NASA Magellan Radar Map of Venusian Plains",
+        "catalogId": "NASA PIA00271",
+        "instrument": "Magellan Synthetic Aperture Radar (SAR)",
+        "url": "assets/photos/venera_magellan.jpg",
+        "desc_tr": "NASA Magellan uydusunun yoğun bulutları radarla delerek görüntülediği Venüs volkanik düzlükleri ve Venera iniş havzası.",
+        "desc_en": "Magellan radar imagery revealing the volcanic plains and tectonic ridges of Venus beneath its opaque sulfuric clouds."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "🎖️ TİTANYUM ZIRH İMZA PLAKETİ",
+      "badge_en": "🎖️ TITANIUM PRESSURE HULL INSIGNIA PENNANT",
+      "title_tr": "Kurşunun Eridiği Yüzeyde Bükülmeyen Metal Anıt",
+      "title_en": "An Indestructible Titanium Time Capsule in a Lead-Melting World",
+      "desc_tr": "Venera 7'nin küresel zırhının içine yerleştirilen beşgen metal plaket, dışarıdaki 90 atmosferlik ezici basınca ve 475°C cehennem sıcağına rağmen titanyum küre içinde mühürlü olarak korunmaktadır.",
+      "desc_en": "Sealed inside the high-strength titanium sphere rests a pentagonal commemorative pennant that survived the 90-bar crushing atmosphere."
+    }
+  },
+  {
+    "id": "pioneer-venus-day",
+    "body": "venus",
+    "name_tr": "NASA Pioneer Venus \"Day Probe\": İniş Takımı Olmadan Yüzeyde Hayatta Kalan Sonda",
+    "name_en": "NASA Pioneer Venus \"Day Probe\": The Atmospheric Probe That Refused to Die on Impact",
+    "mission": "Pioneer Venus Multiprobe (NASA ARC)",
+    "date": "9 Aralık 1978",
+    "date_en": "December 9, 1978",
+    "decade": "1970",
+    "category": "probe",
+    "category_tr": "Atmosferik Küre Sondası",
+    "category_en": "Atmospheric Spherical Probe",
+    "coords": {
+      "lat": -31.3,
+      "lng": 317
+    },
+    "locationName": "Theia Mons Güney Düzlükleri (Venüs)",
+    "modelType": "probe",
+    "headline_tr": "Yere Çarptığında Parçalanması Beklenirken 67 Dakika Boyunca Yüzeyden Yayın Yapan NASA Mucizesi",
+    "headline_en": "Designed Only for Atmospheric Descent, Yet Transmitted from the Venusian Surface for 67 Minutes",
+    "quote_tr": "Hiçbir iniş ayağı veya paraşütü olmamasına rağmen sondamız Venüs yüzeyine çarptıktan sonra 67 dakika boyunca veri göndermeye devam etti.",
+    "quote_en": "With no parachute or landing legs, our Day Probe hit the surface of Venus and astonishingly continued transmitting for 67 minutes.",
+    "quoteAuthor": "Colin & Hall, NASA Ames Research Center (NASA SP-2021-4705)",
+    "story_tr": "NASA'nın 1978 Pioneer Venus Multiprobe görevi, ana taşıyıcı (Bus) ve 4 atmosfer sondasından (1 Büyük Sonda + 3 Küçük Sonda: North, Night ve Day) oluşuyordu. Küçük sondaların hiçbirinde paraşüt veya darbe emici iniş ayağı yoktu; sadece atmosferden düşerken veri toplayıp yere çarptıklarında yok olmaları planlanmıştı.\n\nAncak 9 Aralık 1978'de yoğun karbondioksit atmosferi o kadar kalın ve ağdalıydı ki (deniz suyunun %6.5'i yoğunlukta!), sondaların düşüş hızı paraşütsüz bile saatte 35 kilometreye (9.8 m/s) kadar yavaşladı. \"Day Probe\" (Gündüz Sondası) ve \"Night Probe\" yüzeye çarptıktan sonra parçalanmadı! Özellikle Day Probe, 460°C sıcaklıkta pilinin son damlası tükenene kadar tam 67 dakika 37 saniye boyunca Venüs yüzeyinden doğrudan Dünya'ya sinyal gönderdi.",
+    "story_en": "NASA's Pioneer Venus Multiprobe released four titanium-hulled atmospheric probes into Venus on December 9, 1978. The three Small Probes had no parachutes and were never intended to survive impact. Yet Venus's supercritical CO2 atmosphere was so dense that terminal velocity slowed to just 35 km/h. The 'Day Probe' survived touchdown intact and transmitted telemetry from the baking surface for 67 minutes and 37 seconds!",
+    "whyAbandoned_tr": "Tek yönlü atmosferik dalış görevi; yüksek basınçlı iç bataryası yüzeydeki aşırı ısıda 67.5 dakika sonra tükendi.",
+    "whyAbandoned_en": "One-way atmospheric entry probe; internal battery depleted after 67.5 minutes under 460°C surface heat.",
+    "currentCondition_tr": "76 cm çapındaki konik aerodinamik ısı kalkanı ve içindeki titanyum basınç küresi ile elmas optik pencereleri Theia Mons güneyinde bozulmadan yatmaktadır.",
+    "currentCondition_en": "Its 76-cm conical aeroshell, titanium pressure vessel, and pure diamond optical sensor windows remain intact in the southern plains.",
+    "discardedItems": [
+      "Pioneer Venus Day Probe Titanyum Basınç Küresi (90 kg)",
+      "13.5 Karatlık Saf Elmas Kızılötesi Radyometre Penceresi",
+      "Karbon-Fenolik Konik Isı Kalkanı Gövdesi",
+      "Nephelometre (Bulut Parçacık Ölçer) ve Sıcaklık Sensörleri"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "90 kg (Day Probe) + 290 kg (Large Probe)",
+      "powerSource": "Gümüş-Çinko Batarya",
+      "activeDuration": "56 dk iniş + 67 dk 37 sn yüzey yayını",
+      "coordinatesReadable": "31°18' G, 317°00' D"
+    },
+    "audioSnippet": "[NASA Ames DSN Telemetry: Pioneer Venus Day Probe Surface Signal Locked]",
+    "realPhotos": [
+      {
+        "title_tr": "Venüs Küresel Radar Topografyası (Pioneer & Magellan)",
+        "title_en": "Venus Global Radar Topography",
+        "catalogId": "NASA PIA00271",
+        "instrument": "NASA Magellan / Pioneer Radar Mapper",
+        "url": "assets/photos/venera_magellan.jpg",
+        "desc_tr": "Pioneer Venus ve Magellan görevlerinin haritaladığı Venüs yüzey yükseltileri ve volkanik kuşaklar.",
+        "desc_en": "Radar altimetry map of Venus compiled from NASA Pioneer Venus and Magellan orbital surveys."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "💎 VENÜS YÜZEYİNDEKİ 13.5 KARATLIK ELMAS PENCERE",
+      "badge_en": "💎 13.5-CARAT SOLID DIAMOND OPTICAL WINDOW ON VENUS",
+      "title_tr": "Sülfürik Asit ve 470°C Isıya Dayanabilen Tek Şeffaf Madde: Saf Elmas",
+      "title_en": "Cut from a 205-Carat Industrial Diamond to Survive Sulfuric Acid Clouds",
+      "desc_tr": "Normal cam veya kuvars mercekler Venüs'ün kızgın sülfürik asit ve hidroflorik asit bulutlarında aşındığı için, NASA mühendisleri sondanın kızılötesi radyometre sensörü için 13.5 karatlık disk şeklinde saf bir elmas pencere üretti. O elmas bugün hala Venüs yüzeyinde parlamaktadır.",
+      "desc_en": "Because ordinary glass corrodes in hot hydrofluoric and sulfuric acid, NASA fitted the probe with a custom 13.5-carat pure diamond optical window that still rests on the Venusian plains."
+    }
+  },
+  {
+    "id": "venera-13",
+    "body": "venus",
+    "name_tr": "Venera 13 İniş Sondası: Cehennemden İlk Renkli Panorama ve Rüzgar Sesi",
+    "name_en": "Venera 13 Lander: First Color Panorama & Acoustic Recording from Venus",
+    "mission": "Venera 13",
+    "date": "1 Mart 1982",
+    "date_en": "March 1, 1982",
+    "decade": "1980",
+    "category": "lander",
+    "category_tr": "Ağır Gezegen İniş Aracı",
+    "category_en": "Heavy Planetary Lander",
+    "coords": {
+      "lat": -7.5,
+      "lng": 303
+    },
+    "locationName": "Phoebe Regio Doğusu (Venüs)",
+    "modelType": "venera",
+    "headline_tr": "457°C Sıcaklıkta 127 Dakika Direnerek Kehribar Gökyüzünü ve Bazalt Kayaları Fotoğraflayan Efsane",
+    "headline_en": "Enduring 457°C and 89 Bar for 127 Minutes to Capture Amber Skies, Basalt Slabs, and Venusian Thunder",
+    "quote_tr": "Kamera kapağı fırlatıldı; kehribar rengi yoğun gökyüzü altında koyu gri yassı bazalt kayalar ve ince Venüs toprağı göründü.",
+    "quote_en": "The lens cap popped off, revealing flat dark-grey basaltic rock slabs beneath a dense, glowing amber sky.",
+    "quoteAuthor": "Dr. Valery Barsukov, Venera Bilim Ekibi",
+    "story_tr": "1 Mart 1982'de Phoebe Regio yaylasının doğusuna inen 760 kilogramlık Venera 13, gezegen keşif tarihinin en dayanıklı makinelerinden biriydi. 50 km irtifada paraşütünü bırakıp sadece yoğun karbondioksit havasını kesen aerodinamik fren diskiyle (aerobraking ring) süzülerek yüzeye indi.\n\nYüzey sıcaklığı 457°C, basınç ise Dünya'nın tam 89 katıydı (8.9 MPa). Yalnızca 32 dakika dayanması beklenirken, lityum-nitrat ısı emici jelleri sayesinde tam 127 dakika (2 saatten fazla!) hayatta kaldı. Kuvars pencereli çift telefoto kamerasıyla Venüs'ün ilk 360 derecelik renkli panoramik fotoğraflarını çekti, mekanik matkabıyla toprak örneği alıp X-ışını floresans spektrometresiyle (potasyumlu gabro bazaltı) analiz etti ve yerleşik mikrofonuyla başka bir gezegendeki İLK gerçek rüzgar ve sondaj seslerini kaydetti!",
+    "story_en": "Touching down east of Phoebe Regio on March 1, 1982, the 760-kg Venera 13 lander shed its parachute at 50 km altitude and descended solely on its aerodynamic disk brake through the dense CO2 atmosphere. Designed to survive 32 minutes in 457°C heat and 89 bar pressure, it operated for a stunning 127 minutes—transmitting the first color panoramas of Venus, drilling and analyzing potassium-rich basaltic rock, and recording the first acoustic sounds on another world.",
+    "whyAbandoned_tr": "Tek yönlü yüzey laboratuvarı; 127 dakikanın sonunda 457°C dış ısı titanyum kürenin iç sıcaklığını elektronik sınırın üzerine çıkardı.",
+    "whyAbandoned_en": "One-way surface laboratory; after 127 minutes, ambient 457°C heat penetrated the phase-change thermal buffers.",
+    "currentCondition_tr": "Titanyum basınç gövdesi, tırtıklı darbe emici iniş halkası, açılmış matkap kolu ve kameranın tam önüne düşen yarım silindir lens kapağı Phoebe Regio bazaltlarının üzerinde durmaktadır.",
+    "currentCondition_en": "The titanium hull, serrated shock-absorbing torus ring, deployed soil drill arm, and ejected semi-cylindrical camera lens cap remain on the basalt slabs of Phoebe Regio.",
+    "discardedItems": [
+      "Venera 13 Titanyum Basınç Gövdesi ve Aerodinamik Fren Halkası (760 kg)",
+      "Görüntüye Giren Efsanevi Yarım Silindir Kamera Lens Kapağı",
+      "Yüzey Sondaj Matkabı (GZU) ve Toprak Mekanik Ölçüm Kolu",
+      "Akustik Mikrofon ve Groza-2 Elektrik Boşalma Dedektörü"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "760 kg (yüzey iniş aracı)",
+      "powerSource": "Yüksek Kapasiteli Akümülatör Bataryası",
+      "activeDuration": "127 dakika (beklenenin 4 katı)",
+      "coordinatesReadable": "7°30' G, 303°00' D"
+    },
+    "audioSnippet": "[Venera 13 Acoustic Microphone: Low Roar of Dense Venusian Wind & Rock Drill]",
+    "realPhotos": [
+      {
+        "title_tr": "Magellan Radarından Phoebe Regio & Venüs Volkanik Yüzeyi",
+        "title_en": "Magellan Radar View of Venusian Volcanic Terrain",
+        "catalogId": "NASA PIA00271",
+        "instrument": "Magellan SAR Radar",
+        "url": "assets/photos/venera_magellan.jpg",
+        "desc_tr": "Venera 13'ün indiği bazaltik lav düzlüklerinin radar yansıma görüntüsü.",
+        "desc_en": "Radar topography of the fractured basaltic plains of Venus."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "📸 KAMERANIN ÖNÜNE DÜŞEN LENS KAPAĞI PARADOKSU",
+      "badge_en": "📸 THE LENS CAP PARADOX OF VENERA 13 & 14",
+      "title_tr": "4 Gün Arayla İnen İki Sondanın Başına Gelen İnanılmaz Tesadüf",
+      "title_en": "Why Venera 14 Tested the Compressibility of Its Own Lens Cap",
+      "desc_tr": "Venera 13'ün panoramik fotoğrafında yerde yarım silindir şeklinde beyaz bir parça görülür: Bu, piroteknik cıvatayla fırlatılan titanyum kamera kapağıdır. 4 gün sonra inen ikizi Venera 14'te ise bu kapak şanssızlık eseri tam toprak ölçüm kolunun altına düştü ve sonda Venüs toprağı yerine kendi lens kapağının sertliğini ölçtü!",
+      "desc_en": "In Venera 13's famous panorama, the ejected white titanium lens cap sits right on the basalt floor. Four days later on Venera 14, the identical cap landed directly beneath the spring-loaded soil penetrometer—which faithfully measured the compressibility of its own lens cap instead of the rock!"
+    }
+  },
+  {
+    "id": "cassini-huygens",
+    "body": "outer",
+    "name_tr": "ESA/NASA Huygens Sondası: Titan'ın Sıvı Metan Yataklarındaki İniş Aracı",
+    "name_en": "ESA/NASA Huygens Probe: Humanity's Farthest Touchdown on Saturn's Moon Titan",
+    "mission": "Cassini-Huygens (NASA / ESA / ASI)",
+    "date": "14 Ocak 2005",
+    "date_en": "January 14, 2005",
+    "decade": "2000",
+    "category": "lander",
+    "category_tr": "Dış Güneş Sistemi Sondası",
+    "category_en": "Outer Solar System Lander",
+    "coords": {
+      "lat": -10.25,
+      "lng": -192.32
+    },
+    "locationName": "Adiri / Shangri-La (Titan - Satürn'ün Uydusu)",
+    "modelType": "huygens",
+    "headline_tr": "Dünya'dan 1.2 Milyar Kilometre Uzakta, -179.5°C'de Metan Nehirlerinin ve Buz Çakıllarının Arasına İniş",
+    "headline_en": "1.2 Billion Kilometers from Earth: Touching Down Among Rounded Water-Ice Cobbles at -179.5°C",
+    "quote_tr": "Cassini-Huygens, NASA ve Avrupa Uzay Ajansı (ESA) arasındaki en büyük amiral gemisi ortaklığı olarak Dış Güneş Sistemi'nde ilk yüzey inişini başardı.",
+    "quote_en": "Cassini-Huygens represented a flagship partnership between NASA and ESA, achieving the first touchdown in the outer solar system.",
+    "quoteAuthor": "Linda Billings, Ed. (NASA SP-2021-4705: 50 Years of Solar System Exploration, s. 80)",
+    "story_tr": "[Resmi Kaynak — NASA SP-2021-4705 \"50 Years of Solar System Exploration\", s. 79-80]: NASA'nın Cassini yörünge aracı ile Avrupa Uzay Ajansı'nın (ESA) Huygens sondası, 15 Ekim 1997'de fırlatıldı ve 7 yıllık yolculuğun ardından Satürn sistemine ulaştı. 25 Aralık 2004'te Cassini'den ayrılan 318 kilogramlık Huygens, 14 Ocak 2005'te Satürn'ün dev uydusu Titan'ın turuncu organik sisli atmosferine daldı.\n\n2 saat 27 dakika süren paraşütlü inişi boyunca metan yağmurlarının oyduğu nehir kanallarını, kıyı şeritlerini ve karanlık kumul ovalarını fotoğrafladı. Saat 12:43 UTC'de \"Shangri-La\" bölgesindeki Adiri kıyısına 4.6 m/s hızla, ıslak kil/kum kıvamında metanla doymuş bir zemine indi.\n\nİniş anında sarsıntıyla kamerasının önüne düşen 10-15 santimetrelik yuvarlak taşlar aslında kaya değil, sıvı metan akarsularında yuvarlanarak aşınmış ve -179.5°C'de granit kadar sertleşmiş SU BUZU çakıllarıydı! Huygens yüzeyden 72 dakika boyunca Cassini'ye veri aktardı ve pilleri bitene kadar çalışmaya devam etti.",
+    "story_en": "[Official Citation — NASA SP-2021-4705 \"50 Years of Solar System Exploration\", pp. 79-80]: Deployed from NASA's Cassini orbiter, ESA's 318-kg Huygens probe entered Titan's golden nitrogen-methane haze on January 14, 2005. Descending by parachute for 2 hours 27 minutes, it imaged dendritic river networks carved by liquid methane rain before touching down in the damp hydrocarbon floodplains of Adiri (Shangri-La) at -179.5°C. Its surface camera revealed rounded 15-cm cobbles made of solid water ice, transmitting for 72 minutes before Cassini dropped below the horizon.",
+    "whyAbandoned_tr": "Tek yönlü Dış Güneş Sistemi yüzey keşif sondası; 5 adet LiSO2 bataryası dondurucu -179.5°C soğukta yaklaşık 3.5 saat sonra tükendi.",
+    "whyAbandoned_en": "One-way outer solar system lander; its five LiSO2 batteries depleted after ~3.5 hours in the cryogenic -179.5°C environment.",
+    "currentCondition_tr": "Alüminyum petekli kubbe gövdesi, GCMS atmosfer analizörü, yüzey penetrometresi ve yakınına düşen naylon-kevlar paraşütü, Titan'ın oksijensiz ve dondurucu azot atmosferinde kimyasal paslanma olmadan ilk günkü gibi korunmaktadır.",
+    "currentCondition_en": "Resting in oxygen-free cryogenic nitrogen at -179.5°C, the aluminum honeycomb descent module, penetrometer, and nearby parachute remain pristine without oxidation.",
+    "discardedItems": [
+      "Huygens Yüzey İniş Modülü (Descent Module - 199 kg)",
+      "2.7 Metre Çaplı Bırakılmış Ön Isı Kalkanı (Front Shield) & Arka Kapak",
+      "Üç Kademeli Dengeleyici ve Ana İniş Paraşütleri",
+      "SSP (Surface Science Package) Akustik Sonar ve Penetrometre Çubuğu",
+      "DISR Kameraları ve Yüzey Aydınlatma Lambası"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "318 kg (toplam giriş kütlesi; ~199 kg iniş modülü)",
+      "powerSource": "5 × LiSO2 (Lityum Sülfür Dioksit) Batarya (1.8 kWh)",
+      "activeDuration": "2 sa 27 dk iniş + 72 dk yüzey rölesi",
+      "coordinatesReadable": "10°15' G, 192°19' B (Shangri-La / Titan)"
+    },
+    "audioSnippet": "[Huygens Acoustic Sensor & Radar Echo: Liquid Methane Winds on Titan]",
+    "realPhotos": [
+      {
+        "title_tr": "Huygens'in Gözünden Titan Yüzeyi ve Su Buzu Çakılları",
+        "title_en": "Titan's Surface & Water-Ice Cobbles by Huygens",
+        "catalogId": "NASA PIA07232 / ESA DISR",
+        "instrument": "Descent Imager / Spectral Radiometer (DISR)",
+        "url": "assets/photos/huygens_titan.jpg",
+        "desc_tr": "Dünya'dan 1.2 milyar km uzakta, başka bir gezegenin uydusundan çekilen tarihin ilk ve tek yüzey fotoğrafı. Öndeki taşlar -179.5°C'de donmuş su buzu çakıllarıdır.",
+        "desc_en": "History's farthest surface photograph, showing rounded water-ice cobbles resting on a dark methane-rich floodplain on Titan."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "🎵 TİTAN'A İNDİRİLEN 4 BESTELİK MÜZİK KAYDI (LALD)",
+      "badge_en": "🎵 FOUR MUSICAL COMPOSITIONS DELIVERED TO TITAN",
+      "title_tr": "Fransız Besteciler Julien Civange ve Louis Haéri'nin Uzay Şarkıları",
+      "title_en": "Music Composed to Travel 1.2 Billion Kilometers to Saturn's Largest Moon",
+      "desc_tr": "Huygens'in hafıza belleğine gençliği ve gelecek nesilleri uzay keşfine teşvik etmek amacıyla \"LalD\" projesi kapsamında 4 adet müzik eseri (\"Hot Time\", \"Bald James Deans\", \"No Love\" ve \"Planetalyan\") kaydedilmişti. Bu şarkılar şu an Satürn'ün uydusu Titan'da yatmaktadır.",
+      "desc_en": "Stored inside Huygens's solid-state memory are four musical tracks by French composers Julien Civange and Louis Haéri, forever resting on the hydrocarbon plains of Titan."
+    }
+  },
+  {
+    "id": "rosetta-philae",
+    "body": "outer",
+    "name_tr": "ESA/NASA Rosetta & Philae: 67P Kuyruklu Yıldızındaki İki Sessiz Kaşif",
+    "name_en": "ESA/NASA Rosetta & Philae: Twin Explorers Resting on Comet 67P",
+    "mission": "Rosetta / Philae (ESA & NASA)",
+    "date": "12 Kasım 2014 (Philae) / 30 Eylül 2016 (Rosetta)",
+    "date_en": "Nov 12, 2014 (Philae) / Sep 30, 2016 (Rosetta)",
+    "decade": "2010",
+    "category": "lander",
+    "category_tr": "Kuyruklu Yıldız İniş Aracı",
+    "category_en": "Comet Nucleus Lander & Orbiter",
+    "coords": {
+      "lat": -2.36,
+      "lng": -8.68
+    },
+    "locationName": "Abydos Uçurumu & Sais Bölgesi (67P/Churyumov-Gerasimenko)",
+    "modelType": "philae",
+    "headline_tr": "Yerçekiminin Dünya'nın 100.000'de Biri Olduğu Bir Kuyruklu Yıldızda İki Kez Sekip Uçurum Çatlağına Sıkışan Sonda",
+    "headline_en": "Bouncing Twice Across a Low-Gravity Comet Nucleus Before Wedging Into the Shadowed Cliffs of Abydos",
+    "quote_tr": "Philae iniş aracı 12 Kasım 2014'te ana uzay aracından ayrıldı; ancak yüzeye tutunmasını sağlayacak iki zıpkın ve itici sistem çalışmayınca yüzeyde iki kez sekti.",
+    "quote_en": "The Philae lander was released on 12 November 2014, but due to the failure of two devices meant to secure the lander to the surface, it bounced twice before coming to rest.",
+    "quoteAuthor": "Conway, Yeomans & Rosenburg (NASA SP-2022-4235: NEO Research, s. 214)",
+    "story_tr": "[Resmi Kaynak — NASA SP-2022-4235 \"A History of Near-Earth Objects Research\", s. 214-215]: 10 yıl süren 6.4 milyar kilometrelik uzay kovalamacasının ardından Rosetta, 67P/Churyumov-Gerasimenko Kuyruklu Yıldızı'na ulaştı. 12 Kasım 2014'te çamaşır makinesi büyüklüğündeki (100 kg) Philae iniş aracını bıraktı.\n\nKuyruklu yıldızdaki yerçekimi o kadar zayıftı ki (100 kg'lık Philae orada sadece 1 gram ağırlığındaydı!), aracın sekmesini önlemek için tepesinde bir soğuk gaz iticisi ve ayaklarının altında iki zıpkın (harpoon) vardı. Ancak ne itici ne de zıpkınlar ateşlendi! Philae, Agilkia iniş noktasından 1 kilometre yüksekliğe geri sıçradı, 1 saat 50 dakika uçup ikinci kez çarptı ve sonunda \"Abydos\" bölgesindeki karanlık bir kaya çatlağına yan yatmış halde sıkıştı.\n\nGüneş ışığı alamamasına rağmen dahili pilleriyle 63 saat boyunca organik molekülleri analiz etti. Yaklaşık 2 yıl boyunca nerede olduğu bulunamadı; ta ki 2 Eylül 2016'da Rosetta'nın OSIRIS kamerası onu bir kaya yarığında bacakları havada görüntüleyene kadar! 28 gün sonra, 30 Eylül 2016'da ana uzay aracı Rosetta da Sais bölgesine kontrollü olarak indirilerek Philae'nin yanındaki ebedi uykusuna katıldı.",
+    "story_en": "[Official Citation — NASA SP-2022-4235 \"A History of Near-Earth Objects Research\", pp. 214-215]: On November 12, 2014, the 100-kg Philae lander touched down on Comet 67P/Churyumov-Gerasimenko. Because its cold-gas thruster and anchoring harpoons failed to fire in the microgravity environment (where Philae weighed just 1 gram), it rebounded 1 km into space, bounced twice over 2 hours, and wedged on its side inside a dark crevice at Abydos. Operating for 63 hours on battery power, its exact resting place remained a mystery until Rosetta photographed its upturned legs on September 2, 2016—just weeks before Rosetta itself made a final controlled descent onto the comet.",
+    "whyAbandoned_tr": "Zıpkınların ateşlenmemesi sonucu gölgeli Abydos uçurumuna sıkışarak güneş enerjisi alamaması; ana araç Rosetta ise Güneş'ten uzaklaşırken enerjisi biteceği için 30 Eylül 2016'da yüzeye indirildi.",
+    "whyAbandoned_en": "Philae wedged into a shadowed cliff at Abydos after anchoring harpoons failed; Rosetta was intentionally landed at Sais on Sep 30, 2016 as the comet receded toward Jupiter's orbit.",
+    "currentCondition_tr": "Hem üç ayaklı karbon fiber Philae iniş aracı (Abydos çatlağında yan yatmış halde), hem de 28 metrelik güneş kanatlarıyla ana Rosetta uzay aracı (Sais çukurunda) 67P Kuyruklu Yıldızı'nın üzerinde her 6.45 yılda bir Güneş'in etrafında dönmektedir.",
+    "currentCondition_en": "Both the three-legged carbon-fiber Philae lander (wedged at Abydos) and the Rosetta orbiter with its 28-meter solar wings (at Sais) ride aboard Comet 67P on its 6.45-year solar orbit.",
+    "discardedItems": [
+      "Philae Karbon Fiber İniş Aracı ve 3 Ayaklı İniş Takımı (100 kg)",
+      "Rosetta Ana Yörünge Uzay Aracı ve 28m Güneş Panelleri (~1,670 kg kuru)",
+      "NASA Görev Katkıları: ALICE UV Spektrometresi, MIRO ve IES Sensörleri",
+      "SD2 Sondaj Matkabı, SESAME Akustik Sensörleri ve MUPUS Çekiç Sondası",
+      "1.000 Dilde İnsanlık Arşivi Taşıyan Nikel Rosetta Diski"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "100 kg (Philae) + ~1,670 kg (Rosetta)",
+      "powerSource": "Güneş Panelleri + LiSO2 & Li-ion Batarya",
+      "activeDuration": "Philae: 63 saat yüzey; Rosetta: 12 yıl 6 ay",
+      "coordinatesReadable": "Abydos & Sais (67P Küçük Lobu)"
+    },
+    "audioSnippet": "[Philae SESAME-CASSE Acoustic Footpad Sensor: Thud on Comet 67P Ice Crust]",
+    "realPhotos": [
+      {
+        "title_tr": "67P/Churyumov-Gerasimenko Kuyruklu Yıldızı ve İniş Bölgesi",
+        "title_en": "Comet 67P/Churyumov-Gerasimenko & Landing Terrain",
+        "catalogId": "NASA PIA18899 / ESA OSIRIS",
+        "instrument": "Rosetta OSIRIS / NavCam",
+        "url": "assets/photos/rosetta_philae.jpg",
+        "desc_tr": "Philae ve Rosetta'nın üzerinde ebediyen yolculuk ettiği 4.3 km genişliğindeki çift loblu kuyruklu yıldız çekirdeği.",
+        "desc_en": "The rugged, bi-lobed nucleus of Comet 67P where both Philae and Rosetta now rest."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "📜 1.000 İNSAN DİLİNİ TAŞIYAN MİKRO-KAZIMALI ROSETTA DİSKİ",
+      "badge_en": "📜 THE LONG NOW MICRO-ETCHED NICKEL ROSETTA DISK",
+      "title_tr": "Milyonlarca Yıl Güneş Sistemi'nde Dolaşacak Dil Ansiklopedisi",
+      "title_en": "An Archive of 1,000 Human Languages Riding a Comet Through Deep Time",
+      "desc_tr": "Rosetta uzay aracının gövdesine Long Now Vakfı tarafından üretilen saf nikel alaşımlı bir disk monte edilmiştir. Üzerinde Dünya'daki 1.000 farklı dilin 13.000 sayfalık sözlük ve metin arşivi mikroskobik olarak kazınmıştır; bir büyüteçle doğrudan okunabilmektedir.",
+      "desc_en": "Mounted on Rosetta is a solid nickel-alloy disk micro-etched with 13,000 pages documenting 1,000 human languages—preserving Earth's linguistic heritage aboard an ancient comet."
+    }
+  },
+  {
+    "id": "near-shoemaker-eros",
+    "body": "outer",
+    "name_tr": "NASA NEAR Shoemaker: 433 Eros Asteroidine Tarihin İlk İnişi",
+    "name_en": "NASA NEAR Shoemaker: History's First Touchdown on an Asteroid (433 Eros)",
+    "mission": "NEAR Shoemaker (NASA Discovery #2)",
+    "date": "12 Şubat 2001",
+    "date_en": "February 12, 2001",
+    "decade": "2000",
+    "category": "probe",
+    "category_tr": "Asteroit Yörünge & İniş Aracı",
+    "category_en": "Asteroid Orbiter & Lander",
+    "coords": {
+      "lat": -35,
+      "lng": -27
+    },
+    "locationName": "Himeros Eyer Sırtı (433 Eros Yakın Dünya Asteroidi)",
+    "modelType": "probe",
+    "headline_tr": "İniş Ayağı Olmayan Bir Yörünge Aracını 5 İtici Ateşlemesiyle Bir Asteroidin Üzerine Yumuşakça Kondurmak",
+    "headline_en": "Improvising a Feather-Light 1.5 m/s Touchdown on Asteroid 433 Eros Using an Orbiter With No Landing Legs",
+    "quote_tr": "Ajans, 1993 yılında ilk iki Discovery görevi olan NEAR ve Pathfinder'ı başlattı... NEAR, bir asteroit yörüngesine giren ve yüzeyine inen ilk uzay aracı oldu.",
+    "quote_en": "The agency directed the first two Discovery missions, NEAR and Pathfinder, in 1993... NEAR became the first spacecraft to orbit and touch down on an asteroid.",
+    "quoteAuthor": "David W. Brown (NASA SP-2026-4239: NASA's Discovery Program, s. 74)",
+    "story_tr": "[Resmi Kaynak — NASA SP-2026-4239 \"NASA's Discovery Program\" & NASA SP-2022-4235 \"NEO Research\"]: Johns Hopkins Uygulamalı Fizik Laboratuvarı (APL) tarafından geliştirilen NEAR Shoemaker, bir asteroidin (34 km uzunluğundaki fıstık biçimli 433 Eros) yörüngesine giren ilk uzay aracıydı. Bir yıl boyunca Eros'un etrafında dönerek 160.000'den fazla fotoğraf çekti.\n\nGörev sonunda yakıtı bitmek üzereyken görev direktörü Robert Farquhar çılgınca bir fikir önerdi: Aracın hiçbir iniş ayağı olmamasına rağmen onu Eros'un yüzeyine indirmek! 12 Şubat 2001'de 5 kez hassas frenleme ateşlemesi yapan NEAR Shoemaker, Himeros krateri kenarına saniyede sadece 1.5 metre (yürüyüş hızı!) hızla yumuşakça dokundu.\n\nDört güneş paneli kanadından ikisinin uçları ve gövdesi asteroit tozuna yaslandı. Parçalanmak bir yana, yüzeyden 16 gün boyunca gama-ışını spektrometresiyle Eros'un iç kimyasal yapısını ölçüp Dünya'ya gönderdi!",
+    "story_en": "[Official Citation — NASA SP-2026-4239 & SP-2022-4235]: Built by Johns Hopkins APL for NASA's Discovery Program, NEAR Shoemaker orbited the 34-km S-type asteroid 433 Eros for a year. With propellant nearly exhausted on February 12, 2001, engineers executed five braking burns to guide the legless orbiter onto the edge of Himeros saddle at a gentle 1.5 m/s—the slowest planetary touchdown in history. Resting on two of its four solar panels, NEAR continued transmitting gamma-ray composition data from the surface for 16 days!",
+    "whyAbandoned_tr": "Yörünge görevi sonunda son damla hidrazin yakıtıyla asteroit yüzeyine indirildi; 28 Şubat 2001'de Eros'un soğuk kış gecesinde (-150°C) iletişim kesildi.",
+    "whyAbandoned_en": "Intentionally landed at end of orbital mission; communications concluded on February 28, 2001 after 16 days of bonus surface science.",
+    "currentCondition_tr": "Sekizgen alüminyum gövdesi, 1.5 metrelik çanak anteni ve dört galyum-arsenit güneş paneliyle 433 Eros asteroidinin Himeros bölgesindeki bloklu regolit üzerinde hiç bozulmadan durmaktadır.",
+    "currentCondition_en": "Rests intact on the blocky regolith of 433 Eros, balanced on the tips of two solar panels and its aft chassis.",
+    "discardedItems": [
+      "NEAR Shoemaker Sekizgen Uzay Aracı Gövdesi (487 kg kuru kütle)",
+      "4 × Galyum-Arsenit Güneş Paneli Kanadı",
+      "X-Işını / Gama-Işını Spektrometresi (XGRS) ve Lazer Altimetre (NLR)",
+      "1.5m Yüksek Kazançlı Çanak Anten ve Manyetometre"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "487 kg (kuru kütle)",
+      "powerSource": "4 × Güneş Paneli (1,800 W) + NiCd Batarya",
+      "activeDuration": "1 yıl yörünge + 16 gün yüzey çalışması",
+      "coordinatesReadable": "35°00' G, 27°00' B (433 Eros - Himeros)"
+    },
+    "audioSnippet": "[APL Mission Control: NEAR Shoemaker Touchdown Confirmed at 1.5 m/s on Eros]",
+    "realPhotos": [
+      {
+        "title_tr": "NEAR Shoemaker'ın İnerken 120 Metre İrtifadan Çektiği Son Kare",
+        "title_en": "Asteroid 433 Eros Regolith from 120 Meters Before Touchdown",
+        "catalogId": "NASA PIA03112",
+        "instrument": "NEAR Multi-Spectral Imager (MSI)",
+        "url": "assets/photos/near_eros.jpg",
+        "desc_tr": "NEAR Shoemaker'ın Eros yüzeyine değmeden hemen önce çektiği, 6 metre genişliğindeki alanı ve santimetre boyutundaki taşları gösteren son fotoğrafı.",
+        "desc_en": "The final close-up image transmitted by NEAR Shoemaker moments before its solar panel tips touched the dusty surface of asteroid 433 Eros."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "☄️ DR. EUGENE SHOEMAKER'IN ADINI TAŞIYAN İKİNCİ ANIT",
+      "badge_en": "☄️ NAMED IN HONOR OF PLANETARY GEOLOGY PIONEER EUGENE SHOEMAKER",
+      "title_tr": "Külleri Ay'da, İsmi Dünya Yakını Bir Asteroitin Üzerinde",
+      "title_en": "Ashes on the Moon, Legacy Resting Forever on Asteroid 433 Eros",
+      "desc_tr": "NASA SP-2022-4235 monografisinde anlatıldığı üzere, gezegen çarpışma jeolojisinin kurucusu Eugene Shoemaker'ın 1997'deki vefatının ardından külleri Lunar Prospector ile Ay'a gönderilmiş, NEAR uzay aracına ise onun onuruna \"NEAR Shoemaker\" adı verilmiştir.",
+      "desc_en": "As chronicled in NASA SP-2022-4235, following Eugene Shoemaker's passing in 1997, NASA honored the legendary astrogeologist by placing his ashes on the Moon and renaming the NEAR asteroid mission 'NEAR Shoemaker.'"
+    }
+  },
+  {
+    "id": "galileo-probe",
+    "body": "outer",
+    "name_tr": "NASA Galileo Atmosfer Sondası & Ana Aracı: Europa'yı Korumak İçin Feda Ediliş",
+    "name_en": "NASA Galileo Atmospheric Probe & Orbiter: Sacrificed into Jupiter to Protect Europa",
+    "mission": "Galileo (NASA / JPL)",
+    "date": "7 Aralık 1995 (Sonda) / 21 Eylül 2003 (Ana Araç)",
+    "date_en": "Dec 7, 1995 (Probe) / Sep 21, 2003 (Orbiter)",
+    "decade": "1990",
+    "category": "shield",
+    "category_tr": "Gaz Devi Dalış Sondası",
+    "category_en": "Gas Giant Entry Probe & Orbiter",
+    "coords": {
+      "lat": 6.5,
+      "lng": -4.4
+    },
+    "locationName": "Jüpiter Kuzey Ekvator Kuşağı (NEB)",
+    "modelType": "shield",
+    "headline_tr": "Güneş Yüzeyinden Daha Sıcak Bir Şok Dalgasıyla Jüpiter'e Saatte 170.000 km Hızla Dalan İnsan Yapımı Cihaz",
+    "headline_en": "Plunging into Jupiter at 170,000 km/h Through a 15,500°C Plasma Shockwave and 230g Deceleration",
+    "quote_tr": "Europa'nın buz altı okyanusunu Dünya bakterileriyle kirletmemek için Galileo, Jüpiter atmosferinde buharlaşmaya gönderildi.",
+    "quote_en": "To protect Europa's subsurface ocean from terrestrial contamination, Galileo was commanded to plunge into Jupiter.",
+    "quoteAuthor": "NASA Gezegen Koruma Ofisi (NASA SP-2021-4705)",
+    "story_tr": "[Resmi Kaynak — NASA SP-2021-4705 \"50 Years of Solar System Exploration\"]: 7 Aralık 1995'te Galileo'nun 339 kilogramlık atmosfer sondası, Jüpiter'in bulutlarına saatte 170.600 km (47.8 km/s) hızla daldı. Bu, insan yapımı bir nesnenin şimdiye kadar yaşadığı en şiddetli atmosfer girişiydi: Önündeki şok dalgası 15.500°C'ye (Güneş yüzeyinin neredeyse 3 katı!) ulaştı, sonda Dünya yerçekiminin 230 katı (230g) yavaşlama kuvvetine maruz kaldı ve 152 kg'lık karbon-fenolik ısı kalkanının yarısından fazlası saniyeler içinde buharlaştı!\n\nBuna rağmen paraşütünü açarak 57.6 dakika boyunca Jüpiter'in bulutlarının 156 km derinliğine (22 bar basınç ve 153°C sıcaklığa) kadar veri gönderdi.\n\nAna Galileo yörünge aracı ise 8 yıl boyunca Jüpiter'in uydusu Europa'nın altında sıvı tuzlu su okyanusu olduğunu kanıtladı. Görev bittiğinde, sterilize edilmemiş aracın kazara Europa'ya çarpıp olası uzaylı yaşamını Dünya mikroplarıyla kirletmemesi için 21 Eylül 2003'te Jüpiter'e çarptırılarak atomlarına ayrıldı.",
+    "story_en": "[Official Citation — NASA SP-2021-4705]: On December 7, 1995, the 339-kg Galileo Entry Probe slammed into Jupiter's atmosphere at 47.8 km/s (170,600 km/h), enduring a 15,500°C plasma fireball and 230g deceleration that vaporized 80 kg of its carbon-phenolic heat shield. It transmitted atmospheric data for 57.6 minutes down to 22 bars before melting. Eight years later, on September 21, 2003, NASA intentionally plunged the main Galileo orbiter into Jupiter so it could never crash into and contaminate Europa's subsurface ocean.",
+    "whyAbandoned_tr": "Gezegen Koruma Protokolü (Planetary Protection): Europa, Ganymede ve Callisto'nun buz altı okyanuslarını Dünya mikroorganizmalarıyla kirletmemek için Jüpiter atmosferinde kasıtlı olarak imha edildi.",
+    "whyAbandoned_en": "Planetary Protection Protocol: Intentionally vaporized in Jupiter's atmosphere to prevent biological contamination of Europa's ocean.",
+    "currentCondition_tr": "Hem atmosfer sondası hem de 2.2 tonluk Galileo yörünge aracı, Jüpiter'in binlerce atmosferlik derinliklerinde eriyip atomlarına ayrılarak gezegenin gaz katmanlarının kalıcı bir parçası haline gelmiştir.",
+    "currentCondition_en": "Completely vaporized and dissociated into elemental atoms deep within Jupiter's high-pressure metallic hydrogen envelope.",
+    "discardedItems": [
+      "Galileo Atmosferik Dalış Sondası ve 152 kg Karbon-Fenolik Isı Kalkanı",
+      "Galileo Ana Yörünge Uzay Aracı (2,223 kg)",
+      "2 × GPHS-RTG Nükleer Güç Jeneratörü",
+      "Nötr Kütle Spektrometresi (NMS) ve Helyum İnterferometresi"
+    ],
+    "technicalSpecs": {
+      "massLeftKg": "339 kg (Sonda) + 2,223 kg (Ana Araç)",
+      "powerSource": "LiSO2 Batarya (Sonda) / 2 × RTG (Ana Araç)",
+      "activeDuration": "57.6 dk (Sonda) / 14 yıl (Ana Araç)",
+      "coordinatesReadable": "6°30' K, 4°24' B (Jüpiter NEB)"
+    },
+    "audioSnippet": "[Galileo Probe Doppler Wind Experiment: 650 km/h Jovian Jet Stream Telemetry]",
+    "realPhotos": [
+      {
+        "title_tr": "Galileo'nun Gözünden Jüpiter ve Buzlu Uydusu Europa",
+        "title_en": "Jupiter & Icy Ocean Moon Europa Imaged by Galileo",
+        "catalogId": "NASA PIA00343",
+        "instrument": "Galileo Solid-State Imaging (SSI)",
+        "url": "assets/photos/galileo_jupiter.jpg",
+        "desc_tr": "Galileo uzay aracının uğruna kendini Jüpiter atmosferinde feda ettiği buzlu okyanus uydusu ve Jüpiter sistemi.",
+        "desc_en": "Archival imagery captured by the Galileo spacecraft before its protective plunge into Jupiter."
+      }
+    ],
+    "secretRelic": {
+      "badge_tr": "🛡️ İNSANLIK TARİHİNİN EN DAYANIKLI ISI KALKANI (230G & 15.500°C)",
+      "badge_en": "🛡️ THE GREATEST THERMAL SHIELD IN AEROSPACE HISTORY (230G & 15,500°C)",
+      "title_tr": "Saniyeler İçinde 80 Kilogram Karbonun Buharlaşarak Sondasını Kurtardığı An",
+      "title_en": "Losing 80 Kilograms of Carbon-Phenolic Shielding in Seconds Inside a Jovian Fireball",
+      "desc_tr": "Galileo sondasının toplam ağırlığının neredeyse yarısı (%45'i, yani 152 kg) sadece ısı kalkanıydı. Jüpiter'e girerken oluşan 15.500°C'lik plazma topunda bu kalkanın 80 kilogramı saniyeler içinde eriyip buharlaştı ancak içindeki bilimsel cihazları tek bir çizik bile almadan Jüpiter bulutlarına ulaştırdı.",
+      "desc_en": "Nearly half of the Galileo Probe's total mass (152 kg out of 339 kg) consisted solely of its carbon-phenolic heat shield—80 kg of which vaporized during the 230g Jovian entry."
+    }
   }
 ];
 
@@ -1078,6 +1523,93 @@ const CELESTIAL_DATA = {
     "totalMassLeft_en": "Approx. 10,000 kg of human-made robotic hardware",
     "ambientColor": 2363656,
     "glowColor": 14509619
+  },
+  "venus": {
+    "name_tr": "Venüs",
+    "name_en": "Venus",
+    "tagline_tr": "465°C Sülfürik Asit Bulutları ve 90 Bar Basınç Altındaki Titanyum Zaman Kapsülleri",
+    "tagline_en": "Titanium Time Capsules Beneath 465°C Sulfuric Acid Clouds and 90-Bar Crushing Pressure",
+    "radiusKm": 6051.8,
+    "gravity": "8.87 m/s² (Dünya'nın ~%90.4'ü)",
+    "gravity_en": "8.87 m/s² (~90.4% of Earth)",
+    "atmosphere_tr": "%96.5 CO2 + Sülfürik Asit (92 Bar Basınç)",
+    "atmosphere_en": "96.5% CO2 + Sulfuric Acid (92 Bar Pressure)",
+    "temp_tr": "+457°C ile +475°C sabit sera cehennemi",
+    "temp_en": "+457°C to +475°C runaway greenhouse",
+    "totalMassLeft_tr": "Yaklaşık 22.000 kg insan yapımı sonda (Venera, Vega & Pioneer)",
+    "totalMassLeft_en": "Approx. 22,000 kg of human-made probes (Venera, Vega & Pioneer)",
+    "ambientColor": 2824453,
+    "glowColor": 16096779
+  },
+  "outer": {
+    "name_tr": "Titan & Dış Sistem",
+    "name_en": "Titan & Outer System",
+    "tagline_tr": "Satürn'ün Uydusu Titan, 67P Kuyruklu Yıldızı, 433 Eros Asteroidi ve Jüpiter'deki Uzak Kaşifler",
+    "tagline_en": "Distant Relics on Saturn's Moon Titan, Comet 67P, Asteroid 433 Eros & Jupiter",
+    "radiusKm": 2574.7,
+    "gravity": "1.35 m/s² (Titan) / 0.001 m/s² (67P)",
+    "gravity_en": "1.35 m/s² (Titan) / 0.001 m/s² (67P)",
+    "atmosphere_tr": "%97 Azot + Sıvı Metan Bulutları (1.45 Bar)",
+    "atmosphere_en": "97% Nitrogen + Methane Haze (1.45 Bar)",
+    "temp_tr": "-179.5°C Kriyojenik İklim",
+    "temp_en": "-179.5°C Cryogenic Climate",
+    "totalMassLeft_tr": "~4.800 kg (Huygens, Rosetta/Philae, NEAR Shoemaker, Galileo, Cassini)",
+    "totalMassLeft_en": "~4,800 kg (Huygens, Rosetta/Philae, NEAR Shoemaker, Galileo, Cassini)",
+    "ambientColor": 2497034,
+    "glowColor": 15381256
+  }
+};
+
+const LIVE_ROVER_TELEMETRY = {
+  "perseverance": {
+    "id": "perseverance-live",
+    "name": "Perseverance (Mars 2020)",
+    "instrument": "MEDA (Mars Environmental Dynamics Analyzer)",
+    "location_tr": "Jezero Krateri Batı Kaldera Yamacı (Witch Hazel Hill)",
+    "location_en": "Jezero Crater Western Rim (Witch Hazel Hill)",
+    "landingEpoch": "2021-02-18T20:55:00Z",
+    "coords": {
+      "lat": 18.4447,
+      "lng": 77.4508
+    },
+    "linkedArtifactId": "perseverance-backshell-chute",
+    "tempMaxC": -17.4,
+    "tempMinC": -78.2,
+    "pressurePa": 742.6,
+    "windSpeedMs": 6.8,
+    "windDir_tr": "GD (Güneydoğu)",
+    "windDir_en": "SE (Southeast)",
+    "dustTau": 0.46,
+    "skyStatus_tr": "Açık / Hafif Tozlu (UV İndeksi: Yüksek)",
+    "skyStatus_en": "Clear / Light Haze (UV Index: High)",
+    "odometerKm": 31.42,
+    "powerStatus": "MMRTG (Plütonyum-238): 104W Sabit Çıkış",
+    "dsnStation": "DSS-14 Goldstone (70m Anten) — 2.0 Mbps Downlink"
+  },
+  "curiosity": {
+    "id": "curiosity-live",
+    "name": "Curiosity (MSL)",
+    "instrument": "REMS (Rover Environmental Monitoring Station)",
+    "location_tr": "Gale Krateri / Sharp Dağı (Gediz Vallis Kanalı)",
+    "location_en": "Gale Crater / Mount Sharp (Gediz Vallis Ridge)",
+    "landingEpoch": "2012-08-06T05:17:57Z",
+    "coords": {
+      "lat": -4.5895,
+      "lng": 137.4417
+    },
+    "linkedArtifactId": "curiosity-skycrane",
+    "tempMaxC": -12.8,
+    "tempMinC": -74.5,
+    "pressurePa": 818.3,
+    "windSpeedMs": 5.2,
+    "windDir_tr": "KD (Kuzeydoğu)",
+    "windDir_en": "NE (Northeast)",
+    "dustTau": 0.54,
+    "skyStatus_tr": "Mevsimsel Kanyon Esintisi",
+    "skyStatus_en": "Seasonal Canyon Breeze",
+    "odometerKm": 33.18,
+    "powerStatus": "MMRTG (Plütonyum-238): 88W Sabit Çıkış",
+    "dsnStation": "DSS-63 Madrid (70m Anten) — 1.2 Mbps Downlink"
   }
 };
 
@@ -1090,6 +1622,46 @@ function getArtifactById(id) {
 }
 
 const OFFICIAL_SOURCES = [
+  {
+    "name_tr": "NASA SP-2024-4559: Governing the Moon — A History (Stephen S. Buono)",
+    "name_en": "NASA SP-2024-4559: Governing the Moon — A History (Stephen S. Buono)",
+    "desc_tr": "NASA Teknoloji, Politika ve Strateji Ofisi (OTPS) monografisi (No. 59). Ay mirasının korunması, 1979 Ay Anlaşması, \"One Small Step Act\" (2020) ve Artemis Anlaşmaları Bölüm 9 kapsamında Apollo iniş alanlarının hukuki statüsü.",
+    "desc_en": "Monographs in Aerospace History No. 59. Chronicles lunar governance, the Moon Agreement, the One Small Step Act, and Artemis Accords heritage protection.",
+    "url": "https://www.nasa.gov/history/",
+    "curator": "NASA Office of Technology, Policy, and Strategy / NASA History Office"
+  },
+  {
+    "name_tr": "NASA SP-2026-4239: NASA's Discovery Program — Competitive Planetary Exploration (David W. Brown)",
+    "name_en": "NASA SP-2026-4239: NASA's Discovery Program — Competitive Planetary Exploration (David W. Brown)",
+    "desc_tr": "Mars Pathfinder & Sojourner, NEAR Shoemaker (433 Eros inişi), Lunar Prospector ve InSight görevlerinin mühendislik, telemetri ve bilimsel tarihini belgeleyen resmi NASA Tarih Serisi eseri (ISBN 978-1-62683-090-5).",
+    "desc_en": "Official NASA History Series volume documenting Mars Pathfinder, NEAR Shoemaker on 433 Eros, Lunar Prospector, Genesis, and InSight.",
+    "url": "https://www.nasa.gov/ebooks/",
+    "curator": "NASA History Office (Washington, DC)"
+  },
+  {
+    "name_tr": "NASA SP-2022-4235: A History of Near-Earth Objects Research (Conway, Yeomans & Rosenburg)",
+    "name_en": "NASA SP-2022-4235: A History of Near-Earth Objects Research (Conway, Yeomans & Rosenburg)",
+    "desc_tr": "Dr. Eugene Shoemaker'ın çarpışma jeolojisi çalışmaları, Rosetta ve Philae'nin 67P Kuyruklu Yıldızı'na inişi (s. 214-215), NEAR Shoemaker ve gezegen savunması tarihi.",
+    "desc_en": "Comprehensive NASA History Division study on impact cratering, Eugene Shoemaker, ESA/NASA Rosetta & Philae on Comet 67P, and asteroid exploration.",
+    "url": "https://www.nasa.gov/ebooks/",
+    "curator": "NASA History Division & Jet Propulsion Laboratory"
+  },
+  {
+    "name_tr": "NASA SP-2021-4705: 50 Years of Solar System Exploration (Ed. Linda Billings)",
+    "name_en": "NASA SP-2021-4705: 50 Years of Solar System Exploration (Ed. Linda Billings)",
+    "desc_tr": "Güneş Sistemi keşfinin 50 yılı: Venera ve Pioneer Venus sondaları, Viking 1-2, Galileo Jüpiter sondası, Cassini-Huygens Titan inişi (s. 79-80) ve Mars gezginlerinin birincil tarihsel perspektifleri.",
+    "desc_en": "Historical perspectives on 50 years of solar system exploration including Venera, Pioneer Venus, Viking, Galileo, Cassini-Huygens on Titan, and Mars rovers.",
+    "url": "https://www.nasa.gov/ebooks/",
+    "curator": "NASA History Division (Linda Billings, Editor)"
+  },
+  {
+    "name_tr": "NASA Image and Video Library & Open Data Portal (images.nasa.gov / data.nasa.gov)",
+    "name_en": "NASA Image and Video Library & Open Data Portal (images.nasa.gov / data.nasa.gov)",
+    "desc_tr": "3D uzay aracı modelleme referansları, yüksek çözünürlüklü görev fotoğrafları, REMS/MEDA Mars meteoroloji veri setleri ve açık telemetri katalogları.",
+    "desc_en": "Official repository for 3D spacecraft reference photography, mission archives, and open planetary telemetry datasets.",
+    "url": "https://data.nasa.gov/",
+    "curator": "NASA Office of the Chief Information Officer"
+  },
   {
     "name_tr": "NASA Apollo Lunar Surface Journal (ALSJ)",
     "name_en": "NASA Apollo Lunar Surface Journal (ALSJ)",

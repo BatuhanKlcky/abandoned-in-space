@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Abandoned but not Forgotten: NASA's Discarded Equipment on the Moon and Mars</title>
+  <title>Abandoned but not Forgotten: NASA's Discarded Equipment Across the Solar System</title>
   
   <!-- Google Fonts: Space Mono & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=3.6">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
   
   <!-- Three.js & OrbitControls via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -33,21 +33,29 @@
         <div class="title-group">
           <h1>
             <span>ABANDONED BUT NOT FORGOTTEN</span>
-            <span class="sub-badge">NASA RELICS</span>
+            <span class="sub-badge">SOLAR SYSTEM RELICS</span>
           </h1>
-          <p id="app-tagline" data-i18n="app_subtitle">Ay ve Mars'taki Tarihi NASA Kalıntıları ve Hikaye Haritası</p>
+          <p id="app-tagline" data-i18n="app_subtitle">Ay, Mars, Venüs ve Dış Gezegenlerdeki Tarihi Uzay Kalıntıları ve Hikaye Haritası</p>
         </div>
       </div>
 
-      <!-- Celestial Body Switcher -->
+      <!-- Celestial Body Switcher (Moon, Mars, Venus, Outer System) -->
       <div class="planet-toggle-container">
         <button class="planet-btn active" data-body="moon" title="Ay Yüzeyini İncele">
           <span class="btn-dot"></span>
-          <span>AY (MOON)</span>
+          <span data-i18n="planet_moon">AY (MOON)</span>
         </button>
         <button class="planet-btn" data-body="mars" title="Mars Yüzeyini İncele">
           <span class="btn-dot"></span>
-          <span>MARS</span>
+          <span data-i18n="planet_mars">MARS</span>
+        </button>
+        <button class="planet-btn" data-body="venus" title="Venüs Yüzeyindeki Sovyet Venera ve NASA Pioneer Sondalarını İncele">
+          <span class="btn-dot"></span>
+          <span data-i18n="planet_venus">VENÜS</span>
+        </button>
+        <button class="planet-btn" data-body="outer" title="Titan (Huygens), 67P Kuyruklu Yıldızı (Philae), Eros ve Jüpiter Görevlerini İncele">
+          <span class="btn-dot"></span>
+          <span data-i18n="planet_outer">TİTAN & DIŞ SİSTEM</span>
         </button>
       </div>
 
@@ -57,7 +65,11 @@
           <span>🎬</span>
           <span data-i18n="btn_sim">SİMÜLASYON</span>
         </button>
-        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları">
+        <button class="hud-btn btn-webxr-walk" id="btn-top-walk" title="1:1 Ölçekte Yüzeyde Yürü & WebXR VR/AR Modu">
+          <span>🥽</span>
+          <span data-i18n="btn_walk_top">1:1 YÜZEY / VR</span>
+        </button>
+        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivi">
           <span>📚</span>
           <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
         </button>
@@ -86,10 +98,11 @@
       <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
       <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
       <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
+      <button class="tour-btn" id="tour-all-btn" title="Tüm Güneş Sistemi Büyük Turu (25 Görev)">🌌 Tüm Sistem (25)</button>
       <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
     </div>
 
-    <!-- Left Dock: Planetary Telemetry & Relics Quick Search -->
+    <!-- Left Dock: Planetary Telemetry, Live Mars Weather & Relics Quick Search -->
     <aside class="left-dock interactive" id="left-dock">
       
       <!-- Planetary Telemetry Card -->
@@ -128,6 +141,48 @@
         </div>
       </div>
 
+      <!-- NEW: Live Mars Weather & Active Rover Telemetry Card (NASA MEDA / REMS API) -->
+      <div class="glass-card live-mars-card" id="card-live-mars">
+        <div class="card-label">
+          <span data-i18n="live_mars_header">📡 CANLI MARS HAVA & TELEMETRİ</span>
+          <span class="live-badge" id="live-api-badge">NASA MEDA/REMS</span>
+        </div>
+
+        <div class="rover-tabs">
+          <button class="rover-tab-btn active" data-rover="perseverance">PERSEVERANCE</button>
+          <button class="rover-tab-btn" data-rover="curiosity">CURIOSITY</button>
+        </div>
+
+        <div class="live-rover-meta">
+          <span class="rover-sol-pill" id="live-rover-sol">SOL 1468</span>
+          <span class="rover-loc-text" id="live-rover-loc">Jezero Krateri • 18.44°K, 77.45°D</span>
+        </div>
+
+        <div class="stats-grid live-weather-grid">
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="weather_temp">HAVA SICAKLIĞI</div>
+            <div class="stat-val" id="live-temp">-18°C / -76°C</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="weather_wind">RÜZGAR HIZI</div>
+            <div class="stat-val" id="live-wind">6.8 m/s (GD)</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="weather_pressure">BASINÇ</div>
+            <div class="stat-val" id="live-pressure">742.5 Pa</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title" data-i18n="weather_odometer">KAT EDİLEN YOL</div>
+            <div class="stat-val" id="live-odometer">32.45 km</div>
+          </div>
+        </div>
+
+        <button class="goto-rover-btn" id="btn-goto-rover">
+          <span>📍</span>
+          <span id="goto-rover-label" data-i18n="btn_goto_rover">Haritada Rover Konumuna Uç</span>
+        </button>
+      </div>
+
       <!-- Quick Relics List & Search Card -->
       <div class="glass-card" id="card-relics-list" style="flex:1;">
         <div class="card-label">
@@ -149,10 +204,11 @@
     <!-- Bottom Filter Dock (Desktop) -->
     <footer class="bottom-dock interactive">
       <div class="filter-bar">
-        <span class="filter-tag">DÖNEM:</span>
-        <button class="pill-btn decade-pill active" data-decade="all">TÜMÜ</button>
+        <span class="filter-tag" data-i18n="filter_decade">DÖNEM:</span>
+        <button class="pill-btn decade-pill active" data-decade="all" data-i18n="decade_all">TÜMÜ</button>
         <button class="pill-btn decade-pill" data-decade="1960">1960'LAR</button>
         <button class="pill-btn decade-pill" data-decade="1970">1970'LER</button>
+        <button class="pill-btn decade-pill" data-decade="1980">1980'LER</button>
         <button class="pill-btn decade-pill" data-decade="1990">1990'LAR</button>
         <button class="pill-btn decade-pill" data-decade="2000">2000'LER</button>
         <button class="pill-btn decade-pill" data-decade="2010">2010'LAR</button>
@@ -176,7 +232,7 @@
         <span class="m-label">Kalıntılar</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-telemetry">
-        <span class="m-icon">📊</span>
+        <span class="m-icon">📡</span>
         <span class="m-label">Telemetri</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-tour">
@@ -209,20 +265,31 @@
       <!-- Drawer Body -->
       <div class="drawer-content">
         
-        <!-- PROMINENT ACTION: Cinematic 3D Simulation Button -->
-        <button class="big-sim-action-btn" id="btn-drawer-sim">
-          <span class="sim-play-icon">🎬</span>
-          <div class="sim-btn-text-group">
-            <span class="sim-btn-main" data-i18n="sim_action_btn">İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)</span>
-            <span class="sim-btn-sub">Gerçek fizik, itici alevleri, toz püskürmesi ve sismik darbe canlandırması</span>
-          </div>
-        </button>
+        <!-- PROMINENT ACTIONS: 3D Simulation & 1:1 WebXR Surface Walk -->
+        <div class="drawer-sim-actions-row">
+          <button class="big-sim-action-btn" id="btn-drawer-sim">
+            <span class="sim-play-icon">🎬</span>
+            <div class="sim-btn-text-group">
+              <span class="sim-btn-main" data-i18n="sim_action_btn">İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)</span>
+              <span class="sim-btn-sub" data-i18n="sim_action_sub">Gerçek fizik, itici alevleri ve sismik darbe canlandırması</span>
+            </div>
+          </button>
+
+          <button class="big-walk-action-btn" id="btn-drawer-walk" title="Meta Quest / Vision Pro WebXR veya Masaüstü 1:1 Astronot Göz Hizasında Yürü">
+            <span class="sim-play-icon">🥽</span>
+            <div class="sim-btn-text-group">
+              <span class="sim-btn-main" data-i18n="walk_action_btn">1:1 ÖLÇEKTE YANINDA YÜRÜ (WebXR)</span>
+              <span class="sim-btn-sub" data-i18n="walk_action_sub">Aracın yanında 1.75m astronot göz hizasında yürü (VR / WASD)</span>
+            </div>
+          </button>
+        </div>
 
         <!-- 3D Holographic Artifact Mini-Viewport -->
         <div class="mini-model-box">
           <canvas id="mini-model-canvas"></canvas>
-          <span class="model-compass-badge">HOLOGRAPHIC RECONSTRUCTION</span>
-          <span class="model-hud-badge">3D SPECIMEN</span>
+          <span class="model-compass-badge">HOLOGRAPHIC PBR CAD</span>
+          <button class="model-xray-btn" id="btn-mini-wireframe" title="CAD Tel Kafes (Wireframe) Görünümünü Aç/Kapat">CAD X-RAY</button>
+          <span class="model-hud-badge">360° INTERACTIVE</span>
         </div>
 
         <!-- Famous Historic Quote Card -->
@@ -282,9 +349,9 @@
         <div class="items-list-container" id="drawer-photos-section" style="display: none;">
           <div class="section-heading-row">
             <div class="section-heading" data-i18n="nasa_photos_label">📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI</div>
-            <span class="pill-badge">LROC & HiRISE</span>
+            <span class="pill-badge">NASA ARCHIVE</span>
           </div>
-          <p class="photos-subtext" data-i18n="nasa_photos_subtext">NASA LROC ve Mars MRO uydularından doğrulanmış arşiv kareleri (Büyütmek için tıklayın):</p>
+          <p class="photos-subtext" data-i18n="nasa_photos_subtext">NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):</p>
           <div class="nasa-photos-grid" id="drawer-photos-grid">
             <!-- Populated dynamically -->
           </div>
@@ -359,7 +426,7 @@
   </div>
 
   <!-- =====================================================================
-       CINEMATIC 3D MISSION SIMULATION THEATER (Overlay)
+       CINEMATIC 3D MISSION SIMULATION THEATER & 1:1 WEBXR SURFACE WALK
        ===================================================================== -->
   <div class="sim-modal-overlay" id="simulation-modal">
     <div class="sim-modal-container">
@@ -380,8 +447,17 @@
               <option value="follow">Takip Kamerası</option>
               <option value="ground">Yüzey Sabit Kamerası</option>
               <option value="free">Serbest 360° Kamera (Mouse/Touch)</option>
+              <option value="walk">🥽 1:1 Yüzey Yürüyüşü (WASD / WebXR)</option>
             </select>
           </div>
+
+          <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronot Göz Hizasında Yüzey Yürüyüşü Modu">
+            <span>🚶</span> <span>1:1 Yürüyüş</span>
+          </button>
+
+          <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Meta Quest veya Apple Vision Pro ile WebXR VR/AR Başlat">
+            <span>🥽</span> <span>WebXR VR/AR</span>
+          </button>
 
           <button class="sim-action-btn" id="btn-replay-sim" title="Simülasyonu Baştan Başlat">
             <span>🔄</span> <span>Tekrar Oynat</span>
@@ -397,19 +473,42 @@
       <div class="sim-canvas-wrapper">
         <canvas id="sim-canvas"></canvas>
 
+        <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
+        <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
+          <div class="walk-visor-banner">
+            <div class="walk-xr-status" id="walk-xr-status">🥽 1:1 ASTRONOT YÜZEY VİZÖRÜ AKTİF (WASD / Ok Tuşları ile Yürü • Fare Sürükle ile 360° Bak • SPACE ile Sıçra)</div>
+            <div class="walk-metrics-row">
+              <span id="walk-hud-dist">ARACA MESAFE: 13.5 m (1:1 Ölçek)</span>
+              <span>•</span>
+              <span id="walk-hud-grav">YÜZEY YERÇEKİMİ: 1.62 m/s² (0.16g) | GÖZ HİZASI: 1.75 m</span>
+            </div>
+          </div>
+
+          <!-- Interactive Touch / Mouse D-Pad for Surface Walk -->
+          <div class="walk-dpad-container">
+            <button class="dpad-btn dpad-up" id="walk-btn-up" title="İleri Yürü (W)">▲</button>
+            <div class="dpad-mid-row">
+              <button class="dpad-btn dpad-left" id="walk-btn-left" title="Sola Yürü (A)">◄</button>
+              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Düşük Yerçekimi Sıçraması (SPACE)">SIÇRA</button>
+              <button class="dpad-btn dpad-right" id="walk-btn-right" title="Sağa Yürü (D)">►</button>
+            </div>
+            <button class="dpad-btn dpad-down" id="walk-btn-down" title="Geri Yürü (S)">▼</button>
+          </div>
+        </div>
+
         <!-- Real-Time Telemetry HUD Overlay -->
         <div class="sim-hud-overlay">
           <div class="hud-gauge-row">
             <div class="hud-gauge">
-              <span class="gauge-label">İRTİFA (ALTITUDE)</span>
+              <span class="gauge-label">İRTİFA / GÖZ HİZASI</span>
               <span class="gauge-val" id="hud-alt">75.0 m</span>
             </div>
             <div class="hud-gauge">
-              <span class="gauge-label">DİKEY HIZ (VERTICAL VELOCITY)</span>
+              <span class="gauge-label">HIZ / MESAFE</span>
               <span class="gauge-val" id="hud-speed">-3.2 m/s</span>
             </div>
             <div class="hud-gauge">
-              <span class="gauge-label">İTME GÜCÜ (THRUST)</span>
+              <span class="gauge-label">İTME GÜCÜ / MOD</span>
               <span class="gauge-val" id="hud-thrust">78%</span>
             </div>
           </div>
@@ -432,18 +531,18 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span>🏛️</span>
-          <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ</h2>
+          <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & TARİH SERİSİ ARŞİVLERİ</h2>
         </div>
         <button class="close-btn" id="btn-close-sources">✕</button>
       </div>
       <p class="sources-intro" data-i18n="sources_intro">
-        Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri ve telsiz konuşmaları NASA'nın resmi kamuya açık bilimsel arşivlerinden doğrulanmıştır:
+        Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referansları ve telsiz konuşmaları NASA'nın resmi bilimsel arşivlerinden doğrulanmıştır:
       </p>
       <div class="sources-list" id="sources-list-container">
         <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
       </div>
       <div class="modal-footer-note">
-        <span>✦ NASA Açık Veri Politikası (Open Data Policy) kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
+        <span>✦ NASA Açık Veri Politikası (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
       </div>
     </div>
   </div>
@@ -480,11 +579,11 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=3.6"></script>
-  <script src="js/textures.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/scene.js?v=3.6"></script>
-  <script src="js/simulation.js?v=3.6"></script>
-  <script src="js/app.js?v=3.6"></script>
+  <script src="js/data.js?v=4.0"></script>
+  <script src="js/textures.js?v=4.0"></script>
+  <script src="js/audio.js?v=4.0"></script>
+  <script src="js/scene.js?v=4.0"></script>
+  <script src="js/simulation.js?v=4.0"></script>
+  <script src="js/app.js?v=4.0"></script>
 </body>
 </html>

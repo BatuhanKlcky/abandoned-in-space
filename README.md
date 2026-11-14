@@ -1,40 +1,38 @@
-# 🛰️ Abandoned but not Forgotten: NASA's Discarded Equipment on the Moon and Mars
-### (Terk Edilmiş Ama Unutulmamış: Ay ve Mars'taki Tarihi NASA Ekipmanları)
+# 🛰️ Abandoned but not Forgotten: NASA's Discarded Equipment Across the Solar System (v4.0)
+### (Terk Edilmiş Ama Unutulmamış: Ay, Mars, Venüs ve Dış Gezegenlerdeki Tarihi Uzay Ekipmanları)
 
 > **"Buradan barış ve umutla ayrılıyoruz; geri döndüğümüzde tüm insanlık için döneceğiz."** — *Gene Cernan (Apollo 17, Ay'da yürüyen son insan)*
 
-İnsanlığın Dünya dışındaki gök cisimlerinde (Ay ve Mars) bıraktığı tarihi donanımların, iniş kademelerinin, keşif araçlarının ve bilimsel anıtların 3D interaktif haritası ve eğitici hikaye anlatımı platformu.
+İnsanlığın Dünya dışındaki gök cisimlerinde (**Ay, Mars, Venüs, Titan, 67P Kuyruklu Yıldızı, 433 Eros Asteroidi ve Jüpiter**) bıraktığı **25 tarihi donanımın**, iniş kademelerinin, keşif araçlarının ve bilimsel anıtların 3D interaktif haritası, **1:1 WebXR Yüzey Yürüyüşü** ve eğitici hikaye anlatımı platformu.
+
+🔗 **Canlı Web Adresi (GitHub Pages):** [https://batuhanklcky.github.io/abandoned-in-space/](https://batuhanklcky.github.io/abandoned-in-space/)
 
 ---
 
-## 🌟 Öne Çıkan Özellikler
+## 🌟 v4.0 Öne Çıkan Özellikler & Yol Haritası Entegrasyonu
 
-1. **3D İnteraktif Gök Cisimleri (Three.js WebGL)**:
-   - **Ay (The Moon)**: Sessizlik Denizi, Fırtınalar Okyanusu, Fra Mauro, Hadley Rille, Descartes Yaylaları, Taurus-Littrow ve kutup kraterleri.
-   - **Mars (Kızıl Gezegen)**: Chryse Planitia, Ares Vallis, Gusev Krateri, Meridiani Planum, Vastitas Borealis, Gale Krateri, Elysium Planitia ve Jezero Krateri.
-   - Çevrimdışı ve CORS hatasız çalışan, kraterleri ve bazalt denizlerini dinamik üreten yüksek çözünürlüklü prosedürel yüzey ve kabartma (bump) haritaları.
-   - Gerçek eksen eğiklikleri (Mars ~25.2°, Ay ~1.5°), atmosferik ışık saçılması (Mars'ın turuncu korona parıltısı), 6.000 parçacıklı Samanyolu yıldız tarlası ve dinamik Güneş ışıklandırması.
+1. **🪐 4 Farklı Gök Cismi & Dış Güneş Sistemi Görevleri (25 Tarihi Görev)**:
+   - **Ay (The Moon - 10 Görev)**: Surveyor 3, Apollo 11, Apollo 12, Apollo 13 S-IVB, Apollo 14, Apollo 15 (LRV), Apollo 16, Apollo 17, Lunar Prospector ve LCROSS Centaur.
+   - **Mars (Kızıl Gezegen - 8 Görev)**: Viking 1, Mars Pathfinder & Sojourner, Spirit, Opportunity, Phoenix, Curiosity Sky Crane, InSight ve Perseverance & Ingenuity.
+   - **Venüs (92 Bar Basınç Cehennemi - 3 Görev)**: Sovyet **Venera 7** (başka bir gezegenden ilk veri), **NASA Pioneer Venus Day Probe** (beklenmedik şekilde 67.5 dakika yüzeyden sinyal gönderen titanyum küre) ve **Venera 13** (465°C'de ilk renkli Venüs panoraması ve ses kaydı).
+   - **Titan & Dış Sistem (4 Görev)**: Satürn'ün uydusu Titan'a inen **ESA/NASA Cassini-Huygens**, **67P/Churyumov-Gerasimenko** kuyruklu yıldızına inen **Rosetta & Philae**, **433 Eros** asteroidine doğaçlama inen **NEAR Shoemaker** ve Jüpiter'in 22 barlık atmosferinde buharlaşan **Galileo Atmosferik Sondası**.
 
-2. **Tarihi Kalıntılar & Etkileşimli Radar İşaretçileri (Beacons)**:
-   - Gerçek enlem/boylam koordinatlarına göre küre üzerine yerleştirilmiş, radyal darbe halkaları (pulse wave) yayan 3D ışıklı işaretçiler.
-   - İşaretçiye tıklandığında kameranın pürüzsüz bir şekilde yüzeydeki o noktaya doğru sinematik uçuşu (`OrbitControls` yumuşak kamera geçişi).
+2. **🥽 WebXR ile VR/AR Entegrasyonu & 1:1 Ölçekte Yüzey Yürüyüşü**:
+   - Kullanıcıların **Meta Quest**, **Apple Vision Pro** (`navigator.xr` WebXR Immersive VR/AR API) veya masaüstü/mobil tarayıcıda **1.75 metre astronot göz hizasında** Apollo Ay Modülü, Venera 13, Huygens veya Mars gezginlerinin yanında **1:1 gerçek ölçekte** yürümesini sağlar.
+   - `WASD` / Ok tuşları ve dokunmatik ekran D-Pad kontrolleri, fare/dokunmatik 360° vizör bakışı, gezegenin gerçek yerçekimi ivmesine (`1.62 m/s²` Ay, `3.72 m/s²` Mars, `8.87 m/s²` Venüs, `1.35 m/s²` Titan) göre çalışan `SPACE` sıçrama fiziği ve zeminde `5m / 10m / 15m` holografik ölçek halkaları.
 
-3. **3D Holografik Mini-Görüntüleyici (Mini-Model Viewport)**:
-   - Hikaye çekmecesinde ilgili ekipmanın 3D minyatür rekonstrüksiyonu (Apollo İniş Kademesi, 6 tekerlekli Mars Gezgini, Ingenuity Mars Helikopteri, Sky Crane Gökyüzü Vinci veya Saturn V Roket Kademesi).
+3. **📡 Canlı Telemetri & Mars Hava Durumu (NASA MEDA / REMS)**:
+   - Halen Mars'ta aktif olan **Perseverance (Jezero Krateri - MEDA)** ve **Curiosity (Gale Krateri - REMS)** gezginlerinin iniş epoch'una göre astronomik olarak hesaplanan anlık **Mars Günü (Sol)** sayacı, minimum/maksimum hava sıcaklığı, atmosfer basıncı (`Pa`), rüzgar hızı/yönü, kat edilen kilometre (`odometer`) ve **"📍 Haritada Rover Konumuna Uç"** doğrudan odaklanma özelliği.
 
-4. **Derin Tarihi Hikaye Anlatımı & Telemetri Çekmecesi**:
-   - **Neden Geride Bırakıldı?**: Yörüngeye dönüş kütle hesapları, tek yönlü teknoloji gösterileri, batarya ömürleri veya kasıtlı sismik çarpışma deneyleri.
-   - **Bugünkü Durumu**: Onlarca yıllık sert vakum, Güneş'in filtresiz UV ışınımı, mikrometeorit çarpmaları, Mars'ın küresel toz fırtınaları veya kutup kuru buzları altında bugünkü fiziki halleri.
-   - **Terk Edilen Eşyalar Listesi**: Altın plaketler, silikon iyi niyet diskleri, lazer reflektörleri, Hasselblad kameraları, Alan Shepard'ın vurduğu golf topları, Charlie Duke'un bıraktığı aile fotoğrafı, "Fallen Astronaut" anıtı ve Eugene Shoemaker'ın küllerini taşıyan hatıra kapsülü.
-   - **Telsiz & Ses Kayıtları**: Web Audio API ile sentezlenen otantik NASA Apollo *Quindar Tonu* (2525 Hz bip tonu) ve telsiz cızırtısı.
+4. **🛠️ Blender Gerektirmeyen Çok Parçalı Prosedürel PBR 3D Modeller & CAD X-Ray**:
+   - Tüm uzay aracı modelleri (`Apollo LM`, `Rover`, `Ingenuity`, `Venera 13`, `Huygens`, `Philae`, `Sky Crane`, `S-IVB`, `Galileo`) harici 3D yazılıma ihtiyaç duymadan doğrudan Three.js içinde kırışık **Kapton altın folyo kabartma dokuları (`generateKaptonFoilBump`)**, fotovoltaik güneş paneli dokuları (`generateSolarPanelTexture`) ve **CAD X-Ray (Tel Kafes)** inceleme moduyla üretilmiştir.
 
-5. **Rehberli Hikaye Turu (Guided Story Tour)**:
-   - "HİKAYE TURU" butonu ile Apollo 11'den başlayarak kronolojik olarak tüm tarihi bölgeleri sırayla otomatik gezdiren, kamera geçişlerini ve hikayeleri ekrana getiren etkileşimli mod.
-
-6. **Filtreler & Arama**:
-   - **Dönem Filtresi**: 1960'lar, 1970'ler, 1990'lar, 2000'ler, 2010'lar ve 2020'ler.
-   - **Anında Arama**: Görev adına, ekipman türüne veya bölgeye göre anlık filtreleme ("Apollo", "Opportunity", "Golf", "Ingenuity", "Sojourner").
-   - **Çift Dil Desteği (TR / EN)**: Tek tıkla Türkçe ve İngilizce arasında geçiş.
+5. **📚 Resmi NASA History Series Monografileri & Açık Veri Kaynakları**:
+   - **NASA SP-2024-4559**: *Governing the Moon: A History* (Stephen S. Buono) — Artemis Accords Bölüm 9 mirası ve Ay'daki 190 tonluk antropolojik envanter.
+   - **NASA SP-2026-4239**: *NASA's Discovery Program: Competitive Planetary Exploration in the 21st Century* (David W. Brown) — Mars Pathfinder, Sojourner ve NEAR Shoemaker.
+   - **NASA SP-2022-4235**: *A History of Near-Earth Objects Research* (Conway, Yeomans & Rosenburg) — Eugene Shoemaker'ın Ay'daki külleri ve 433 Eros asteroidi.
+   - **NASA SP-2021-4705**: *50 Years of Solar System Exploration: Historical Perspectives* (Linda Billings, ed.) — Viking, Pioneer Venus, Galileo ve Cassini-Huygens.
+   - **data.nasa.gov** & **images.nasa.gov** resmi fotoğraf ve telemetri katalogları.
 
 ---
 
@@ -42,37 +40,7 @@
 
 Proje dizininde Python veya Node.js ile yerel sunucu başlatabilirsiniz:
 
-### Yöntem 1: Python ile (Önerilen)
 ```bash
 python server.py
 ```
 *(Tarayıcınız otomatik olarak `http://localhost:8080` adresinde açılacaktır.)*
-
-Alternatif olarak:
-```bash
-python -m http.server 8080
-```
-
-### Yöntem 2: Node.js ile
-```bash
-npx serve .
-```
-
----
-
-## 📁 Proje Dizin Yapısı
-
-```
-abandoned-in-space/
-├── index.html          # Ana HUD ve WebGL kapsayıcı arayüzü
-├── server.py           # Tek tıkla çalıştırıcı yerel Python sunucusu
-├── README.md           # Proje belgelendirmesi ve tarihi arka plan
-├── css/
-│   └── style.css       # NASA JPL / Mission Control cam estetiği (Glassmorphism)
-└── js/
-    ├── data.js         # Ay ve Mars'taki NASA kalıntılarının tarihi veri tabanı
-    ├── textures.js     # Yüksek kaliteli prosedürel Ay ve Mars yüzey haritası üreteci
-    ├── audio.js        # Web Audio API ile Quindar tonu ve uzay ambiyansı sentezleyici
-    ├── scene.js        # Three.js 3D gezegen motoru, işaretçiler ve holografik mini-model
-    └── app.js          # Uygulama mantığı, rehberli tur, filtreler ve dil yönetimi
-```

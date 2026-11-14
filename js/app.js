@@ -1,6 +1,7 @@
 /**
  * Application Orchestrator & UI Controller
- * Manages State, Guided Story Tour, Language Switcher (TR/EN), Filters, and HUD Telemetry
+ * Manages State, Guided Story Tour (Planet & Full Solar System), Language Switcher (TR/EN),
+ * Live Mars Weather & Rover Telemetry (MEDA / REMS), 1:1 WebXR Surface Walk, and HUD Telemetry
  */
 
 class AbandonedInSpaceApp {
@@ -10,7 +11,8 @@ class AbandonedInSpaceApp {
     this.activeDecade = 'all';
     this.activeCategory = 'all';
     this.searchQuery = '';
-    
+    this.activeRover = 'perseverance';
+
     this.isTourActive = false;
     this.tourIndex = 0;
     this.tourList = [];
@@ -34,6 +36,7 @@ class AbandonedInSpaceApp {
 
     // 4. Populate Initial State
     this.updateBodyTelemetry();
+    this.initLiveMarsTelemetry();
     this.renderArtifactsList();
 
     // 5. Audio startup on first user gesture
@@ -47,7 +50,7 @@ class AbandonedInSpaceApp {
   }
 
   bindControls() {
-    // Planet Toggle Buttons
+    // Planet Toggle Buttons (Moon, Mars, Venus, Outer System)
     document.querySelectorAll('.planet-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const body = e.currentTarget.getAttribute('data-body');
@@ -60,7 +63,7 @@ class AbandonedInSpaceApp {
     if (soundBtn) {
       soundBtn.addEventListener('click', () => {
         const enabled = window.SpaceAudio.toggleSound();
-        soundBtn.innerHTML = enabled 
+        soundBtn.innerHTML = enabled
           ? `<span>🔊</span> <span data-i18n="sound_on">${this.currentLang === 'tr' ? 'SES: AÇIK' : 'AUDIO: ON'}</span>`
           : `<span>🔇</span> <span data-i18n="sound_off">${this.currentLang === 'tr' ? 'SES: KAPALI' : 'AUDIO: OFF'}</span>`;
         window.SpaceAudio.playTelemetryPing(800, 0.05);
@@ -82,7 +85,7 @@ class AbandonedInSpaceApp {
         if (this.isTourActive) {
           this.endTour();
         } else {
-          this.startTour();
+          this.startTour(false);
         }
       });
     }
@@ -90,9 +93,11 @@ class AbandonedInSpaceApp {
     // Tour Banner Controls
     const tourNextBtn = document.getElementById('tour-next-btn');
     const tourPrevBtn = document.getElementById('tour-prev-btn');
+    const tourAllBtn = document.getElementById('tour-all-btn');
     const tourExitBtn = document.getElementById('tour-exit-btn');
     if (tourNextBtn) tourNextBtn.addEventListener('click', () => this.nextTourStep());
     if (tourPrevBtn) tourPrevBtn.addEventListener('click', () => this.prevTourStep());
+    if (tourAllBtn) tourAllBtn.addEventListener('click', () => this.startTour(true));
     if (tourExitBtn) tourExitBtn.addEventListener('click', () => this.endTour());
 
     // Reset View Button
@@ -123,7 +128,19 @@ class AbandonedInSpaceApp {
       nextSiteBtn.addEventListener('click', () => this.navigateAdjacentArtifact(1));
     }
 
-    // Audio broadcast snippet button (Spoken Radio Transmission with Quindar tones & static)
+    // CAD X-Ray Wireframe Button in Holographic Viewer
+    const xrayBtn = document.getElementById('btn-mini-wireframe');
+    if (xrayBtn) {
+      xrayBtn.addEventListener('click', () => {
+        if (this.sceneManager) {
+          const isWire = this.sceneManager.toggleMiniWireframe();
+          xrayBtn.classList.toggle('active', isWire);
+          window.SpaceAudio.playTelemetryPing(1350, 0.04);
+        }
+      });
+    }
+
+    // Audio broadcast snippet button
     const playAudioBtn = document.getElementById('btn-play-transmission');
     if (playAudioBtn) {
       playAudioBtn.addEventListener('click', () => {
@@ -138,14 +155,12 @@ class AbandonedInSpaceApp {
         window.SpaceAudio.playRadioTransmission(
           speechText,
           () => {
-            // onStart
             if (eq) eq.classList.add('active');
             playAudioBtn.classList.add('transmitting');
             if (icon) icon.innerText = "🔊";
             if (btnText) btnText.innerText = this.currentLang === 'tr' ? 'YAYINLANIYOR...' : 'TRANSMITTING...';
           },
           () => {
-            // onEnd
             if (eq) eq.classList.remove('active');
             playAudioBtn.classList.remove('transmitting');
             if (icon) icon.innerText = "📻";
@@ -161,11 +176,47 @@ class AbandonedInSpaceApp {
     const triggerSimulation = () => {
       const art = this.sceneManager.selectedArtifact || (this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
       if (window.SpaceSimulation) {
+        window.SpaceSimulation.cameraMode = 'cinematic';
         window.SpaceSimulation.startSimulation(art);
       }
     };
     if (topSimBtn) topSimBtn.addEventListener('click', triggerSimulation);
     if (drawerSimBtn) drawerSimBtn.addEventListener('click', triggerSimulation);
+
+    // 1:1 Surface Walk & WebXR Controls
+    const topWalkBtn = document.getElementById('btn-top-walk');
+    const drawerWalkBtn = document.getElementById('btn-drawer-walk');
+    const triggerSurfaceWalk = () => {
+      const art = this.sceneManager.selectedArtifact || (this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
+      if (window.SpaceSimulation) {
+        window.SpaceSimulation.startSurfaceWalk(art);
+      }
+    };
+    if (topWalkBtn) topWalkBtn.addEventListener('click', triggerSurfaceWalk);
+    if (drawerWalkBtn) drawerWalkBtn.addEventListener('click', triggerSurfaceWalk);
+
+    // Live Mars Rover Tabs & Goto Button
+    document.querySelectorAll('.rover-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.rover-tab-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        this.activeRover = e.currentTarget.getAttribute('data-rover');
+        this.updateLiveMarsCard();
+        window.SpaceAudio.playTelemetryPing(1150, 0.04);
+      });
+    });
+
+    const gotoRoverBtn = document.getElementById('btn-goto-rover');
+    if (gotoRoverBtn) {
+      gotoRoverBtn.addEventListener('click', () => {
+        const targetId = this.activeRover === 'perseverance' ? 'perseverance-parachute' : 'curiosity-skycrane';
+        const targetArt = ARTIFACTS.find(a => a.id === targetId);
+        if (targetArt) {
+          this.selectArtifact(targetArt);
+          window.SpaceAudio.playTelemetryPing(1400, 0.06);
+        }
+      });
+    }
 
     // Sources Modal Controls
     const sourcesBtn = document.getElementById('btn-sources-toggle');
@@ -211,6 +262,7 @@ class AbandonedInSpaceApp {
     const mBtnTour = document.getElementById('m-btn-tour');
     const leftDock = document.getElementById('left-dock');
     const cardTelemetry = document.getElementById('card-telemetry');
+    const cardLiveMars = document.getElementById('card-live-mars');
     const cardRelics = document.getElementById('card-relics-list');
     const btnMobileCloseList = document.getElementById('btn-mobile-close-list');
 
@@ -231,6 +283,7 @@ class AbandonedInSpaceApp {
       mBtnRelics.addEventListener('click', () => {
         setMobileTabActive(mBtnRelics);
         if (cardTelemetry) cardTelemetry.style.display = 'none';
+        if (cardLiveMars) cardLiveMars.style.display = 'none';
         if (cardRelics) cardRelics.style.display = 'flex';
         if (leftDock) leftDock.classList.add('mobile-visible');
         this.closeDrawer();
@@ -241,6 +294,7 @@ class AbandonedInSpaceApp {
       mBtnTelemetry.addEventListener('click', () => {
         setMobileTabActive(mBtnTelemetry);
         if (cardTelemetry) cardTelemetry.style.display = 'block';
+        if (cardLiveMars) cardLiveMars.style.display = 'block';
         if (cardRelics) cardRelics.style.display = 'none';
         if (leftDock) leftDock.classList.add('mobile-visible');
         this.closeDrawer();
@@ -252,7 +306,7 @@ class AbandonedInSpaceApp {
         setMobileTabActive(mBtnTour);
         if (leftDock) leftDock.classList.remove('mobile-visible');
         if (this.isTourActive) this.endTour();
-        else this.startTour();
+        else this.startTour(false);
       });
     }
 
@@ -300,19 +354,76 @@ class AbandonedInSpaceApp {
         if (this.isTourActive) this.endTour();
         this.closeDrawer();
         this.sceneManager.resetView();
-      } else if (e.key === 'ArrowRight' && this.isTourActive) {
+      } else if (e.key === 'ArrowRight' && this.isTourActive && (!window.SpaceSimulation || !window.SpaceSimulation.isPlaying)) {
         this.nextTourStep();
-      } else if (e.key === 'ArrowLeft' && this.isTourActive) {
+      } else if (e.key === 'ArrowLeft' && this.isTourActive && (!window.SpaceSimulation || !window.SpaceSimulation.isPlaying)) {
         this.prevTourStep();
       }
     });
+  }
+
+  // --- Live Mars Weather & Rover Telemetry (NASA MEDA / REMS + Live Sol Calculation) ---
+  initLiveMarsTelemetry() {
+    this.updateLiveMarsCard();
+    // Attempt live NASA API check in background to enrich Sol / status if reachable
+    fetch('https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json')
+      .then(res => res.ok ? res.json() : null)
+      .then(json => {
+        if (json && json.soles && json.soles.length > 0 && typeof LIVE_ROVER_TELEMETRY !== 'undefined') {
+          const latest = json.soles[0];
+          if (latest.max_temp && latest.min_temp) {
+            LIVE_ROVER_TELEMETRY.curiosity.weather.maxTempC = parseInt(latest.max_temp, 10) || -14;
+            LIVE_ROVER_TELEMETRY.curiosity.weather.minTempC = parseInt(latest.min_temp, 10) || -79;
+          }
+          if (latest.pressure) {
+            LIVE_ROVER_TELEMETRY.curiosity.weather.pressurePa = parseFloat(latest.pressure) || 818.4;
+          }
+          if (latest.sol) {
+            LIVE_ROVER_TELEMETRY.curiosity.sol = parseInt(latest.sol, 10) || LIVE_ROVER_TELEMETRY.curiosity.sol;
+          }
+          this.updateLiveMarsCard();
+        }
+      })
+      .catch(() => {
+        // Offline or CORS restricted: uses calibrated MEDA / REMS telemetry + astronomical Sol clock
+      });
+  }
+
+  updateLiveMarsCard() {
+    if (typeof LIVE_ROVER_TELEMETRY === 'undefined') return;
+    const r = LIVE_ROVER_TELEMETRY[this.activeRover];
+    if (!r) return;
+
+    const isTr = this.currentLang === 'tr';
+
+    // Compute exact real-time Martian Sol from landing epoch
+    const landingEpochMs = this.activeRover === 'perseverance'
+      ? Date.parse('2021-02-18T20:55:00Z')
+      : Date.parse('2012-08-06T05:17:00Z');
+    const marsSolMs = 88775.244 * 1000;
+    const computedSol = Math.max(r.sol, Math.floor((Date.now() - landingEpochMs) / marsSolMs));
+
+    const solEl = document.getElementById('live-rover-sol');
+    const locEl = document.getElementById('live-rover-loc');
+    const tempEl = document.getElementById('live-temp');
+    const windEl = document.getElementById('live-wind');
+    const pressEl = document.getElementById('live-pressure');
+    const odoEl = document.getElementById('live-odometer');
+    const badgeEl = document.getElementById('live-api-badge');
+
+    if (solEl) solEl.innerText = `SOL ${computedSol}`;
+    if (locEl) locEl.innerText = `${isTr ? r.location_tr : r.location_en} • ${r.lat.toFixed(2)}°, ${r.lon.toFixed(2)}°`;
+    if (tempEl) tempEl.innerText = `${r.weather.maxTempC}°C / ${r.weather.minTempC}°C`;
+    if (windEl) windEl.innerText = `${r.weather.windSpeedMs} m/s (${r.weather.windDir})`;
+    if (pressEl) pressEl.innerText = `${r.weather.pressurePa} Pa`;
+    if (odoEl) odoEl.innerText = `${r.odometerKm} km`;
+    if (badgeEl) badgeEl.innerText = this.activeRover === 'perseverance' ? 'MEDA SENSÖRÜ' : 'REMS SENSÖRÜ';
   }
 
   switchPlanet(body) {
     if (this.currentBody === body) return;
     this.currentBody = body;
 
-    // Toggle button UI
     document.querySelectorAll('.planet-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-body') === body);
     });
@@ -321,14 +432,11 @@ class AbandonedInSpaceApp {
     this.updateBodyTelemetry();
     this.closeDrawer();
     this.renderArtifactsList();
-
-    if (this.isTourActive) {
-      this.endTour();
-    }
   }
 
   updateBodyTelemetry() {
     const data = CELESTIAL_DATA[this.currentBody];
+    if (!data) return;
     const isTr = this.currentLang === 'tr';
 
     const titleEl = document.getElementById('body-name-text');
@@ -374,7 +482,7 @@ class AbandonedInSpaceApp {
 
     if (filtered.length === 0) {
       container.innerHTML = `<div style="padding:14px; color:var(--text-dim); font-size:12px; text-align:center;">
-        ${this.currentLang === 'tr' ? 'Eşleşen tarihi kalıntı bulunamadı.' : 'No matching historical relics found.'}
+        ${this.currentLang === 'tr' ? 'Bu dönemde eşleşen tarihi kalıntı bulunamadı.' : 'No matching historical relics found in this decade.'}
       </div>`;
       return;
     }
@@ -407,7 +515,6 @@ class AbandonedInSpaceApp {
   selectArtifact(artifact) {
     if (!artifact) return;
 
-    // Switch body if artifact is on another celestial body
     if (artifact.body !== this.currentBody) {
       this.switchPlanet(artifact.body);
     }
@@ -422,7 +529,9 @@ class AbandonedInSpaceApp {
     const drawer = document.getElementById('story-drawer');
     if (!drawer) return;
 
-    // Populate data
+    const xrayBtn = document.getElementById('btn-mini-wireframe');
+    if (xrayBtn) xrayBtn.classList.remove('active');
+
     document.getElementById('drawer-mission').innerText = artifact.mission;
     document.getElementById('drawer-date').innerText = isTr ? artifact.date : artifact.date_en;
     document.getElementById('drawer-title').innerText = isTr ? artifact.name_tr : artifact.name_en;
@@ -436,7 +545,6 @@ class AbandonedInSpaceApp {
     document.getElementById('drawer-why-left').innerText = isTr ? artifact.whyAbandoned_tr : artifact.whyAbandoned_en;
     document.getElementById('drawer-condition').innerText = isTr ? artifact.currentCondition_tr : artifact.currentCondition_en;
 
-    // Discarded items list
     const listEl = document.getElementById('drawer-checklist');
     listEl.innerHTML = '';
     artifact.discardedItems.forEach(itemStr => {
@@ -445,13 +553,11 @@ class AbandonedInSpaceApp {
       listEl.appendChild(li);
     });
 
-    // Technical Specs
     document.getElementById('spec-mass').innerText = artifact.technicalSpecs.massLeftKg;
     document.getElementById('spec-power').innerText = artifact.technicalSpecs.powerSource;
     document.getElementById('spec-duration').innerText = artifact.technicalSpecs.activeDuration;
     document.getElementById('spec-coords').innerText = artifact.technicalSpecs.coordinatesReadable;
 
-    // Secret Relic / Easter Egg Highlight Card
     const relicCard = document.getElementById('secret-relic-card');
     if (relicCard) {
       if (artifact.secretRelic) {
@@ -464,7 +570,6 @@ class AbandonedInSpaceApp {
       }
     }
 
-    // Authentic NASA Satellite & Surface Photography Gallery
     const photosSection = document.getElementById('drawer-photos-section');
     const photosGrid = document.getElementById('drawer-photos-grid');
     if (photosSection && photosGrid) {
@@ -494,12 +599,10 @@ class AbandonedInSpaceApp {
       }
     }
 
-    // Audio transmission text
     document.getElementById('drawer-audio-text').innerText = artifact.audioSnippet;
 
     drawer.classList.add('open');
 
-    // Ensure holographic 3D specimen viewer is rendered at exact container dimensions
     if (this.sceneManager) {
       setTimeout(() => this.sceneManager.resizeMiniViewer(), 60);
       setTimeout(() => this.sceneManager.resizeMiniViewer(), 480);
@@ -549,9 +652,9 @@ class AbandonedInSpaceApp {
     this.selectArtifact(filtered[nextIdx]);
   }
 
-  // --- Guided Story Tour ---
-  startTour() {
-    this.tourList = getArtifactsByBody(this.currentBody);
+  // --- Guided Story Tour (Single Body or Grand Solar System Tour) ---
+  startTour(allBodies = false) {
+    this.tourList = allBodies ? [...ARTIFACTS] : getArtifactsByBody(this.currentBody);
     if (this.tourList.length === 0) return;
 
     this.isTourActive = true;
@@ -623,13 +726,11 @@ class AbandonedInSpaceApp {
     this.currentLang = this.currentLang === 'tr' ? 'en' : 'tr';
     const isTr = this.currentLang === 'tr';
 
-    // Update lang button text
     const langBtn = document.getElementById('btn-lang-toggle');
     if (langBtn) {
       langBtn.innerHTML = `<span>🌐</span> <span>${isTr ? 'EN' : 'TR'}</span>`;
     }
 
-    // Update all i18n data elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][key]) {
@@ -645,6 +746,7 @@ class AbandonedInSpaceApp {
     });
 
     this.updateBodyTelemetry();
+    this.updateLiveMarsCard();
     this.renderArtifactsList();
 
     if (this.sceneManager.selectedArtifact) {
@@ -683,8 +785,13 @@ class AbandonedInSpaceApp {
 // Internationalization Strings
 const TRANSLATIONS = {
   tr: {
-    app_subtitle: "Ay ve Mars'taki Tarihi NASA Kalıntıları ve Hikaye Haritası",
+    app_subtitle: "Ay, Mars, Venüs ve Dış Gezegenlerdeki Tarihi Uzay Kalıntıları ve Hikaye Haritası",
+    planet_moon: "AY (MOON)",
+    planet_mars: "MARS",
+    planet_venus: "VENÜS",
+    planet_outer: "TİTAN & DIŞ SİSTEM",
     btn_sim: "SİMÜLASYON",
+    btn_walk_top: "1:1 YÜZEY / VR",
     btn_sources: "RESMİ KAYNAKLAR",
     btn_tour: "HİKAYE TURU",
     btn_reset: "GÖRÜNÜMÜ SIFIRLA",
@@ -692,6 +799,12 @@ const TRANSLATIONS = {
     sound_on: "SES: AÇIK",
     sound_off: "SES: KAPALI",
     telemetry_header: "GÖK CİSMİ TELEMETRİSİ",
+    live_mars_header: "📡 CANLI MARS HAVA & TELEMETRİ",
+    weather_temp: "HAVA SICAKLIĞI",
+    weather_wind: "RÜZGAR HIZI",
+    weather_pressure: "BASINÇ",
+    weather_odometer: "KAT EDİLEN YOL",
+    btn_goto_rover: "Haritada Rover Konumuna Uç",
     radius_label: "YARIÇAP",
     gravity_label: "YERÇEKİMİ",
     temp_label: "YÜZEY SICAKLIĞI",
@@ -699,7 +812,12 @@ const TRANSLATIONS = {
     mass_label: "TOPLAM TERK EDİLEN KÜTLE",
     search_placeholder: "Kalıntı veya görev ara...",
     relics_list_header: "TARİHİ EKİPMANLAR LİSTESİ",
+    filter_decade: "DÖNEM:",
+    decade_all: "TÜMÜ",
     sim_action_btn: "İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)",
+    sim_action_sub: "Gerçek fizik, itici alevleri ve sismik darbe canlandırması",
+    walk_action_btn: "1:1 ÖLÇEKTE YANINDA YÜRÜ (WebXR)",
+    walk_action_sub: "Aracın yanında 1.75m astronot göz hizasında yürü (VR / WASD)",
     why_left_label: "NEDEN GERİDE BIRAKILDI?",
     condition_label: "BUGÜNKÜ DURUMU (YILLAR SONRA)",
     discarded_label: "TERK EDİLEN TEÇHİZAT LİSTESİ",
@@ -710,14 +828,19 @@ const TRANSLATIONS = {
     btn_next_site: "Sonraki Kalıntı",
     hint_controls: "360° Gezin • Yakınlaş • Noktalara Tıkla",
     tour_active_title: "REHBERLİ HİKAYE TURU",
-    sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & ARŞİVLERİ",
-    sources_intro: "Bu projede yer alan tüm koordinatlar, yüzey fotoğrafları analizi, geride bırakılan donanım envanterleri ve telsiz konuşmaları NASA'nın kamuya açık resmi bilimsel arşivlerinden doğrulanmıştır:",
+    sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & TARİH SERİSİ ARŞİVLERİ",
+    sources_intro: "Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referansları ve telsiz konuşmaları NASA'nın resmi bilimsel arşivlerinden doğrulanmıştır:",
     nasa_photos_label: "📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI",
-    nasa_photos_subtext: "NASA LROC ve Mars MRO uydularından doğrulanmış arşiv kareleri (Büyütmek için tıklayın):"
+    nasa_photos_subtext: "NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):"
   },
   en: {
-    app_subtitle: "Historical NASA Artifacts & Storytelling Map on the Moon and Mars",
+    app_subtitle: "Historical Space Artifacts & Storytelling Map Across the Moon, Mars, Venus & Outer System",
+    planet_moon: "MOON",
+    planet_mars: "MARS",
+    planet_venus: "VENUS",
+    planet_outer: "TITAN & OUTER SYSTEM",
     btn_sim: "SIMULATION",
+    btn_walk_top: "1:1 WALK / VR",
     btn_sources: "OFFICIAL SOURCES",
     btn_tour: "STORY TOUR",
     btn_reset: "RESET VIEW",
@@ -725,6 +848,12 @@ const TRANSLATIONS = {
     sound_on: "AUDIO: ON",
     sound_off: "AUDIO: OFF",
     telemetry_header: "CELESTIAL TELEMETRY",
+    live_mars_header: "📡 LIVE MARS WEATHER & TELEMETRY",
+    weather_temp: "AIR TEMP",
+    weather_wind: "WIND SPEED",
+    weather_pressure: "PRESSURE",
+    weather_odometer: "ODOMETER",
+    btn_goto_rover: "Fly to Active Rover on Map",
     radius_label: "RADIUS",
     gravity_label: "GRAVITY",
     temp_label: "SURFACE TEMP",
@@ -732,7 +861,12 @@ const TRANSLATIONS = {
     mass_label: "TOTAL ABANDONED MASS",
     search_placeholder: "Search relics or missions...",
     relics_list_header: "HISTORICAL ARTIFACTS LIST",
+    filter_decade: "DECADE:",
+    decade_all: "ALL",
     sim_action_btn: "WATCH LANDING / IMPACT (3D)",
+    sim_action_sub: "Authentic physics, thruster plumes, and seismic impact reenactment",
+    walk_action_btn: "WALK BESIDE AT 1:1 SCALE (WebXR)",
+    walk_action_sub: "Walk at 1.75m astronaut eye-level beside the craft (VR / WASD)",
     why_left_label: "WHY WAS IT LEFT BEHIND?",
     condition_label: "CURRENT CONDITION (DECADES LATER)",
     discarded_label: "DISCARDED EQUIPMENT CHECKLIST",
@@ -743,10 +877,10 @@ const TRANSLATIONS = {
     btn_next_site: "Next Site",
     hint_controls: "Rotate 360° • Zoom • Tap Beacons",
     tour_active_title: "GUIDED STORY TOUR",
-    sources_modal_title: "OFFICIAL NASA DATA SOURCES & ARCHIVES",
-    sources_intro: "All coordinates, mission dates, discarded hardware manifests, and air-to-ground radio transmissions are compiled from NASA's official public archives:",
+    sources_modal_title: "OFFICIAL NASA DATA SOURCES & HISTORY SERIES ARCHIVES",
+    sources_intro: "All coordinates, mission dates, discarded hardware manifests, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) citations, and radio transmissions are compiled from NASA's official public archives:",
     nasa_photos_label: "📷 AUTHENTIC NASA SATELLITE & SURFACE PHOTOS",
-    nasa_photos_subtext: "Verified archive photography from NASA LROC & Mars MRO orbiters (Click to enlarge):"
+    nasa_photos_subtext: "Verified archive photography from NASA LROC, HiRISE, Magellan, Cassini & Rosetta (Click to enlarge):"
   }
 };
 
@@ -754,4 +888,3 @@ const TRANSLATIONS = {
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new AbandonedInSpaceApp();
 });
-

@@ -2531,3 +2531,205 @@ body {
   color: #020617;
   box-shadow: 0 0 12px var(--cyan-glow);
 }
+
+
+/* ==========================================================================
+   V4.2 PRECISION ANTI-OVERLAP LAYOUT & ASTRONAUT WALK HUD POLISH
+   Guarantees zero overlapping buttons, cards, drawers, or banners at all resolutions
+   ========================================================================== */
+
+.header-bar {
+  padding: 10px 18px;
+  min-height: 62px;
+  background: rgba(6, 10, 18, 0.92);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.16);
+  backdrop-filter: blur(16px);
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.brand-section {
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.nasa-meatball {
+  width: 36px;
+  height: 36px;
+}
+
+.title-group h1 {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.planet-toggle-container {
+  flex-shrink: 0;
+  padding: 3px;
+  gap: 2px;
+}
+
+.planet-btn {
+  padding: 6px 12px;
+  font-size: 11px;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hud-btn {
+  padding: 7px 10px;
+  font-size: 10.5px;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+/* Keep Story Drawer cleanly below Header Bar so top-right header buttons never get covered */
+.story-drawer {
+  top: 72px;
+  right: 16px;
+  bottom: 16px;
+  width: 450px;
+}
+
+/* Keep Left Dock cleanly positioned and prevent flexbox from squishing any card */
+.left-dock {
+  top: 72px;
+  left: 16px;
+  bottom: 66px;
+  width: 292px;
+  max-height: calc(100vh - 138px);
+  gap: 10px;
+}
+
+.left-dock > .glass-card {
+  flex-shrink: 0;
+}
+
+#card-relics-list {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 205px;
+}
+
+.artifacts-list {
+  max-height: 185px;
+}
+
+/* Keep Guided Story Tour Banner strictly inside the center gap between Left Dock and Right Drawer */
+@media (min-width: 1151px) {
+  .tour-banner {
+    top: 72px;
+    left: 322px;
+    right: 480px;
+    transform: none;
+    width: auto;
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  .bottom-dock {
+    left: 322px;
+    right: 480px;
+    transform: none;
+    width: auto;
+  }
+}
+
+/* Laptop & Medium Desktop Responsive Scaling (No Button Overlap) */
+@media (max-width: 1620px) {
+  .title-group p {
+    display: none;
+  }
+  .btn-text-collapsible {
+    display: none;
+  }
+  .planet-btn {
+    padding: 5px 10px;
+    font-size: 10.5px;
+  }
+  .hud-btn {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 1320px) and (min-width: 769px) {
+  .header-bar {
+    flex-wrap: wrap;
+    padding: 8px 14px;
+    gap: 8px;
+  }
+  .left-dock,
+  .story-drawer {
+    top: 112px;
+    max-height: calc(100vh - 175px);
+  }
+  .tour-banner {
+    top: 112px;
+  }
+}
+
+/* Simulation Modal & 1:1 Walk Visor Non-Overlapping Layout */
+.sim-top-bar {
+  padding: 10px 20px;
+  background: rgba(6, 10, 20, 0.92);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.22);
+  backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sim-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.walk-hud-overlay {
+  padding: 76px 24px 125px 24px;
+}
+
+.walk-visor-banner {
+  pointer-events: auto;
+  max-width: 760px;
+  padding: 9px 16px;
+}
+
+.walk-quick-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+
+.walk-sub-btn {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--trans-smooth);
+}
+
+.walk-sub-btn:hover,
+.walk-sub-btn.active {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  color: #a7f3d0;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}

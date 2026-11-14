@@ -238,8 +238,8 @@ class AbandonedInSpaceApp {
       soundBtn.addEventListener('click', () => {
         const enabled = window.SpaceAudio.toggleSound();
         soundBtn.innerHTML = enabled
-          ? `<span>🔊</span> <span data-i18n="sound_on">${this.currentLang === 'tr' ? 'SES: AÇIK' : 'AUDIO: ON'}</span>`
-          : `<span>🔇</span> <span data-i18n="sound_off">${this.currentLang === 'tr' ? 'SES: KAPALI' : 'AUDIO: OFF'}</span>`;
+          ? `<span>🔊</span> <span class="btn-text-collapsible" data-i18n="sound_on">${this.currentLang === 'tr' ? 'SES' : 'AUDIO'}</span>`
+          : `<span>🔇</span> <span class="btn-text-collapsible" data-i18n="sound_off">${this.currentLang === 'tr' ? 'SESSİZ' : 'MUTE'}</span>`;
         window.SpaceAudio.playTelemetryPing(800, 0.05);
       });
     }

@@ -418,57 +418,197 @@ class MissionSimulationTheater {
     } catch (_) {}
   }
 
-  triggerOpenHatch(autoStepOut = false) {
+  triggerInnerAirlockDoor(autoStepIntoAirlock = false) {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const statusEl = document.getElementById('walk-xr-status');
     const btn = document.getElementById('btn-walk-cabin');
 
-    // Prevent opening the pressurized hatch while the rocket is still descending in mid-air!
     if (this.simTime < 5.5) {
       this.playSwitchClickSound(290);
       setTimeout(() => this.playSwitchClickSound(240), 110);
       if (statusEl) {
         statusEl.innerText = isTr
-          ? `⚠️ GÜVENLİK KİLİDİ: Roket अभी inişte (+${this.getDescentOffset().toFixed(1)}m)! Yüzeye inmeden kapak açılamaz!`
-          : `⚠️ SAFETY INTERLOCK: Rocket still descending (+${this.getDescentOffset().toFixed(1)}m)! Wait for touchdown to open hatch!`;
+          ? `⚠️ HAVA KİLİDİ GÜVENLİĞİ: Roket inişte (+${this.getDescentOffset().toFixed(1)}m)! İniş tamamlanmadan kapılar açılamaz!`
+          : `⚠️ AIRLOCK INTERLOCK: Rocket descending (+${this.getDescentOffset().toFixed(1)}m)! Wait for touchdown!`;
       }
       return false;
     }
 
-    if (!this.cabinState.hatchOpen) {
-      this.cabinState.hatchOpen = true;
-      this.walkState.handReachTimer = 1.05; // Animate astronaut right hand reaching out to turn the valve & push hatch!
-      this.playHatchPneumaticSound();
-      if (btn) {
-        btn.classList.add('active');
-        btn.innerText = isTr ? '🪜 Merdivenden Yüzeye İn (E)' : '🪜 Step Out & Climb Down (E)';
-      }
-      if (autoStepOut) {
-        // Turn astronaut toward the opening hatch door (+Z) so they watch the valve spin & door swing open, then step onto ladder porch!
-        this.walkState.x = 0;
-        this.walkState.z = 1.38;
-        this.walkState.yaw = Math.PI;
-        this.walkState.pitch = -0.05;
-        setTimeout(() => {
-          if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
-            this.walkState.isInsideCabin = false;
-            this.walkState.isOnLadder = true;
-            this.walkState.x = 0;
-            this.walkState.z = 2.55;
-            this.walkState.yaw = 0;
-            this.walkState.smoothYaw = 0;
-            this.walkState.pitch = -0.22;
-            this.walkState.smoothPitch = -0.22;
-            if (btn) {
-              btn.classList.remove('active');
-              btn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
-            }
-          }
-        }, 680);
-      }
-      return true;
+    if (!this.cabinState) return false;
+
+    // REAL NASA AIRLOCK INTERLOCK RULE: Outer Door #2 MUST be sealed before Inner Door #1 can open!
+    if (this.cabinState.outerHatchOpen) {
+      this.cabinState.outerHatchOpen = false;
+      this.cabinState.hatchOpen = false;
+      this.playSwitchClickSound(520);
+    }
+
+    this.cabinState.innerHatchOpen = true;
+    this.cabinState.airlockPressurePsi = 4.8;
+    this.walkState.handReachTimer = 0.95;
+    this.playHatchPneumaticSound();
+    this.refreshCabinDisplays();
+
+    this.updateVRGameMiniPill(
+      isTr
+        ? '1. KAPI (İç Basınç Kapısı) Açıldı — Hava Kilidi Odasına Girin!'
+        : 'DOOR 1 (Inner Bulkhead) Open — Step Into Airlock Chamber!'
+    );
+
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerText = isTr ? '🚪 2. Dış Kapıyı Aç & Çık (E)' : '🚪 Open Outer Door #2 & Exit (E)';
+    }
+
+    if (autoStepIntoAirlock && this.walkState.isInsideCabin) {
+      this.walkState.x = 0;
+      this.walkState.z = 1.18;
+      this.walkState.yaw = Math.PI;
+      this.walkState.pitch = -0.04;
+      setTimeout(() => {
+        if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
+          this.walkState.x = 0;
+          this.walkState.z = 2.12; // Inside Airlock Chamber between Door #1 and Door #2!
+          this.triggerOuterAirlockDoor(true);
+        }
+      }, 620);
     }
     return true;
+  }
+
+  triggerOuterAirlockDoor(autoStepOut = false) {
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const statusEl = document.getElementById('walk-xr-status');
+    const btn = document.getElementById('btn-walk-cabin');
+
+    if (this.simTime < 5.5) {
+      this.playSwitchClickSound(290);
+      if (statusEl) {
+        statusEl.innerText = isTr
+          ? `⚠️ HAVA KİLİDİ GÜVENLİĞİ: Roket inişte (+${this.getDescentOffset().toFixed(1)}m)!`
+          : `⚠️ AIRLOCK INTERLOCK: Rocket descending (+${this.getDescentOffset().toFixed(1)}m)!`;
+      }
+      return false;
+    }
+
+    if (!this.cabinState) return false;
+
+    // REAL NASA AIRLOCK INTERLOCK RULE: Inner Door #1 MUST seal shut before Outer Door #2 opens to space vacuum!
+    if (this.cabinState.innerHatchOpen) {
+      this.cabinState.innerHatchOpen = false;
+      this.playSwitchClickSound(480);
+    }
+
+    this.cabinState.outerHatchOpen = true;
+    this.cabinState.hatchOpen = true;
+    this.cabinState.airlockPressurePsi = 0.0;
+    this.walkState.handReachTimer = 1.05;
+    this.playHatchPneumaticSound();
+    this.refreshCabinDisplays();
+
+    this.updateVRGameMiniPill(
+      isTr
+        ? '1. İç Kapı Kilitlendi • Hava Kilidi Vakuma Dengelendi • 2. Dış Kapı Açıldı!'
+        : 'Inner Door #1 Sealed • Airlock Depressurized • Outer Door #2 Open!'
+    );
+
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerText = isTr ? '🪜 Merdivenden Yüzeye İn (E)' : '🪜 Step Out & Climb Down (E)';
+    }
+
+    if (autoStepOut) {
+      this.walkState.x = 0;
+      this.walkState.z = Math.max(this.walkState.z, 2.08);
+      this.walkState.yaw = Math.PI;
+      this.walkState.pitch = -0.05;
+      setTimeout(() => {
+        if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
+          this.walkState.isInsideCabin = false;
+          this.walkState.isOnLadder = true;
+          this.walkState.x = 0;
+          this.walkState.z = 3.15;
+          this.walkState.yaw = 0;
+          this.walkState.smoothYaw = 0;
+          this.walkState.pitch = -0.22;
+          this.walkState.smoothPitch = -0.22;
+          if (btn) {
+            btn.classList.remove('active');
+            btn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
+          }
+        }
+      }, 680);
+    }
+    return true;
+  }
+
+  triggerOpenHatch(autoStepOut = false) {
+    if (!this.cabinState) return false;
+    // Sequential 2-Door Airlock Logic:
+    // If astronaut is inside the main cabin (z < 1.65) and Inner Door #1 isn't open yet, open Door #1 first!
+    if (this.walkState.isInsideCabin && this.walkState.z < 1.68 && !this.cabinState.innerHatchOpen && !this.cabinState.outerHatchOpen) {
+      return this.triggerInnerAirlockDoor(autoStepOut);
+    }
+    // Otherwise seal Inner Door #1, depressurize airlock, and open Outer Door #2!
+    return this.triggerOuterAirlockDoor(autoStepOut);
+  }
+
+  resolveCabinCollision(candX, candZ) {
+    // 1. FRONT FLIGHT INSTRUMENT CONSOLE TABLE (consoleDesk front edge is at z = -1.50):
+    // Keep a strict 0.52m body + outstretched-arm buffer so astronaut can NEVER enter or clip into the table!
+    const minCabinZ = -0.98;
+    let x = Math.max(-1.54, Math.min(1.50, candX));
+    let z = Math.max(minCabinZ, candZ);
+
+    // 2. CENTER CORE PEDESTAL (located at x = 0, z = +0.25 with mesh radius 0.38m):
+    // Smooth radial sliding collision around radius 0.72m so astronaut glides around it without ever clipping or getting stuck
+    const pedZ = 0.25;
+    const pedRadius = 0.72;
+    const dxPed = x;
+    const dzPed = z - pedZ;
+    const distPed = Math.hypot(dxPed, dzPed);
+    if (distPed < pedRadius) {
+      if (distPed > 0.0001) {
+        x = (dxPed / distPed) * pedRadius;
+        z = pedZ + (dzPed / distPed) * pedRadius;
+      } else {
+        z = pedZ - pedRadius;
+      }
+      z = Math.max(minCabinZ, z);
+    }
+
+    // 3. REAR STOWED EQUIPMENT LOCKERS & INNER AIRLOCK BULKHEAD WALL (Door #1 at z = 1.65):
+    // The Dual-Leaf Inner Airlock Doorway (#1) spans |x| <= 0.50.
+    const innerDoorOpenEnough = this.cabinState && (this.cabinState.innerHatchOpen || (this.cabinState.innerHatchProgress || 0) >= 0.52);
+    const outerDoorOpenEnough = this.cabinState && (this.cabinState.outerHatchOpen || (this.cabinState.outerHatchProgress || 0) >= 0.52);
+
+    if (z > 1.24) {
+      if (Math.abs(x) > 0.48) {
+        // If already inside the Airlock Chamber (z >= 1.52), clamp x within the airlock tunnel walls (|x| <= 0.48)
+        if (this.walkState.z >= 1.50) {
+          x = Math.max(-0.48, Math.min(0.48, x));
+        } else {
+          // In main cabin outside the doorway width: block against the rear bulkhead wall at z = 1.24
+          z = 1.24;
+        }
+      } else if (!innerDoorOpenEnough && this.walkState.z < 1.65) {
+        // In front of closed Inner Door #1: stop cleanly at z = 1.24
+        z = Math.min(1.24, z);
+      }
+    }
+
+    // 4. INSIDE THE AIRLOCK CHAMBER (z in [1.65, 2.68]):
+    if (this.walkState.z >= 1.68 && !innerDoorOpenEnough) {
+      // Inner Door #1 has sealed behind the astronaut in the Airlock Chamber
+      z = Math.max(1.86, z);
+      x = Math.max(-0.48, Math.min(0.48, x));
+    }
+
+    // 5. OUTER EVA AIRLOCK DOOR (#2 at z = 2.68):
+    const maxAirlockZ = outerDoorOpenEnough ? 2.86 : 2.30;
+    z = Math.min(maxAirlockZ, z);
+
+    return { x, z };
   }
 
   toggleCabinInterior() {
@@ -481,53 +621,56 @@ class MissionSimulationTheater {
     const btn = document.getElementById('btn-walk-cabin');
 
     if (ws.isInsideCabin) {
-      // If hatch is still closed, first animate the astronaut opening the hatch door & stepping onto the top ladder porch!
-      if (!this.cabinState.hatchOpen) {
+      // If Outer Door #2 is not open yet, run the 2-Door Airlock sequence (Inner Door #1 -> Airlock -> Outer Door #2)!
+      if (!this.cabinState.outerHatchOpen) {
         this.triggerOpenHatch(true);
         return;
       }
-      // Hatch is already open: step down the ladder onto the planetary surface!
+      // Outer Door #2 is already open: step down the ladder onto the planetary surface!
       ws.isInsideCabin = false;
       ws.isOnLadder = false;
       ws.x = 0;
-      ws.z = 6.8;
-      ws.y = this.getExactSurfaceHeight(0, 6.8);
+      ws.z = 7.2;
+      ws.y = this.getExactSurfaceHeight(0, 7.2);
       ws.vy = 0;
       ws.isGrounded = true;
       ws.yaw = 0;
       ws.smoothYaw = 0;
       ws.pitch = 0.05;
       ws.smoothPitch = 0.05;
-      this.spawnFootprint(0, 6.8, 0, true);
-      this.spawnFootprint(0, 6.8, 0, false);
-      this.spawnBootDust(0, 6.8, 8);
+      this.spawnFootprint(0, 7.2, 0, true);
+      this.spawnFootprint(0, 7.2, 0, false);
+      this.spawnBootDust(0, 7.2, 8);
       if (btn) {
         btn.classList.remove('active');
-        btn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+        btn.innerText = isTr ? '🪜 Hava Kilidinden Kabine Gir (E)' : '🪜 Enter Airlock & Cabin (E)';
       }
     } else if (ws.isOnLadder) {
       // If currently on the ladder, step all the way down onto the planetary surface
       ws.isOnLadder = false;
       ws.isInsideCabin = false;
       ws.x = 0;
-      ws.z = 6.8;
-      ws.y = this.getExactSurfaceHeight(0, 6.8);
+      ws.z = 7.2;
+      ws.y = this.getExactSurfaceHeight(0, 7.2);
       ws.vy = 0;
       ws.isGrounded = true;
-      this.spawnFootprint(0, 6.8, ws.smoothYaw, true);
-      this.spawnFootprint(0, 6.8, ws.smoothYaw, false);
-      this.spawnBootDust(0, 6.8, 8);
+      this.spawnFootprint(0, 7.2, ws.smoothYaw, true);
+      this.spawnFootprint(0, 7.2, ws.smoothYaw, false);
+      this.spawnBootDust(0, 7.2, 8);
       if (btn) {
         btn.classList.remove('active');
-        btn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+        btn.innerText = isTr ? '🪜 Hava Kilidinden Kabine Gir (E)' : '🪜 Enter Airlock & Cabin (E)';
       }
     } else {
-      // Outside on the surface -> climb up ladder and enter the NASA Spacecraft Interior Cabin!
-      this.cabinState.hatchOpen = true;
+      // Outside on the surface -> climb up ladder, pass through airlock, and enter the NASA Spacecraft Interior Cabin!
+      this.cabinState.outerHatchOpen = false;
+      this.cabinState.innerHatchOpen = true;
+      this.cabinState.hatchOpen = false;
+      this.cabinState.airlockPressurePsi = 4.8;
       ws.isInsideCabin = true;
       ws.isOnLadder = false;
-      ws.x = 0;
-      ws.z = 0.85;
+      ws.x = -0.52;
+      ws.z = -0.78;
       ws.y = 4.5 + this.getDescentOffset();
       ws.vy = 0;
       ws.isGrounded = true;
@@ -535,9 +678,10 @@ class MissionSimulationTheater {
       ws.smoothYaw = 0;
       ws.pitch = -0.04;
       ws.smoothPitch = -0.04;
+      this.refreshCabinDisplays();
       if (btn) {
         btn.classList.add('active');
-        btn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
+        btn.innerText = isTr ? '🚪 Çift Kapılı Hava Kilidinden Çık (E)' : '🚪 Exit via Dual-Door Airlock (E)';
       }
     }
   }
@@ -629,7 +773,7 @@ class MissionSimulationTheater {
       this.walkState.isOnLadder = false;
       this.walkState.isDrivingRover = false;
       this.walkState.x = -0.52;
-      this.walkState.z = -0.62;
+      this.walkState.z = -0.78;
       this.walkState.y = 4.5 + this.getDescentOffset();
       this.walkState.vy = 0;
       this.walkState.isGrounded = true;
@@ -643,6 +787,11 @@ class MissionSimulationTheater {
       if (this.cabinState) {
         this.cabinState.hatchOpen = false;
         this.cabinState.hatchProgress = 0.0;
+        this.cabinState.innerHatchOpen = false;
+        this.cabinState.innerHatchProgress = 0.0;
+        this.cabinState.outerHatchOpen = false;
+        this.cabinState.outerHatchProgress = 0.0;
+        this.cabinState.airlockPressurePsi = 4.8;
         this.cabinState.prog = '64';
         this.cabinState.throttlePct = 82;
         this.refreshCabinDisplays();
@@ -651,8 +800,8 @@ class MissionSimulationTheater {
       if (cabinBtn) {
         cabinBtn.classList.add('active');
         cabinBtn.innerText = isTr
-          ? '🚪 Kapağı Aç & Dışarı Çık (E)'
-          : '🚪 Open Hatch & Exit (E)';
+          ? '🚪 Çift Kapılı Hava Kilidini Aç & Çık (E)'
+          : '🚪 Open Dual-Door Airlock & Exit (E)';
       }
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
@@ -2708,8 +2857,8 @@ class MissionSimulationTheater {
       return;
     }
 
-    // 2. If inside cabin and hatch isn't open yet, pressing trigger near rear opens the hatch!
-    if (this.walkState.isInsideCabin && !this.cabinState.hatchOpen && this.simTime >= 5.5) {
+    // 2. If inside cabin and airlock outer hatch isn't open yet, pressing trigger runs the 2-Door Airlock sequence!
+    if (this.walkState.isInsideCabin && !this.cabinState.outerHatchOpen && this.simTime >= 5.5) {
       this.pulseXRHaptics(0.75, 50);
       this.triggerOpenHatch(true);
       return;
@@ -3004,6 +3153,105 @@ class MissionSimulationTheater {
     return new THREE.CanvasTexture(canvas);
   }
 
+  generateAirlockPanelTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    const cs = this.cabinState || {
+      innerHatchOpen: false,
+      outerHatchOpen: false,
+      airlockPressurePsi: 4.8
+    };
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+
+    ctx.fillStyle = '#071120';
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(8, 8, 496, 496);
+
+    // Header
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+    ctx.fillRect(20, 20, 472, 64);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText(isTr ? '🔒 NASA ÇİFT KAPILI HAVA KİLİDİ' : '🔒 NASA DUAL-DOOR AIRLOCK SYSTEM', 34, 50);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText(isTr ? 'KURAL: İKİ KAPI AYNI ANDA VAKUMA AÇILAMAZ' : 'RULE: INTERLOCK PREVENTS SIMULTANEOUS OPEN', 34, 74);
+
+    // Door #1 Status Box (Inner Cabin Bulkhead Door)
+    ctx.fillStyle = cs.innerHatchOpen ? 'rgba(16, 185, 129, 0.25)' : 'rgba(15, 23, 42, 0.92)';
+    ctx.fillRect(24, 102, 464, 96);
+    ctx.strokeStyle = cs.innerHatchOpen ? '#10b981' : '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(24, 102, 464, 96);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(isTr ? '1. KAPI (İÇ BASINÇ KAPISI):' : '1. INNER CABIN DOOR:', 40, 140);
+    ctx.fillStyle = cs.innerHatchOpen ? '#10b981' : '#f59e0b';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(
+      cs.innerHatchOpen
+        ? (isTr ? '🟢 AÇIK (KABİN BASINCI EŞİT)' : '🟢 OPEN (EQUALIZED 4.8 PSI)')
+        : (isTr ? '🔒 KİLİTLİ & SIZDIRMAZ' : '🔒 SEALED & LOCKED'),
+      40,
+      178
+    );
+
+    // Airlock Chamber Pressure Box
+    const psi = cs.airlockPressurePsi !== undefined ? cs.airlockPressurePsi : (cs.outerHatchOpen ? 0.0 : 4.8);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+    ctx.fillRect(24, 214, 464, 110);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(24, 214, 464, 110);
+    ctx.fillStyle = '#fde68a';
+    ctx.font = 'bold 19px monospace';
+    ctx.fillText(
+      isTr
+        ? `HAVA KİLİDİ BASINCI: ${psi.toFixed(1)} PSI (${(psi * 6.895).toFixed(1)} kPa)`
+        : `AIRLOCK PRESSURE: ${psi.toFixed(1)} PSI (${(psi * 6.895).toFixed(1)} kPa)`,
+      40,
+      250
+    );
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(40, 268, 432, 32);
+    ctx.fillStyle = psi > 2.0 ? '#00f0ff' : '#f59e0b';
+    ctx.fillRect(40, 268, Math.max(18, (psi / 4.8) * 432), 32);
+
+    // Door #2 Status Box (Outer EVA Vacuum Hatch)
+    ctx.fillStyle = cs.outerHatchOpen ? 'rgba(16, 185, 129, 0.25)' : 'rgba(15, 23, 42, 0.92)';
+    ctx.fillRect(24, 340, 464, 96);
+    ctx.strokeStyle = cs.outerHatchOpen ? '#10b981' : '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(24, 340, 464, 96);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(isTr ? '2. KAPI (DIŞ EVA VAKUM KAPISI):' : '2. OUTER EVA VACUUM DOOR:', 40, 378);
+    ctx.fillStyle = cs.outerHatchOpen ? '#10b981' : '#ef4444';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(
+      cs.outerHatchOpen
+        ? (isTr ? '🟢 AÇIK (MERDİVEN ÇIKIŞI AKTİF)' : '🟢 OPEN (EVA PORCH & LADDER)')
+        : (isTr ? '🔒 VAKUM KİLİDİ KAPALI' : '🔒 VACUUM SEAL LOCKED'),
+      40,
+      416
+    );
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(
+      isTr ? '[TIKLA / E / VR DOKUN]: KAPI 1 <-> KAPI 2 GEÇİŞİ' : '[CLICK / E / VR TOUCH]: CYCLE DOOR 1 <-> DOOR 2',
+      32,
+      474
+    );
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
   refreshCabinDisplays() {
     if (this.dskyScreenMesh && this.dskyScreenMesh.material) {
       if (this.dskyScreenMesh.material.map) this.dskyScreenMesh.material.map.dispose();
@@ -3014,6 +3262,16 @@ class MissionSimulationTheater {
       if (this.mainTelemetryMesh.material.map) this.mainTelemetryMesh.material.map.dispose();
       this.mainTelemetryMesh.material.map = this.generateTelemetryScreenTexture(this.currentArtifact);
       this.mainTelemetryMesh.material.needsUpdate = true;
+    }
+    const airlockTex = this.generateAirlockPanelTexture();
+    if (this.airlockPanelMesh && this.airlockPanelMesh.material) {
+      if (this.airlockPanelMesh.material.map) this.airlockPanelMesh.material.map.dispose();
+      this.airlockPanelMesh.material.map = airlockTex;
+      this.airlockPanelMesh.material.needsUpdate = true;
+    }
+    if (this.cabinAirlockPanelMesh && this.cabinAirlockPanelMesh.material) {
+      this.cabinAirlockPanelMesh.material.map = airlockTex;
+      this.cabinAirlockPanelMesh.material.needsUpdate = true;
     }
   }
 
@@ -3044,7 +3302,7 @@ class MissionSimulationTheater {
     this.walkableInteriorGroup = new THREE.Group();
     this.interactables = this.surfaceInteractables ? [...this.surfaceInteractables] : [];
 
-    // Live Interactive Cabin State
+    // Live Interactive Cabin & Dual-Door Airlock State
     this.cabinState = {
       prog: '68',
       verb: '16',
@@ -3059,6 +3317,11 @@ class MissionSimulationTheater {
       glycolPump: true,
       sBandLocked: true,
       lightMode: 0, // 0: Nominal White, 1: Deep-Space Cyan, 2: Red Night-Adaptation
+      innerHatchOpen: false,
+      innerHatchProgress: 0.0,
+      outerHatchOpen: false,
+      outerHatchProgress: 0.0,
+      airlockPressurePsi: 4.8,
       hatchOpen: false,
       hatchProgress: 0.0
     };
@@ -3113,8 +3376,8 @@ class MissionSimulationTheater {
     const ladderGroup = new THREE.Group();
     this.walkableInteriorGroup.add(ladderGroup);
 
-    const ladderBottomZ = 6.2;
-    const ladderTopZ = 2.45;
+    const ladderBottomZ = 6.85;
+    const ladderTopZ = 3.45;
     const dy = cabinFloorY - groundY0;
     const dz = ladderBottomZ - ladderTopZ;
     const ladderLen = Math.hypot(dy, dz);
@@ -3151,10 +3414,10 @@ class MissionSimulationTheater {
       new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.88 })
     );
     entryPad.rotation.x = -Math.PI / 2;
-    entryPad.position.set(0, this.getExactSurfaceHeight(0, 6.3) + 0.04, 6.3);
+    entryPad.position.set(0, this.getExactSurfaceHeight(0, 6.95) + 0.04, 6.95);
     entryPad.userData.interactive = {
-      label_tr: '🪜 [SOL TIK / VR TETİK] EVA MERDİVENİNDEN KABİN İÇİNE TIRMAN',
-      label_en: '🪜 [CLICK / VR TRIGGER] CLIMB EVA LADDER INTO CABIN',
+      label_tr: '🪜 [SOL TIK / VR TETİK] EVA MERDİVENİNDEN ÇİFT KAPILI HAVA KİLİDİNE TIRMAN',
+      label_en: '🪜 [CLICK / VR TRIGGER] CLIMB EVA LADDER INTO DUAL-DOOR AIRLOCK & CABIN',
       onClick: () => {
         this.playSwitchClickSound(620);
         this.toggleCabinInterior();
@@ -3163,15 +3426,16 @@ class MissionSimulationTheater {
     this.interactables.push(entryPad);
     ladderGroup.add(entryPad);
 
-    const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.12, 0.82), isogridWallMat);
-    porchDeck.position.set(0, cabinFloorY - 0.06, 2.40);
+    // Exterior EVA Porch outside Airlock Outer Door #2 (z = 2.68 to 3.52)
+    const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.12, 0.86), isogridWallMat);
+    porchDeck.position.set(0, cabinFloorY - 0.06, 3.10);
     porchDeck.castShadow = true;
     ladderGroup.add(porchDeck);
 
-    // Porch Handrails
+    // Porch Safety Handrails
     for (let side = -1; side <= 1; side += 2) {
-      const pRail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.78), isogridAlum);
-      pRail.position.set(side * 0.78, cabinFloorY + 0.35, 2.40);
+      const pRail = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.78, 0.82), isogridAlum);
+      pRail.position.set(side * 0.84, cabinFloorY + 0.36, 3.10);
       ladderGroup.add(pRail);
     }
 
@@ -3184,25 +3448,25 @@ class MissionSimulationTheater {
     }
 
     // =========================================================================
-    // 2. WALK-IN PRESSURIZED NASA CABIN SHELL (CNC-Milled Triangular Isogrid)
+    // 2. WALK-IN PRESSURIZED NASA CABIN SHELL & DUAL-DOOR AIRLOCK MODULE
     // =========================================================================
     const cabinGroup = new THREE.Group();
     cabinGroup.position.set(0, cabinFloorY, 0);
     this.walkableInteriorGroup.add(cabinGroup);
 
-    const floorDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), isogridWallMat);
-    floorDeck.position.set(0, -0.08, 0);
+    const floorDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.05), isogridWallMat);
+    floorDeck.position.set(0, -0.08, -0.22);
     floorDeck.receiveShadow = true;
     cabinGroup.add(floorDeck);
 
     for (let vx = -1; vx <= 1; vx += 2) {
-      const velcroPad = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.016, 1.85), blueValve);
-      velcroPad.position.set(vx * 0.95, 0.01, 0.2);
+      const velcroPad = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.016, 1.55), blueValve);
+      velcroPad.position.set(vx * 1.05, 0.01, 0.15);
       cabinGroup.add(velcroPad);
     }
 
-    const ceilingDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), darkPanelMat);
-    ceilingDeck.position.set(0, 3.1, 0);
+    const ceilingDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.05), darkPanelMat);
+    ceilingDeck.position.set(0, 3.1, -0.22);
     cabinGroup.add(ceilingDeck);
 
     // Overhead Docking / COAS Viewport Window + 3D COAS Collimator Sight
@@ -3226,7 +3490,7 @@ class MissionSimulationTheater {
 
     // Dynamic Interior Cabin PointLights (controllable via 3D Lighting Switch!)
     this.cabinLightMain = new THREE.PointLight(0xf8fafc, 2.5, 12);
-    this.cabinLightMain.position.set(0, 2.75, 0);
+    this.cabinLightMain.position.set(0, 2.75, -0.2);
     cabinGroup.add(this.cabinLightMain);
 
     this.cabinLightConsole = new THREE.PointLight(0x38bdf8, 1.5, 7);
@@ -3234,7 +3498,7 @@ class MissionSimulationTheater {
     cabinGroup.add(this.cabinLightConsole);
 
     // Structural Milled Isogrid Ring Frames (Ribs) around the Cabin Perimeter
-    for (let rz = -1.8; rz <= 1.8; rz += 1.2) {
+    for (let rz = -1.8; rz <= 1.5; rz += 1.1) {
       const leftRib = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.1, 0.12), isogridAlum);
       leftRib.position.set(-2.15, 1.55, rz);
       const rightRib = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.1, 0.12), isogridAlum);
@@ -3244,45 +3508,245 @@ class MissionSimulationTheater {
       cabinGroup.add(leftRib, rightRib, topRib);
     }
 
-    // Back (+Z) Bulkhead with Open Ingress/Egress Hatch Doorway + Stowed PLSS & ALSRC Rock Boxes
-    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), isogridWallMat);
-    backWallLeft.position.set(-1.5, 1.55, 2.18);
-    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), isogridWallMat);
-    backWallRight.position.set(1.5, 1.55, 2.18);
-    const backWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.85, 0.14), isogridWallMat);
-    backWallHeader.position.set(0, 2.68, 2.18);
-    cabinGroup.add(backWallLeft, backWallRight, backWallHeader);
+    // =========================================================================
+    // 2A. DUAL-DOOR PRESSURIZED SPACECRAFT AIRLOCK SYSTEM (z = +1.65 to +2.68)
+    //     • DOOR #1 (z = +1.65): INNER PRESSURIZED CABIN BULKHEAD DUAL-LEAF DOOR
+    //     • AIRLOCK DECOMPRESSION CHAMBER (z = +1.65 .. +2.68)
+    //     • DOOR #2 (z = +2.68): OUTER EVA VACUUM DUAL-LEAF ARMORED HATCH
+    // =========================================================================
+    // Inner Airlock Bulkhead Wall at z = 1.65 separating Main Cockpit from Airlock Chamber
+    const innerWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1.48, 3.1, 0.14), isogridWallMat);
+    innerWallLeft.position.set(-1.46, 1.55, 1.65);
+    const innerWallRight = new THREE.Mesh(new THREE.BoxGeometry(1.48, 3.1, 0.14), isogridWallMat);
+    innerWallRight.position.set(1.46, 1.55, 1.65);
+    const innerWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.88, 0.14), isogridWallMat);
+    innerWallHeader.position.set(0, 2.66, 1.65);
+    cabinGroup.add(innerWallLeft, innerWallRight, innerWallHeader);
 
-    // Interactive Hinged Squared Ingress/Egress Hatch Door & Red Pressure-Relief Valve Wheel
-    // Pivoted on the right doorframe hinge (x = +0.68, y = 1.12, z = 2.18) so it starts SEALED SHUT (hatchProgress = 0)
-    // during rocket descent and swings smoothly outward when the astronaut opens it!
-    this.hatchPivotGroup = new THREE.Group();
-    this.hatchPivotGroup.position.set(0.68, 1.12, 2.18);
-    cabinGroup.add(this.hatchPivotGroup);
+    // Titanium Pressure Seal Frame around Door #1 (Inner Airlock Doorway)
+    const innerFrameTop = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.08, 0.22), charcoalRack);
+    innerFrameTop.position.set(0, 2.22, 1.65);
+    const innerFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.24, 0.22), charcoalRack);
+    innerFrameL.position.set(-0.72, 1.10, 1.65);
+    const innerFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.24, 0.22), charcoalRack);
+    innerFrameR.position.set(0.72, 1.10, 1.65);
+    cabinGroup.add(innerFrameTop, innerFrameL, innerFrameR);
 
-    const hatchDoor = new THREE.Mesh(new THREE.BoxGeometry(1.36, 2.15, 0.09), isogridAlum);
-    hatchDoor.position.set(-0.68, 0, 0);
-    this.hatchDoor = hatchDoor;
-    this.hatchPivotGroup.add(hatchDoor);
+    // Illuminated Status Lamp above Door #1 (Inner Cabin Bulkhead Door)
+    this.innerHatchStatusLamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.52, 0.08, 0.18),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+    );
+    this.innerHatchStatusLamp.position.set(0, 2.34, 1.62);
+    cabinGroup.add(this.innerHatchStatusLamp);
 
-    // Armored Upper Hatch Viewport Window Frame on Door so astronaut can see the ladder outside
-    const hatchWinFrame = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.38, 0.11), charcoalRack);
-    hatchWinFrame.position.set(0, 0.52, 0);
-    const hatchWinGlass = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.30, 0.12), glassMat);
-    hatchWinGlass.position.set(0, 0.52, 0);
-    hatchDoor.add(hatchWinFrame, hatchWinGlass);
+    // DOOR #1: Twin Synchronized Inner Pressurized Bulkhead Doors (Left & Right Hinged Leaves at z = 1.65)
+    this.innerDoorLeftPivot = new THREE.Group();
+    this.innerDoorLeftPivot.position.set(-0.68, 1.10, 1.65);
+    this.innerDoorRightPivot = new THREE.Group();
+    this.innerDoorRightPivot.position.set(0.68, 1.10, 1.65);
+    cabinGroup.add(this.innerDoorLeftPivot, this.innerDoorRightPivot);
 
-    // Dual-sided Red Pressure-Relief Valve Wheel on the Hatch Door
+    const innerLeafL = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.16, 0.08), isogridAlum);
+    innerLeafL.position.set(0.34, 0, 0);
+    const innerLeafR = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.16, 0.08), isogridAlum);
+    innerLeafR.position.set(-0.34, 0, 0);
+    this.innerDoorLeftPivot.add(innerLeafL);
+    this.innerDoorRightPivot.add(innerLeafR);
+
+    // Armored Inspection Windows & Silicone Pressure Seals on both Inner Door Leaves
+    [innerLeafL, innerLeafR].forEach((leaf, lIdx) => {
+      const sign = lIdx === 0 ? 1 : -1;
+      const wFrame = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.38, 0.10), charcoalRack);
+      wFrame.position.set(sign * -0.02, 0.48, 0);
+      const wGlass = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.30, 0.11), glassMat);
+      wGlass.position.set(sign * -0.02, 0.48, 0);
+      const sealEdge = new THREE.Mesh(new THREE.BoxGeometry(0.028, 2.16, 0.09), charcoalRack);
+      sealEdge.position.set(sign * 0.33, 0, 0);
+      leaf.add(wFrame, wGlass, sealEdge);
+    });
+
+    // Dual-Sided Blue Pressure-Equalization Valve Wheel on Inner Door #1
+    const innerHatchWheel = new THREE.Group();
+    innerHatchWheel.position.set(-0.20, -0.05, 0);
+    for (let wzSide = -1; wzSide <= 1; wzSide += 2) {
+      const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 12, 24), blueValve);
+      wheelRim.position.z = wzSide * 0.06;
+      innerHatchWheel.add(wheelRim);
+      for (let sp = 0; sp < 2; sp++) {
+        const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.30, 8), chromeSwitchMat);
+        spoke.rotation.z = (sp * Math.PI) / 2;
+        spoke.position.z = wzSide * 0.06;
+        innerHatchWheel.add(spoke);
+      }
+    }
+    const innerShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.14, 12), brassNutMat);
+    innerShaft.rotation.x = Math.PI / 2;
+    innerHatchWheel.add(innerShaft);
+    this.innerHatchWheel = innerHatchWheel;
+    innerLeafR.add(innerHatchWheel);
+
+    const innerDoorInteract = {
+      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 1. KAPI (İÇ BASINÇ KAPISI): HAVA KİLİDİ ODASINA GEÇİŞ',
+      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #1 (INNER CABIN BULKHEAD): OPEN / SEAL AIRLOCK',
+      onClick: () => {
+        if (!this.cabinState.innerHatchOpen) {
+          this.triggerInnerAirlockDoor(false);
+        } else {
+          this.triggerOuterAirlockDoor(false);
+        }
+      }
+    };
+    innerLeafL.userData.interactive = innerDoorInteract;
+    innerLeafR.userData.interactive = innerDoorInteract;
+    innerHatchWheel.userData.interactive = innerDoorInteract;
+    this.interactables.push(innerLeafL, innerLeafR, innerHatchWheel);
+
+    // -------------------------------------------------------------------------
+    // PRESSURIZED AIRLOCK DECOMPRESSION CHAMBER (z = +1.65 to +2.68)
+    // -------------------------------------------------------------------------
+    const airlockFloor = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.14, 1.08), charcoalRack);
+    airlockFloor.position.set(0, -0.07, 2.16);
+    const airlockCeiling = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.14, 1.08), darkPanelMat);
+    airlockCeiling.position.set(0, 2.38, 2.16);
+    const airlockWallL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.48, 1.08), isogridWallMat);
+    airlockWallL.position.set(-0.84, 1.18, 2.16);
+    const airlockWallR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.48, 1.08), isogridWallMat);
+    airlockWallR.position.set(0.84, 1.18, 2.16);
+    cabinGroup.add(airlockFloor, airlockCeiling, airlockWallL, airlockWallR);
+
+    // Exterior Gold Kapton Thermal Shielding around the protruding Airlock Module
+    const extAirlockTop = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.06, 1.08), goldKapton);
+    extAirlockTop.position.set(0, 2.46, 2.16);
+    const extAirlockL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.52, 1.08), goldKapton);
+    extAirlockL.position.set(-0.92, 1.20, 2.16);
+    const extAirlockR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.52, 1.08), goldKapton);
+    extAirlockR.position.set(0.92, 1.20, 2.16);
+    cabinGroup.add(extAirlockTop, extAirlockL, extAirlockR);
+
+    // 3 Circumferential Structural Pressure Ribs inside the Airlock Tunnel
+    [1.82, 2.16, 2.50].forEach((az) => {
+      const aRibL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.36, 0.08), isogridAlum);
+      aRibL.position.set(-0.76, 1.16, az);
+      const aRibR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.36, 0.08), isogridAlum);
+      aRibR.position.set(0.76, 1.16, az);
+      const aRibTop = new THREE.Mesh(new THREE.BoxGeometry(1.60, 0.08, 0.08), isogridAlum);
+      aRibTop.position.set(0, 2.28, az);
+      cabinGroup.add(aRibL, aRibR, aRibTop);
+    });
+
+    // Overhead Airlock Status Beacon PointLight
+    this.airlockLight = new THREE.PointLight(0xf59e0b, 1.6, 5);
+    this.airlockLight.position.set(0, 2.18, 2.16);
+    cabinGroup.add(this.airlockLight);
+
+    // Interactive Airlock Interlock & Pressure Control Displays (One inside Cabin beside Door #1, One inside Airlock Chamber!)
+    const airlockTex = this.generateAirlockPanelTexture();
+    const airlockPanelMat = new THREE.MeshBasicMaterial({ map: airlockTex });
+
+    this.cabinAirlockPanelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.46), airlockPanelMat);
+    this.cabinAirlockPanelMesh.position.set(-1.05, 1.48, 1.56);
+    this.cabinAirlockPanelMesh.rotation.y = Math.PI;
+    cabinGroup.add(this.cabinAirlockPanelMesh);
+
+    this.airlockPanelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.48), airlockPanelMat);
+    this.airlockPanelMesh.position.set(-0.75, 1.42, 2.16);
+    this.airlockPanelMesh.rotation.y = Math.PI / 2;
+    cabinGroup.add(this.airlockPanelMesh);
+
+    // O2/N2 Equalization Pipes & Pressure Dump Valve on Right Airlock Wall
+    for (let ap = 0; ap < 2; ap++) {
+      const aPipe = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.025, 2.2, 12),
+        ap === 0 ? copperPipe : blueValve
+      );
+      aPipe.position.set(0.74, 1.15, 2.02 + ap * 0.28);
+      cabinGroup.add(aPipe);
+    }
+    const dumpValve = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.018, 10, 20), redValve);
+    dumpValve.rotation.y = Math.PI / 2;
+    dumpValve.position.set(0.71, 1.32, 2.16);
+    cabinGroup.add(dumpValve);
+
+    const airlockCycleAction = {
+      label_tr: '🔒 [SOL TIK / E / VR DOKUN] HAVA KİLİDİ BASINÇ DENGELEME & KAPI 1 <-> KAPI 2 KONTROL PANELİ',
+      label_en: '🔒 [CLICK / E / VR TOUCH] AIRLOCK PRESSURE EQUALIZATION & DOOR 1 <-> DOOR 2 INTERLOCK PANEL',
+      onClick: () => {
+        dumpValve.rotation.x += Math.PI / 2;
+        if (!this.cabinState.innerHatchOpen && !this.cabinState.outerHatchOpen) {
+          this.triggerInnerAirlockDoor(false);
+        } else if (this.cabinState.innerHatchOpen) {
+          this.triggerOuterAirlockDoor(false);
+        } else {
+          this.triggerInnerAirlockDoor(false);
+        }
+      }
+    };
+    this.cabinAirlockPanelMesh.userData.interactive = airlockCycleAction;
+    this.airlockPanelMesh.userData.interactive = airlockCycleAction;
+    dumpValve.userData.interactive = airlockCycleAction;
+    this.interactables.push(this.cabinAirlockPanelMesh, this.airlockPanelMesh, dumpValve);
+
+    // -------------------------------------------------------------------------
+    // DOOR #2 (z = +2.68): OUTER EVA VACUUM DUAL-LEAF ARMORED HATCH + RED VALVE WHEEL
+    // -------------------------------------------------------------------------
+    const outerFrameTop = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.16, 0.18), charcoalRack);
+    outerFrameTop.position.set(0, 2.30, 2.68);
+    const outerFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.38, 0.18), charcoalRack);
+    outerFrameL.position.set(-0.78, 1.15, 2.68);
+    const outerFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.38, 0.18), charcoalRack);
+    outerFrameR.position.set(0.78, 1.15, 2.68);
+    cabinGroup.add(outerFrameTop, outerFrameL, outerFrameR);
+
+    // Illuminated Outer EVA Hatch Status Beacon above Door #2
+    this.hatchStatusLamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.54, 0.09, 0.22),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+    );
+    this.hatchStatusLamp.position.set(0, 2.40, 2.68);
+    cabinGroup.add(this.hatchStatusLamp);
+
+    // Twin Synchronized Outer EVA Armored Doors (Left & Right Leaves at z = +2.68 opening outward onto EVA Porch!)
+    this.outerDoorLeftPivot = new THREE.Group();
+    this.outerDoorLeftPivot.position.set(-0.68, 1.10, 2.68);
+    this.outerDoorRightPivot = new THREE.Group();
+    this.outerDoorRightPivot.position.set(0.68, 1.10, 2.68);
+    this.hatchPivotGroup = this.outerDoorRightPivot;
+    cabinGroup.add(this.outerDoorLeftPivot, this.outerDoorRightPivot);
+
+    const outerLeafL = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.16, 0.10), isogridAlum);
+    outerLeafL.position.set(0.34, 0, 0);
+    const outerLeafR = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.16, 0.10), isogridAlum);
+    outerLeafR.position.set(-0.34, 0, 0);
+    this.outerDoorLeftPivot.add(outerLeafL);
+    this.outerDoorRightPivot.add(outerLeafR);
+    this.hatchDoor = outerLeafR;
+
+    // Gold Kapton Exterior Thermal Armor & Upper Viewport Windows on both Outer Door Leaves
+    [outerLeafL, outerLeafR].forEach((leaf, lIdx) => {
+      const sign = lIdx === 0 ? 1 : -1;
+      const extGold = new THREE.Mesh(new THREE.BoxGeometry(0.64, 2.08, 0.02), goldKapton);
+      extGold.position.set(0, 0, 0.052);
+      const wFrame = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.38, 0.13), charcoalRack);
+      wFrame.position.set(sign * -0.02, 0.50, 0);
+      const wGlass = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.30, 0.14), glassMat);
+      wGlass.position.set(sign * -0.02, 0.50, 0);
+      const centerSeal = new THREE.Mesh(new THREE.BoxGeometry(0.032, 2.16, 0.11), charcoalRack);
+      centerSeal.position.set(sign * 0.33, 0, 0);
+      leaf.add(extGold, wFrame, wGlass, centerSeal);
+    });
+
+    // Dual-Sided Red Pressure-Relief & Vacuum Lock Valve Wheel on Outer Door #2
     const hatchWheel = new THREE.Group();
-    hatchWheel.position.set(-0.22, -0.06, 0);
+    hatchWheel.position.set(-0.20, -0.06, 0);
     for (let wzSide = -1; wzSide <= 1; wzSide += 2) {
       const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.028, 12, 24), redValve);
-      wheelRim.position.z = wzSide * 0.065;
+      wheelRim.position.z = wzSide * 0.07;
       hatchWheel.add(wheelRim);
       for (let sp = 0; sp < 2; sp++) {
         const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 8), chromeSwitchMat);
         spoke.rotation.z = (sp * Math.PI) / 2;
-        spoke.position.z = wzSide * 0.065;
+        spoke.position.z = wzSide * 0.07;
         hatchWheel.add(spoke);
       }
     }
@@ -3290,42 +3754,34 @@ class MissionSimulationTheater {
     wheelShaft.rotation.x = Math.PI / 2;
     hatchWheel.add(wheelShaft);
     this.hatchWheel = hatchWheel;
-    hatchDoor.add(hatchWheel);
+    outerLeafR.add(hatchWheel);
 
-    // Illuminated 3D Hatch Latch Handle & Status Lamp above the door
-    this.hatchStatusLamp = new THREE.Mesh(
-      new THREE.BoxGeometry(0.46, 0.08, 0.16),
-      new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-    );
-    this.hatchStatusLamp.position.set(0, 2.28, 2.16);
-    cabinGroup.add(this.hatchStatusLamp);
-
-    const hatchInteract = {
-      label_tr: '🚪 [SOL TIK / E TUŞU] BASINÇLI KABİN KAPAĞINI & VALFİNİ AÇ / DIŞARI ÇIK',
-      label_en: '🚪 [CLICK / PRESS E] OPEN PRESSURIZED HATCH & STEP OUTSIDE',
+    const outerHatchInteract = {
+      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 2. KAPI (ÇİFT KANATLI DIŞ EVA VAKUM KAPISI): AÇ & DIŞARI ÇIK',
+      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #2 (DUAL-LEAF OUTER EVA HATCH): OPEN & STEP OUTSIDE',
       onClick: () => {
-        if (!this.cabinState.hatchOpen) {
-          this.triggerOpenHatch(false);
+        if (!this.cabinState.outerHatchOpen) {
+          this.triggerOuterAirlockDoor(false);
         } else if (this.walkState.isInsideCabin) {
           this.playSwitchClickSound(580);
           this.walkState.isInsideCabin = false;
           this.walkState.isOnLadder = true;
           this.walkState.x = 0;
-          this.walkState.z = 2.52;
+          this.walkState.z = 3.10;
         } else {
-          this.playSwitchClickSound(440);
-          this.cabinState.hatchOpen = !this.cabinState.hatchOpen;
+          this.triggerInnerAirlockDoor(false);
         }
       }
     };
-    hatchDoor.userData.interactive = hatchInteract;
-    hatchWheel.userData.interactive = hatchInteract;
-    this.interactables.push(hatchDoor, hatchWheel);
+    outerLeafL.userData.interactive = outerHatchInteract;
+    outerLeafR.userData.interactive = outerHatchInteract;
+    hatchWheel.userData.interactive = outerHatchInteract;
+    this.interactables.push(outerLeafL, outerLeafR, hatchWheel);
 
-    // Stowed EVA PLSS Backpacks & Apollo Lunar Sample Return Containers (ALSRC Rock Boxes) on Rear Wall
+    // Stowed EVA PLSS Backpacks & Apollo Lunar Sample Return Containers (ALSRC Rock Boxes) on Rear Bulkhead
     for (let side = -1; side <= 1; side += 2) {
       const stowedPlss = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.56, 0.22), isogridAlum);
-      stowedPlss.position.set(side * 1.48, 1.55, 1.96);
+      stowedPlss.position.set(side * 1.56, 1.55, 1.44);
       const plssBand = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.05, 0.23), redValve);
       plssBand.position.y = 0.22;
       stowedPlss.add(plssBand);
@@ -3333,7 +3789,7 @@ class MissionSimulationTheater {
 
       // ALSRC Metallic Lunar Rock Sample Box with Latches on Floor
       const rockBox = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 0.34), chromeSwitchMat);
-      rockBox.position.set(side * 1.48, 0.15, 1.85);
+      rockBox.position.set(side * 1.56, 0.15, 1.38);
       cabinGroup.add(rockBox);
     }
 
@@ -3409,16 +3865,16 @@ class MissionSimulationTheater {
     // Exterior Ascent Stage Thermal Kapton Collar & 4 Corner RCS Thruster Quad Assemblies
     const extLowerBandFront = new THREE.Mesh(new THREE.BoxGeometry(4.56, 0.48, 0.06), goldKapton);
     extLowerBandFront.position.set(0, 0.26, -2.28);
-    const extLowerBandLeft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.56), goldKapton);
-    extLowerBandLeft.position.set(-2.28, 0.26, 0);
-    const extLowerBandRight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.56), goldKapton);
-    extLowerBandRight.position.set(2.28, 0.26, 0);
+    const extLowerBandLeft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.05), goldKapton);
+    extLowerBandLeft.position.set(-2.28, 0.26, -0.22);
+    const extLowerBandRight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 4.05), goldKapton);
+    extLowerBandRight.position.set(2.28, 0.26, -0.22);
     cabinGroup.add(extLowerBandFront, extLowerBandLeft, extLowerBandRight);
 
     for (let cx = -1; cx <= 1; cx += 2) {
       for (let cz = -1; cz <= 1; cz += 2) {
         const rcsPod = new THREE.Group();
-        rcsPod.position.set(cx * 2.34, 2.25, cz * 1.95);
+        rcsPod.position.set(cx * 2.34, 2.25, cz * 1.65);
         const podBox = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.32), isogridAlum);
         rcsPod.add(podBox);
         const nozUp = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 12, 1, true), charcoalRack);
@@ -3431,11 +3887,20 @@ class MissionSimulationTheater {
       }
     }
 
-    // Sloped Main Flight Instrument Console Desk (y = 1.05, z = -1.85)
+    // Sloped Main Flight Instrument Console Desk (y = 1.04, z = -1.84) + Solid Floor-to-Desk Avionics Cabinet Base!
     const consoleDesk = new THREE.Mesh(new THREE.BoxGeometry(4.15, 0.18, 0.72), charcoalRack);
     consoleDesk.position.set(0, 1.04, -1.84);
     consoleDesk.rotation.x = 0.22;
     cabinGroup.add(consoleDesk);
+
+    // Solid Structural Avionics Cabinet Base & Toe-Kick Bumper beneath the Console Desk (Prevents visual or physical pass-through!)
+    const consoleBaseCabinet = new THREE.Mesh(new THREE.BoxGeometry(4.12, 0.96, 0.64), darkPanelMat);
+    consoleBaseCabinet.position.set(0, 0.48, -1.84);
+    const consoleFrontBumper = new THREE.Mesh(new THREE.BoxGeometry(4.16, 0.06, 0.06), isogridAlum);
+    consoleFrontBumper.position.set(0, 0.96, -1.48);
+    const consoleFloorGuardLine = new THREE.Mesh(new THREE.BoxGeometry(4.10, 0.015, 0.05), cyanGlow);
+    consoleFloorGuardLine.position.set(0, 0.01, -1.46);
+    cabinGroup.add(consoleBaseCabinet, consoleFrontBumper, consoleFloorGuardLine);
 
     // High-Resolution Wide NASA Telemetry & Radar Altimeter Display on Center Pillar
     const mainScreenMat = new THREE.MeshBasicMaterial({ map: this.generateTelemetryScreenTexture(artifact) });
@@ -3790,10 +4255,10 @@ class MissionSimulationTheater {
     // =========================================================================
     // 4. LEFT & RIGHT SIDE WALLS + INTERACTIVE 120-BREAKER PANEL & CORE MODULE
     // =========================================================================
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), isogridWallMat);
-    leftWall.position.set(-2.18, 1.55, 0);
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), isogridWallMat);
-    rightWall.position.set(2.18, 1.55, 0);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 3.92), isogridWallMat);
+    leftWall.position.set(-2.18, 1.55, -0.24);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 3.92), isogridWallMat);
+    rightWall.position.set(2.18, 1.55, -0.24);
     cabinGroup.add(leftWall, rightWall);
 
     // Left Wall: Panels 11 & 16 Circuit Breaker Array (120 Individual Interactive 3D Breakers with Hex Collars!)
@@ -3861,14 +4326,15 @@ class MissionSimulationTheater {
       cabinGroup.add(canister);
     }
 
-    // Mission-Specific Center Pedestal / Internal Core Module (Interactive!)
+    // Mission-Specific Center Pedestal / Internal Core Module at (x = 0, z = +0.25) with compact radius 0.38m
+    // (Leaves a wide unobstructed walkway in front of the Flight Console Desk so astronaut never clips into the desk!)
     if (category === 'impact') {
-      const gyroPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.58, 0.85, 24), charcoalRack);
-      gyroPedestal.position.set(0, 0.42, -0.45);
-      const gyroSphere = new THREE.Mesh(new THREE.SphereGeometry(0.38, 28, 28), goldKapton);
-      gyroSphere.position.set(0, 1.05, -0.45);
-      const gyroRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.025, 12, 28), cyanGlow);
-      gyroRing.position.set(0, 1.05, -0.45);
+      const gyroPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.40, 0.82, 24), charcoalRack);
+      gyroPedestal.position.set(0, 0.41, 0.25);
+      const gyroSphere = new THREE.Mesh(new THREE.SphereGeometry(0.32, 28, 28), goldKapton);
+      gyroSphere.position.set(0, 0.98, 0.25);
+      const gyroRing = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.022, 12, 28), cyanGlow);
+      gyroRing.position.set(0, 0.98, 0.25);
       gyroRing.rotation.x = Math.PI / 3;
       gyroRing.userData.interactive = {
         label_tr: '🛰️ [SOL TIK / VR TETİK] SATURN V ST-124M ATALETSEL JİROSKOP HALKASINI DÖNDÜR',
@@ -3882,15 +4348,15 @@ class MissionSimulationTheater {
       this.interactables.push(gyroRing);
       cabinGroup.add(gyroPedestal, gyroSphere, gyroRing);
     } else if (body === 'mars' || body === 'venus' || body === 'outer') {
-      const rtgPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.92, 24), charcoalRack);
-      rtgPedestal.position.set(0, 0.46, -0.45);
+      const rtgPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.40, 0.85, 24), charcoalRack);
+      rtgPedestal.position.set(0, 0.42, 0.25);
       cabinGroup.add(rtgPedestal);
 
       const rtgCore = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 0.65, 20),
+        new THREE.CylinderGeometry(0.20, 0.20, 0.60, 20),
         new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0xea580c, emissiveIntensity: 0.9, roughness: 0.3 })
       );
-      rtgCore.position.set(0, 1.15, -0.45);
+      rtgCore.position.set(0, 1.08, 0.25);
       rtgCore.userData.interactive = {
         label_tr: '☢️ [SOL TIK / VR TETİK] MMRTG PLÜTONYUM-238 NÜKLEER ÇEKİRDEK & NUMUNE KARUSELİ TESTİ',
         label_en: '☢️ [CLICK / VR TRIGGER] INSPECT MMRTG PU-238 NUCLEAR CORE & SAMPLE CAROUSEL',
@@ -3904,15 +4370,15 @@ class MissionSimulationTheater {
 
       for (let t = 0; t < 12; t++) {
         const ang = (t * Math.PI * 2) / 12;
-        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 12), chromeSwitchMat);
-        tube.position.set(Math.cos(ang) * 0.38, 0.98, -0.45 + Math.sin(ang) * 0.38);
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.020, 0.020, 0.22, 12), chromeSwitchMat);
+        tube.position.set(Math.cos(ang) * 0.31, 0.92, 0.25 + Math.sin(ang) * 0.31);
         cabinGroup.add(tube);
       }
     } else {
-      const engineCover = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.62, 0.88, 28), isogridWallMat);
-      engineCover.position.set(0, 0.44, -0.42);
-      const engineTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.59, 0.59, 0.06, 28), goldKapton);
-      engineTopCap.position.set(0, 0.89, -0.42);
+      const engineCover = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.82, 28), isogridWallMat);
+      engineCover.position.set(0, 0.41, 0.25);
+      const engineTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.06, 28), goldKapton);
+      engineTopCap.position.set(0, 0.83, 0.25);
       engineTopCap.userData.interactive = {
         label_tr: '🔥 [SOL TIK / VR TETİK] APS YÜKSELİŞ MOTORU (ASCENT ENGINE) KAPAK TELEMETRİSİ',
         label_en: '🔥 [CLICK / VR TRIGGER] INSPECT ASCENT PROPULSION SYSTEM (APS) ENGINE COVER',
@@ -4002,7 +4468,7 @@ class MissionSimulationTheater {
           const obj = this.interactables[j];
           if (!obj || !obj.visible || !obj.userData || !obj.userData.interactive) continue;
           obj.getWorldPosition(objWorldPos);
-          if (handWorldPos.distanceTo(objWorldPos) < 0.24) {
+          if (handWorldPos.distanceTo(objWorldPos) < 0.36) {
             this.vrTouchCooldown = 0.55;
             this.pulseXRHaptics(0.85, 55);
             obj.userData.interactive.onClick();
@@ -4575,36 +5041,72 @@ class MissionSimulationTheater {
     const cabinFloorY = 4.5;
     const descentOffset = this.getDescentOffset(this.simTime);
     const isDescending = this.simTime < 5.8;
-    const groundY0 = this.getExactSurfaceHeight(0, 6.2);
+    const groundY0 = this.getExactSurfaceHeight(0, 6.85);
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const cabinBtn = document.getElementById('btn-walk-cabin');
 
-    // Smoothly animate the Hinged Pressurized EVA Hatch Door & Spinning Red Valve Wheel!
+    // Smoothly animate BOTH Doors of the Dual-Door Pressurized Airlock System:
+    // • Door #1 (Inner Cabin Bulkhead Dual-Leaf Door at z = 1.65) + Inner Blue Valve Wheel
+    // • Door #2 (Outer EVA Vacuum Dual-Leaf Armored Hatch at z = 2.68) + Outer Red Valve Wheel
     if (this.cabinState) {
-      const targetHatch = this.cabinState.hatchOpen ? 1.0 : 0.0;
-      const diff = targetHatch - (this.cabinState.hatchProgress || 0);
-      if (Math.abs(diff) > 0.001) {
-        this.cabinState.hatchProgress = (this.cabinState.hatchProgress || 0) + Math.sign(diff) * Math.min(Math.abs(diff), dt * 1.75);
+      // 1. Inner Airlock Door (#1)
+      const targetInner = this.cabinState.innerHatchOpen ? 1.0 : 0.0;
+      const diffInner = targetInner - (this.cabinState.innerHatchProgress || 0);
+      if (Math.abs(diffInner) > 0.001) {
+        this.cabinState.innerHatchProgress = (this.cabinState.innerHatchProgress || 0) + Math.sign(diffInner) * Math.min(Math.abs(diffInner), dt * 1.85);
       } else {
-        this.cabinState.hatchProgress = targetHatch;
+        this.cabinState.innerHatchProgress = targetInner;
       }
-      const hp = this.cabinState.hatchProgress || 0;
+      const ip = this.cabinState.innerHatchProgress || 0;
+      if (this.innerHatchWheel) {
+        this.innerHatchWheel.rotation.z = ip * Math.PI * 3.5;
+      }
+      const innerSwing = Math.max(0, (ip - 0.14) / 0.86) * (Math.PI * 0.58);
+      if (this.innerDoorLeftPivot) this.innerDoorLeftPivot.rotation.y = innerSwing;
+      if (this.innerDoorRightPivot) this.innerDoorRightPivot.rotation.y = -innerSwing;
+      if (this.innerHatchStatusLamp && this.innerHatchStatusLamp.material) {
+        this.innerHatchStatusLamp.material.color.setHex(
+          isDescending ? 0xef4444 : (this.cabinState.innerHatchOpen ? 0x10b981 : 0xf59e0b)
+        );
+      }
+
+      // 2. Outer EVA Airlock Door (#2)
+      const targetOuter = this.cabinState.outerHatchOpen ? 1.0 : 0.0;
+      const diffOuter = targetOuter - (this.cabinState.outerHatchProgress || 0);
+      if (Math.abs(diffOuter) > 0.001) {
+        this.cabinState.outerHatchProgress = (this.cabinState.outerHatchProgress || 0) + Math.sign(diffOuter) * Math.min(Math.abs(diffOuter), dt * 1.75);
+      } else {
+        this.cabinState.outerHatchProgress = targetOuter;
+      }
+      const op = this.cabinState.outerHatchProgress || 0;
+      this.cabinState.hatchProgress = op;
       if (this.hatchWheel) {
-        this.hatchWheel.rotation.z = hp * Math.PI * 3.5;
+        this.hatchWheel.rotation.z = op * Math.PI * 3.5;
       }
-      if (this.hatchPivotGroup) {
-        const doorSwing = Math.max(0, (hp - 0.16) / 0.84);
-        this.hatchPivotGroup.rotation.y = -doorSwing * (Math.PI * 0.62);
-      }
+      const outerSwing = Math.max(0, (op - 0.16) / 0.84) * (Math.PI * 0.62);
+      if (this.outerDoorLeftPivot) this.outerDoorLeftPivot.rotation.y = outerSwing;
+      if (this.outerDoorRightPivot) this.outerDoorRightPivot.rotation.y = -outerSwing;
       if (this.hatchStatusLamp && this.hatchStatusLamp.material) {
         this.hatchStatusLamp.material.color.setHex(
-          isDescending ? 0xef4444 : (this.cabinState.hatchOpen ? 0x10b981 : 0xf59e0b)
+          isDescending ? 0xef4444 : (this.cabinState.outerHatchOpen ? 0x10b981 : 0xf59e0b)
+        );
+      }
+      if (this.airlockLight) {
+        this.airlockLight.color.setHex(
+          isDescending ? 0xef4444 : (this.cabinState.outerHatchOpen || this.cabinState.innerHatchOpen ? 0x10b981 : 0xf59e0b)
         );
       }
     }
 
     if (ws.handReachTimer && ws.handReachTimer > 0) {
       ws.handReachTimer = Math.max(0, ws.handReachTimer - dt);
+    }
+
+    // Always enforce cabin table & wall collision when inside the cabin, even when stationary!
+    if (ws.isInsideCabin) {
+      const safeNow = this.resolveCabinCollision(ws.x, ws.z);
+      ws.x = safeNow.x;
+      ws.z = safeNow.z;
     }
 
     if (isMoving) {
@@ -4616,36 +5118,42 @@ class MissionSimulationTheater {
       const candidateZ = ws.z + nz * speed * dt;
       const candidateDist = Math.hypot(candidateX, candidateZ);
 
-      // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin (|x| <= 1.88, z in [-1.72, 2.25])
+      // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin or Dual-Door Airlock Chamber
       if (ws.isInsideCabin) {
-        // When walking up to the rear +Z Hatch Door (z > 1.15 and |x| < 0.88):
-        // After touchdown, the astronaut automatically reaches out, spins the valve wheel, and opens the hatch door!
-        if (candidateZ > 1.15 && Math.abs(candidateX) < 0.88 && !this.cabinState.hatchOpen) {
-          this.triggerOpenHatch(false);
+        // STEP A: Approaching Inner Airlock Door #1 (z = 1.65) from inside the Main Cabin
+        if (ws.z < 1.65 && candidateZ > 1.02 && Math.abs(candidateX) < 0.72 && !this.cabinState.innerHatchOpen) {
+          this.triggerInnerAirlockDoor(false);
         }
 
-        const hatchReadyToStepOut = !isDescending && this.cabinState && this.cabinState.hatchOpen && (this.cabinState.hatchProgress || 0) >= 0.62;
+        // STEP B: Inside the Airlock Chamber (z >= 1.72) approaching Outer EVA Door #2 (z = 2.68):
+        // Obeys the NASA Airlock Interlock Rule: Seals Inner Door #1 behind the astronaut, depressurizes, and opens Outer Door #2!
+        if (ws.z >= 1.70 && candidateZ > 1.98 && Math.abs(candidateX) < 0.68 && !this.cabinState.outerHatchOpen) {
+          this.triggerOuterAirlockDoor(false);
+        }
 
-        // If hatch is open and astronaut walks out through the +Z doorway (|x| < 0.78 and z > 2.24), step onto the top ladder porch!
-        if (hatchReadyToStepOut && candidateZ > 2.24 && Math.abs(candidateX) < 0.78) {
+        // STEP C: Returning from Airlock Chamber (z >= 1.72) toward Main Cabin (-Z) when Inner Door #1 is closed:
+        if (ws.z >= 1.72 && candidateZ < 1.92 && nz < -0.1 && !this.cabinState.innerHatchOpen) {
+          this.triggerInnerAirlockDoor(false);
+        }
+
+        const outerReadyToStepOut = !isDescending && this.cabinState && this.cabinState.outerHatchOpen && (this.cabinState.outerHatchProgress || 0) >= 0.55;
+
+        // If Outer Door #2 is open and astronaut walks out through z > 2.72, step onto the exterior EVA Porch & Boarding Ladder!
+        if (outerReadyToStepOut && candidateZ > 2.72 && Math.abs(candidateX) < 0.68) {
           ws.isInsideCabin = false;
           ws.isOnLadder = true;
           ws.x = Math.max(-0.45, Math.min(0.45, candidateX));
-          ws.z = 2.48;
+          ws.z = 3.08;
           if (cabinBtn) {
             cabinBtn.classList.remove('active');
             cabinBtn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
           }
-          this.updateVRGameMiniPill(isTr ? 'Merdivene Çıkıldı — Yüzeye İnin!' : 'Stepped Onto Ladder — Climb Down!');
+          this.updateVRGameMiniPill(isTr ? '2. Dış Kapıdan Merdivene Çıkıldı — Yüzeye İnin!' : 'Stepped Out Door #2 Onto Ladder — Climb Down!');
         } else {
-          // Constrain smoothly within cabin walls & around center pedestal (radius 0.72m at z = -0.42)
-          const maxCabinZ = hatchReadyToStepOut ? 2.26 : 1.78;
-          const clampedX = Math.max(-1.82, Math.min(1.82, candidateX));
-          const clampedZ = Math.max(-1.62, Math.min(maxCabinZ, candidateZ));
-          if (Math.hypot(clampedX, clampedZ + 0.42) > 0.72) {
-            ws.x = clampedX;
-            ws.z = clampedZ;
-          }
+          // Resolve strict collision against Console Desk (z >= -0.98), Center Pedestal, Cabin Walls & Airlock Doors!
+          const resolved = this.resolveCabinCollision(candidateX, candidateZ);
+          ws.x = resolved.x;
+          ws.z = resolved.z;
         }
       } else if (ws.isDrivingRover) {
         // Driving the LRV Moon Buggy across the planetary surface!
@@ -4665,24 +5173,28 @@ class MissionSimulationTheater {
           }
         }
       } else {
-        // 2. Check if astronaut is in the Exterior Boarding Ladder Corridor (|x| < 0.95, z between 2.15 and 6.35)
-        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.10 && candidateZ <= 6.35;
+        // 2. Check if astronaut is in the Exterior Boarding Ladder & EVA Porch Corridor (|x| < 0.95, z between 2.75 and 7.05)
+        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.70 && candidateZ <= 7.05;
         if (inLadderCorridor) {
           ws.isOnLadder = true;
           ws.x = Math.max(-0.55, Math.min(0.55, candidateX));
           ws.z = candidateZ;
-          // Climbing back up to the top of the ladder (z <= 2.18 while moving toward -Z) steps back inside the cabin!
-          if (ws.z <= 2.18 && nz < 0) {
-            this.cabinState.hatchOpen = true;
+          // Climbing back up to the top EVA Porch (z <= 2.92 while moving toward -Z) enters the Airlock Chamber!
+          if (ws.z <= 2.92 && nz < 0) {
+            this.cabinState.outerHatchOpen = false;
+            this.cabinState.innerHatchOpen = true;
+            this.cabinState.hatchOpen = false;
+            this.cabinState.airlockPressurePsi = 4.8;
+            this.refreshCabinDisplays();
             ws.isInsideCabin = true;
             ws.isOnLadder = false;
-            ws.z = 1.85;
+            ws.z = 2.15;
             ws.y = cabinFloorY + descentOffset;
             if (cabinBtn) {
               cabinBtn.classList.add('active');
-              cabinBtn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
+              cabinBtn.innerText = isTr ? '🚪 Çift Kapılı Hava Kilidinden Çık (E)' : '🚪 Exit via Dual-Door Airlock (E)';
             }
-            this.updateVRGameMiniPill(isTr ? 'Kabin İçine Girildi' : 'Entered Spacecraft Cabin');
+            this.updateVRGameMiniPill(isTr ? 'Hava Kilidinden Kabin İçine Girildi' : 'Entered Airlock & Spacecraft Cabin');
           }
         } else {
           if (ws.isOnLadder) {
@@ -4731,8 +5243,8 @@ class MissionSimulationTheater {
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isOnLadder) {
-      // Smoothly climb up/down the 12 ladder rungs based on z position (z = 6.35 -> groundY0, z = 2.35 -> cabinFloorY)
-      const climbFrac = Math.max(0, Math.min(1, (6.35 - ws.z) / (6.35 - 2.35)));
+      // Smoothly climb up/down the 12 ladder rungs based on z position (z = 6.95 -> groundY0, z = 3.15 -> cabinFloorY)
+      const climbFrac = Math.max(0, Math.min(1, (6.95 - ws.z) / (6.95 - 3.15)));
       ws.y = groundY0 + climbFrac * (cabinFloorY - groundY0);
       ws.vy = 0;
       ws.isGrounded = true;

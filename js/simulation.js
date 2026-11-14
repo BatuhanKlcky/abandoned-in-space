@@ -263,9 +263,9 @@ class MissionSimulationTheater {
           this.toggleCabinInterior();
         }
       }
-      if (code === 'KeyH' || code === 'Tab' || code === 'KeyM' || code === 'Escape') {
+      if (code === 'KeyH' || code === 'Tab' || code === 'KeyM') {
         if (code === 'Tab') e.preventDefault();
-        // When in Clean VR Game Mode, pressing H, TAB, M, or ESC restores all normal UI buttons!
+        // When in Clean VR Game Mode, pressing H or TAB restores all normal UI buttons!
         this.toggleCleanVRGameMode();
       }
     });
@@ -559,18 +559,18 @@ class MissionSimulationTheater {
     const innerDoorOpenEnough = this.cabinState && (this.cabinState.innerHatchProgress || 0) >= 0.72;
     const outerDoorOpenEnough = this.cabinState && (this.cabinState.outerHatchProgress || 0) >= 0.72;
 
-    if (z > 1.20) {
+    if (z > 1.42) {
       if (Math.abs(x) > 0.46) {
-        // If already inside the Airlock Chamber (z >= 1.50), clamp x within the airlock tunnel walls (|x| <= 0.46)
-        if (this.walkState.z >= 1.50) {
+        // If already inside the Airlock Chamber (z >= 1.60), clamp x within the airlock tunnel walls (|x| <= 0.46)
+        if (this.walkState.z >= 1.60) {
           x = Math.max(-0.46, Math.min(0.46, x));
         } else {
-          // In main cabin outside the doorway width: block against the rear bulkhead wall at z = 1.20
-          z = 1.20;
+          // In main cabin outside the doorway width: block against the rear bulkhead wall at z = 1.42
+          z = 1.42;
         }
       } else if (!innerDoorOpenEnough && this.walkState.z < 1.65) {
-        // In front of closed/opening Inner Door #1: hold cleanly at z = 1.20 so astronaut NEVER clips through the door!
-        z = Math.min(1.20, z);
+        // In front of closed/opening Inner Door #1 (door at z = 1.65): hold cleanly at z = 1.48 (17 cm from door)
+        z = Math.min(1.48, z);
       }
     }
 
@@ -578,14 +578,14 @@ class MissionSimulationTheater {
     if (this.walkState.z >= 1.65) {
       x = Math.max(-0.46, Math.min(0.46, x));
       if (!innerDoorOpenEnough) {
-        // Inner Door #1 is closed behind the astronaut: hold at z >= 1.98 so astronaut never clips through Door #1
-        z = Math.max(1.98, z);
+        // Inner Door #1 is closed behind the astronaut: hold at z >= 1.78 (13 cm from Door #1)
+        z = Math.max(1.78, z);
       }
     }
 
     // 5. OUTER EVA AIRLOCK DOOR (#2 at z = 2.68):
-    // When Door #2 is closed/opening (< 72%), hold cleanly at z = 2.24 inside the airlock so astronaut never clips through Door #2!
-    const maxAirlockZ = outerDoorOpenEnough ? 2.86 : 2.24;
+    // When Door #2 is closed/opening (< 72%), hold cleanly at z = 2.54 (14 cm from Door #2)!
+    const maxAirlockZ = outerDoorOpenEnough ? 2.86 : 2.54;
     z = Math.min(maxAirlockZ, z);
 
     return { x, z };
@@ -689,8 +689,10 @@ class MissionSimulationTheater {
       ws.smoothYaw = ws.yaw;
       this.updateVRGameMiniPill(isTr ? 'LRV Ay Aracı Sürüşü Aktif!' : 'LRV Rover Driving Active!');
     } else {
-      ws.x = this.lrvPropGroup.position.x - 1.65;
-      ws.z = this.lrvPropGroup.position.z + 0.8;
+      const rYaw = this.lrvPropGroup.rotation.y;
+      // Step off to the left side of the LRV driver's seat based on rover orientation
+      ws.x = this.lrvPropGroup.position.x - Math.cos(rYaw) * 1.55;
+      ws.z = this.lrvPropGroup.position.z + Math.sin(rYaw) * 1.55;
       ws.y = this.getExactSurfaceHeight(ws.x, ws.z);
       this.updateVRGameMiniPill(isTr ? 'LRV Araçtan İnildi' : 'Dismounted LRV Rover');
     }
@@ -725,6 +727,8 @@ class MissionSimulationTheater {
         }
       }
       this.camera.rotation.order = 'YXZ';
+      this.walkState.keys = { w: false, a: false, s: false, d: false };
+      this.walkState.isLooking = false;
       // Place the astronaut INSIDE the descending rocket cockpit facing the front windows & DSKY computer!
       this.walkState.isInsideCabin = true;
       this.walkState.isOnLadder = false;
@@ -773,6 +777,8 @@ class MissionSimulationTheater {
       this.camera.rotation.z = 0;
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
+      this.walkState.keys = { w: false, a: false, s: false, d: false };
+      this.walkState.isLooking = false;
       this.walkState.isInsideCabin = false;
       this.walkState.isOnLadder = false;
       this.walkState.isDrivingRover = false;
@@ -1209,6 +1215,19 @@ class MissionSimulationTheater {
       this.xrSession.end().catch(() => {});
       this.xrSession = null;
     }
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (_) {}
+    }
+    this.walkState.keys = { w: false, a: false, s: false, d: false };
+    this.walkState.isLooking = false;
+    this.walkState.isDrivingRover = false;
+    this.setCleanVRGameMode(false);
+    if (this.controls) this.controls.enabled = false;
+    if (this.cameraRig) {
+      this.cameraRig.position.set(0, 0, 0);
+      this.cameraRig.rotation.set(0, 0, 0);
+    }
+    if (this.vrHelpPanel) this.vrHelpPanel.visible = false;
     if (this.overlay) this.overlay.classList.remove('open');
   }
 
@@ -5335,18 +5354,18 @@ class MissionSimulationTheater {
       // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin or Dual-Door Airlock Chamber
       if (ws.isInsideCabin) {
         // STEP A: Approaching Inner Airlock Door #1 (z = 1.65) from inside the Main Cabin
-        if (ws.z < 1.65 && candidateZ > 1.15 && Math.abs(candidateX) < 0.62 && !this.cabinState.innerHatchOpen) {
+        if (ws.z < 1.65 && candidateZ > 1.25 && Math.abs(candidateX) < 0.62 && !this.cabinState.innerHatchOpen) {
           this.triggerInnerAirlockDoor(false);
         }
 
-        // STEP B: Fully inside the Airlock Chamber (z >= 1.98) approaching Outer EVA Door #2 (z = 2.68):
+        // STEP B: Fully inside the Airlock Chamber (z >= 1.76) approaching Outer EVA Door #2 (z = 2.68):
         // Obeys the NASA Airlock Interlock Rule: Only seals Inner Door #1 once the astronaut has cleared the z = 1.65 doorway!
-        if (ws.z >= 1.98 && candidateZ > 2.08 && Math.abs(candidateX) < 0.56 && !this.cabinState.outerHatchOpen) {
+        if (ws.z >= 1.76 && candidateZ > 2.05 && Math.abs(candidateX) < 0.56 && !this.cabinState.outerHatchOpen) {
           this.triggerOuterAirlockDoor(false);
         }
 
         // STEP C: Returning from Airlock Chamber (z >= 1.76) toward Main Cabin (-Z) when Inner Door #1 is closed:
-        if (ws.z >= 1.76 && candidateZ < 1.95 && nz < -0.1 && !this.cabinState.innerHatchOpen) {
+        if (ws.z >= 1.76 && candidateZ < 2.05 && nz < -0.1 && !this.cabinState.innerHatchOpen) {
           this.triggerInnerAirlockDoor(false);
         }
 
@@ -5397,13 +5416,13 @@ class MissionSimulationTheater {
           const outerOpenEnough = !isDescending && this.cabinState && (this.cabinState.outerHatchProgress || 0) >= 0.72;
 
           // Approaching Outer Door #2 (z = 2.68) on the EVA Porch while moving toward -Z:
-          if (candidateZ < 3.12 && nz < -0.1 && !this.cabinState.outerHatchOpen) {
+          if (candidateZ < 3.35 && nz < -0.1 && !this.cabinState.outerHatchOpen) {
             this.triggerOuterAirlockDoor(false);
           }
 
-          if (!outerOpenEnough && candidateZ < 3.06) {
+          if (!outerOpenEnough && candidateZ < 2.82) {
             // Solidly block the astronaut outside Outer Door #2 until the door leaves physically swing open!
-            ws.z = Math.max(3.06, ws.z);
+            ws.z = Math.max(2.82, ws.z);
           } else if (outerOpenEnough && candidateZ <= 2.72) {
             // Smoothly walk across the threshold of open Outer Door #2 into the Airlock Chamber (zero teleport/snap!)
             ws.isInsideCabin = true;

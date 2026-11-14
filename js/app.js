@@ -57,131 +57,6 @@ const STORY_CHAPTERS = [
   }
 ];
 
-const JURY_CRITERIA_DATA = [
-  {
-    id: 'impact',
-    name_tr: "1. IMPACT (Etki & Toplumsal/Bilimsel Değer)",
-    name_en: "1. IMPACT (Societal, Educational & Policy Value)",
-    score: "5 / 5",
-    desc_tr: "Uzaydaki ~205 tonluk insan yapımı donanımı 'uzay çöpü' (debris) olarak görmek yerine, NASA SP-2024-4559 (Governing the Moon) ve Artemis Accords Bölüm 9 çerçevesinde 'Gezegenlerarası Arkeoloji ve Kültür Mirası' olarak ele alır. Öğrenciler, araştırmacılar ve uzay hukuku için 4 gök cismini kapsayan yaşayan bir açık bilim müzesi sunar.",
-    desc_en: "Reframes ~205 tons of discarded planetary hardware from 'space debris' into protected 'Extraterrestrial Cultural Heritage' under Artemis Accords Section 9 (NASA SP-2024-4559), serving as an interactive open-science museum across 4 celestial bodies.",
-    proof_tr: "Kanıt: Artemis Accords Bölüm 9 & 4 Gök Cismi Kütle Analizi",
-    proof_en: "Proof: Artemis Accords Section 9 & 4-Body Mass Inventory",
-    actionLabel_tr: "▶ Apollo 11 & Artemis Mirasını Göster",
-    actionLabel_en: "▶ Show Apollo 11 & Artemis Heritage",
-    demoType: 'impact'
-  },
-  {
-    id: 'creativity',
-    name_tr: "2. CREATIVITY (Yaratıcılık & Özgün Mühendislik)",
-    name_en: "2. CREATIVITY (Originality & Immersive Engineering)",
-    score: "5 / 5",
-    desc_tr: "Harici 3D modelleme programlarına (Blender vb.) veya hazır kütüphanelere bağlı kalmadan, doğrudan Three.js içinde matematiksel algoritmalarla üretilen kırışık Kapton altın folyo PBR dokuları, CAD X-Ray (Tel Kafes) mühendislik modu, Web Audio API ile sentezlenen 2525 Hz Apollo Quindar telsiz tonları ve Meta Quest / Vision Pro uyumlu 1:1 WebXR Yüzey Yürüyüşü sunar.",
-    desc_en: "Zero external 3D assets required: procedurally generated wrinkled Kapton foil PBR bump maps, interactive CAD X-Ray wireframe mode, Web Audio API synthesized 2525 Hz Apollo Quindar tones, and 1:1 scale WebXR Astronaut Surface Walk.",
-    proof_tr: "Kanıt: 1:1 WebXR Yüzey Yürüyüşü + Prosedürel PBR CAD X-Ray",
-    proof_en: "Proof: 1:1 WebXR Surface Walk + Procedural PBR CAD X-Ray",
-    actionLabel_tr: "▶ 1:1 Ölçekte Yüzey Yürüyüşünü Başlat (WebXR)",
-    actionLabel_en: "▶ Launch 1:1 Scale Surface Walk (WebXR)",
-    demoType: 'creativity'
-  },
-  {
-    id: 'validity',
-    name_tr: "3. VALIDITY (Bilimsel ve Fiziksel Geçerlilik)",
-    name_en: "3. VALIDITY (Scientific & Physical Accuracy)",
-    score: "5 / 5",
-    desc_tr: "Simülasyon ve 1:1 yürüyüş fiziği her gök cisminin gerçek yüzey yerçekimi ivmesine (Ay: 1.62 m/s², Mars: 3.72 m/s², Venüs: 8.87 m/s², Titan: 1.35 m/s²), gerçek eksen eğikliklerine ve Mars'ın 88,775.244 saniyelik gerçek astronomik Sol (gün) döngüsüne dayanır. Yüzey aşınmaları (UV fotolizi, mikrometeorit kraterleşmesi, 92 bar CO₂ korozyonu) bilimsel raporlarla birebir örtüşür.",
-    desc_en: "Driven by authentic planetary gravity (Moon 1.62 m/s², Mars 3.72 m/s², Venus 8.87 m/s², Titan 1.35 m/s²), axial tilts, astronomical Martian Sol calculation (88,775.244 s), and verified thermal/radiation degradation physics.",
-    proof_tr: "Kanıt: Astronomik Sol Hesabı + Canlı MEDA/REMS Mars Telemetrisi",
-    proof_en: "Proof: Astronomical Sol Clock + Live MEDA/REMS Mars Telemetry",
-    actionLabel_tr: "▶ Canlı Mars Telemetrisi & Rover Konumuna Uç",
-    actionLabel_en: "▶ Fly to Live Mars Telemetry & Rover Site",
-    demoType: 'validity'
-  },
-  {
-    id: 'relevance',
-    name_tr: "4. RELEVANCE (NASA Verisinin Doğrudan Kullanımı)",
-    name_en: "4. RELEVANCE (Direct Integration of Official NASA Data)",
-    score: "5 / 5",
-    desc_tr: "Projedeki 25 kalıntının tamamı doğrudan 4 resmi NASA History Series monografisi (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239), NASA Lunar Artifacts Catalogue (2012), NASA PDS jeodezik koordinatları, images.nasa.gov (LROC NAC, MRO HiRISE, Magellan SAR, Cassini PIA katalogları) ve data.nasa.gov (MEDA/REMS) verileriyle doğrulanmıştır.",
-    desc_en: "Every single artifact is cross-referenced against 4 official NASA History Series monographs (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239), NASA's 2012 Lunar Artifacts Catalogue, PDS coordinates, and PIA archival imagery.",
-    proof_tr: "Kanıt: 10 Resmi NASA Arşivi & Her Kartta Doğrulama Rozeti",
-    proof_en: "Proof: 10 Official NASA Archives & Per-Card Verification Badge",
-    actionLabel_tr: "▶ Resmi NASA Kaynakları & PDF Monografilerini Aç",
-    actionLabel_en: "▶ Open Official NASA Sources & SP Monographs",
-    demoType: 'relevance'
-  },
-  {
-    id: 'presentation',
-    name_tr: "5. PRESENTATION (Açık, Sıralı ve Etkili Hikâye Anlatımı)",
-    name_en: "5. PRESENTATION (Clear, Sequential & Emotional Storytelling)",
-    score: "5 / 5",
-    desc_tr: "Karmaşık veri yığınları yerine kullanıcıyı 5 Bölümlük Kronolojik Hikâye Akışı (I. İlk Dokunuş → II. Bilim İçin Feda → III. Kızıl Gezegen → IV. Venüs & Dış Sistem → V. Uzay Arkeolojisi & Gelecek) içine alır. Her görevde 'Neden Geride Bırakıldı?', 'Bugünkü Durumu', sesli telsiz anonsu ve sinematik 3D canlandırma ile güçlü bir duygusal bağ kurar.",
-    desc_en: "Transforms raw telemetry into a structured 5-Act Chronological Story Tour (First Contact → Sacrificed for Science → Red Planet Pioneers → Venus & Outer System → Future Space Archaeology) with radio voice-overs and 3D reenactments.",
-    proof_tr: "Kanıt: 5 Bölümlük Rehberli Hikâye Turu & Sesli Telsiz Anlatımı",
-    proof_en: "Proof: 5-Act Guided Story Tour & Spoken Radio Transmissions",
-    actionLabel_tr: "▶ 5 Bölümlük Sıralı Hikâye Turunu Başlat",
-    actionLabel_en: "▶ Start 5-Act Sequential Story Tour",
-    demoType: 'presentation'
-  }
-];
-
-const JURY_PITCH_STEPS = [
-  {
-    step: "PERDE 1 (0:00 – 0:35) • GİRİŞ & VİZYON (IMPACT)",
-    title_tr: "“Uzayda Bıraktığımız 205 Tonluk Miras: Çöp mü, Yoksa İnsanlığın İlk Açık Hava Müzesi mi?”",
-    title_en: "“205 Tons Left Across the Solar System: Space Junk, or Humanity's Greatest Open-Air Museum?”",
-    script_tr: "“Sayın jüri üyeleri, 1969'da Neil Armstrong Ay'dan ayrılırken kabinin ağırlığını azaltmak için çizmelerini, kameralarını ve Kartal iniş kademesini geride bıraktı. Bugün Ay, Mars, Venüs ve Satürn'ün uydusu Titan'da 200 tondan fazla sessiz elçimiz yatıyor. Projemiz, NASA'nın resmi arşivlerini kullanarak bu terk edilmiş ekipmanları interaktif bir 3D gezegenlerarası arkeoloji müzesine dönüştürüyor.”",
-    script_en: "“When Neil Armstrong lifted off from Tranquility Base in 1969, he left behind his boots, cameras, and the Eagle descent stage to save weight. Today, over 200 tons of human hardware rest silently across the Moon, Mars, Venus, and Titan. Our project transforms NASA's official archives into an interactive 3D interplanetary museum.”",
-    btn_tr: "🎬 Sahne 1: Apollo 11 & Ay Küresini Aç",
-    btn_en: "🎬 Act 1: Focus Apollo 11 on the Moon",
-    artifactId: 'apollo-11',
-    mode: 'focus'
-  },
-  {
-    step: "PERDE 2 (0:35 – 1:15) • DOĞRULANMIŞ NASA VERİSİ & DUYGUSAL HİKÂYE (RELEVANCE & PRESENTATION)",
-    title_tr: "“Her Kalıntının Bir Hikâyesi ve NASA Arşiv Kanıtı Var”",
-    title_en: "“Every Relic Has a Human Story and Verified NASA Archival Proof”",
-    script_tr: "“Sağdaki hikâye çekmecemizde sadece koordinat vermiyoruz: Aracın neden geride bırakıldığını, 55 yıllık vakum ve UV radyasyonu altındaki bugünkü durumunu, NASA SP-2024-4559 monografi referansını, gerçek LROC uydu fotoğrafını ve 2525 Hz Quindar bip tonuyla orijinal telsiz sesini sunuyoruz. Ayrıca CAD X-Ray modumuzla aracın mühendislik iskeletini Blender kullanmadan doğrudan tarayıcıda inceliyoruz.”",
-    script_en: "“In our Story Drawer, we pair human storytelling with rigorous NASA data: why each craft was abandoned, its current state after decades of UV and micrometeorite weathering, verified LROC/HiRISE satellite photography, authentic Quindar radio transmissions, and a live CAD X-Ray engineering view.”",
-    btn_tr: "🎬 Sahne 2: Apollo 12 & Surveyor 3 Arkeolojisini Göster",
-    btn_en: "🎬 Act 2: Show Apollo 12 & Surveyor 3 Archaeology",
-    artifactId: 'surveyor-3',
-    mode: 'xray'
-  },
-  {
-    step: "PERDE 3 (1:15 – 1:55) • YARATICILIK & 1:1 WEBXR YÜZEY YÜRÜYÜŞÜ (CREATIVITY)",
-    title_tr: "“Kارتal'ın Yanında 1.75 Metre Astronot Göz Hizasında Yürümek”",
-    title_en: "“Walking Next to the Eagle at True 1:1 Astronaut Scale (WebXR)”",
-    script_tr: "“Jüriye en büyük sürprizimiz: Bu araçlara sadece uzaktan bakmıyorsunuz! '1:1 Yüzeyde Yürü (WebXR)' moduna geçtiğimizde, ister Meta Quest / Vision Pro başlıkla ister klavye ve fareyle 1.75 metre astronot göz hizasında doğrudan Ay yüzeyine iniyoruz ve Apollo İniş Modülü'nün altın Kapton folyolarının ve ayaklarının yanında 1:1 ölçekte yürüyoruz!”",
-    script_en: "“Now for our signature innovation: you don't just view these relics from orbit. With one click on '1:1 Surface Walk (WebXR)', you step onto the lunar regolith at 1.75m astronaut eye-level and walk right beside the towering Apollo Lunar Module in 1:1 scale!”",
-    btn_tr: "🥽 Sahne 3: Apollo 11 Yanında 1:1 Yürüyüşü Başlat",
-    btn_en: "🥽 Act 3: Start 1:1 Surface Walk Next to Apollo 11",
-    artifactId: 'apollo-11',
-    mode: 'walk'
-  },
-  {
-    step: "PERDE 4 (1:55 – 2:30) • BİLİMSEL GEÇERLİLİK & CANLI MARS TELEMETRİSİ (VALIDITY)",
-    title_tr: "“Mars'ta Yaşayan Gezginler ve Gökyüzü Vinci (Sky Crane) Fiziği”",
-    title_en: "“Live Mars Weather Telemetry & Sky Crane Ballistic Physics”",
-    script_tr: "“Şimdi Mars'a geçiyoruz. Sol paneldeki Canlı Mars Hava Durumu kartımız, Perseverance (MEDA) ve Curiosity (REMS) verilerini ve iniş anından itibaren geçen gerçek Mars gününü (Sol) saniyesi saniyesine hesaplıyor. Ayrıca Ingenuity'nin kırık kanadıyla beklediği Valinor Tepeleri'ni ve Sky Crane iniş simülasyonunu gerçek Mars yerçekimiyle (3.72 m/s²) izliyoruz.”",
-    script_en: "“Switching to Mars, our live telemetry dock computes the exact Martian Sol for Perseverance (MEDA) and Curiosity (REMS) alongside real-time temperature, pressure, and wind data, while our 3D theater reenacts the Curiosity Sky Crane flyaway and Ingenuity's final flight.”",
-    btn_tr: "🎬 Sahne 4: Mars Sky Crane Simülasyonunu Başlat",
-    btn_en: "🎬 Act 4: Launch Mars Sky Crane Simulation",
-    artifactId: 'curiosity-skycrane',
-    mode: 'sim'
-  },
-  {
-    step: "PERDE 5 (2:30 – 3:00) • VENÜS, TİTAN & GELECEK ÇAĞRISI (GRAND FINALE)",
-    title_tr: "“Venüs'ün 465°C Cehenneminden Satürn'ün Uydusu Titan'a: Unutulmayan Elçiler”",
-    title_en: "“From Venus's 465°C Furnace to Saturn's Moon Titan: Abandoned, Never Forgotten”",
-    script_tr: "“Son olarak Venüs'ün 92 barlık basıncında ezilen Venera 13 ve Pioneer sondalarından, Satürn'ün uydusu Titan'ın metan kıyılarına inen Cassini-Huygens'e uzanıyoruz. İnsanlık yıldızlara doğru ilerlerken, geride bıraktığımız bu 25 sessiz elçi bizim nereden geldiğimizi anlatan en değerli zaman kapsüllerimizdir. Teşekkür ederiz!”",
-    script_en: "“Finally, we travel to Venus's 92-bar furnace with Venera 13 and out to Saturn's moon Titan with the Huygens probe—humanity's most distant landing site. As we journey further into the cosmos, these 25 silent ambassadors remain our greatest time capsules.”",
-    btn_tr: "🪐 Sahne 5: Titan'daki Huygens Sondasına Uç",
-    btn_en: "🪐 Act 5: Fly to Cassini-Huygens on Titan",
-    artifactId: 'cassini-huygens',
-    mode: 'focus'
-  }
-];
 
 class AbandonedInSpaceApp {
   constructor() {
@@ -279,43 +154,6 @@ class AbandonedInSpaceApp {
       pill.addEventListener('click', (e) => {
         const chIdx = parseInt(e.currentTarget.getAttribute('data-chapter'), 10) || 0;
         this.jumpToStoryChapter(chIdx);
-      });
-    });
-
-    // Jury & Storytelling Pitch Modal Controls
-    const juryBtn = document.getElementById('btn-jury-toggle');
-    const juryModal = document.getElementById('jury-modal');
-    const closeJuryBtn = document.getElementById('btn-close-jury');
-
-    const openJuryModal = () => {
-      this.renderJuryModal();
-      if (juryModal) juryModal.classList.add('open');
-      window.SpaceAudio.playTelemetryPing(1180, 0.05);
-    };
-
-    if (juryBtn) juryBtn.addEventListener('click', openJuryModal);
-    if (closeJuryBtn) {
-      closeJuryBtn.addEventListener('click', () => {
-        if (juryModal) juryModal.classList.remove('open');
-      });
-    }
-    if (juryModal) {
-      juryModal.addEventListener('click', (e) => {
-        if (e.target === juryModal) juryModal.classList.remove('open');
-      });
-    }
-
-    document.querySelectorAll('.jury-tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.jury-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.jury-tab-panel').forEach(p => p.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        const tab = e.currentTarget.getAttribute('data-jtab');
-        const panelId = tab === 'pitch'
-          ? 'jpanel-pitch'
-          : (tab === 'compliance' ? 'jpanel-compliance' : 'jpanel-criteria');
-        const panel = document.getElementById(panelId);
-        if (panel) panel.classList.add('active');
       });
     });
 
@@ -561,11 +399,7 @@ class AbandonedInSpaceApp {
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        const juryModal = document.getElementById('jury-modal');
-        if (juryModal && juryModal.classList.contains('open')) {
-          juryModal.classList.remove('open');
-          return;
-        }
+        
         const photoModal = document.getElementById('photo-modal');
         if (photoModal && photoModal.classList.contains('open')) {
           photoModal.classList.remove('open');
@@ -637,7 +471,7 @@ class AbandonedInSpaceApp {
     if (windEl) windEl.innerText = `${r.weather.windSpeedMs} m/s (${r.weather.windDir})`;
     if (pressEl) pressEl.innerText = `${r.weather.pressurePa} Pa`;
     if (odoEl) odoEl.innerText = `${r.odometerKm} km`;
-    if (badgeEl) badgeEl.innerText = this.activeRover === 'perseverance' ? 'MEDA SENSÖRÜ' : 'REMS SENSÖRÜ';
+    if (badgeEl) badgeEl.innerText = this.activeRover === 'perseverance' ? (isTr ? 'MEDA SENSÖRÜ' : 'MEDA SENSOR') : (isTr ? 'REMS SENSÖRÜ' : 'REMS SENSOR');
   }
 
   switchPlanet(body) {
@@ -681,7 +515,7 @@ class AbandonedInSpaceApp {
       if (a.body !== this.currentBody) return false;
       if (this.activeDecade !== 'all' && a.decade !== this.activeDecade) return false;
       if (this.searchQuery) {
-        const title = (a.name_tr + " " + a.name_en + " " + a.mission + " " + a.locationName).toLowerCase();
+        const title = (a.name_tr + " " + a.name_en + " " + a.mission + " " + a.locationName + " " + (a.locationName_en || "")).toLowerCase();
         if (!title.includes(this.searchQuery)) return false;
       }
       return true;
@@ -817,16 +651,18 @@ class AbandonedInSpaceApp {
 
     const listEl = document.getElementById('drawer-checklist');
     listEl.innerHTML = '';
-    artifact.discardedItems.forEach(itemStr => {
+    const items = isTr ? artifact.discardedItems : (artifact.discardedItems_en || artifact.discardedItems);
+    items.forEach(itemStr => {
       const li = document.createElement('li');
       li.innerText = itemStr;
       listEl.appendChild(li);
     });
 
-    document.getElementById('spec-mass').innerText = artifact.technicalSpecs.massLeftKg;
-    document.getElementById('spec-power').innerText = artifact.technicalSpecs.powerSource;
-    document.getElementById('spec-duration').innerText = artifact.technicalSpecs.activeDuration;
-    document.getElementById('spec-coords').innerText = artifact.technicalSpecs.coordinatesReadable;
+    const specs = isTr ? artifact.technicalSpecs : (artifact.technicalSpecs_en || artifact.technicalSpecs);
+    document.getElementById('spec-mass').innerText = specs.massLeftKg;
+    document.getElementById('spec-power').innerText = specs.powerSource;
+    document.getElementById('spec-duration').innerText = specs.activeDuration;
+    document.getElementById('spec-coords').innerText = specs.coordinatesReadable;
 
     // Populate NASA Verification & Scientific Proof Card
     const verMeta = this.getVerificationMetadata(artifact);
@@ -1026,142 +862,6 @@ class AbandonedInSpaceApp {
     if (banner) banner.classList.remove('active');
   }
 
-  // --- NASA 5 Judging Criteria & Sequential Storytelling Pitch Renderer ---
-  renderJuryModal() {
-    const isTr = this.currentLang === 'tr';
-    const critContainer = document.getElementById('jury-criteria-container');
-    const pitchContainer = document.getElementById('jury-pitch-container');
-    const juryModal = document.getElementById('jury-modal');
-
-    if (critContainer) {
-      critContainer.innerHTML = '';
-      JURY_CRITERIA_DATA.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'criterion-card';
-        card.innerHTML = `
-          <div class="criterion-top">
-            <span class="criterion-name">${isTr ? item.name_tr : item.name_en}</span>
-            <span class="criterion-score">★ ${item.score}</span>
-          </div>
-          <p class="criterion-desc">${isTr ? item.desc_tr : item.desc_en}</p>
-          <div class="criterion-action-row">
-            <span class="criterion-proof-tag">✓ ${isTr ? item.proof_tr : item.proof_en}</span>
-            <button class="criterion-demo-btn">${isTr ? item.actionLabel_tr : item.actionLabel_en}</button>
-          </div>
-        `;
-        const btn = card.querySelector('.criterion-demo-btn');
-        if (btn) {
-          btn.addEventListener('click', () => {
-            if (juryModal) juryModal.classList.remove('open');
-            this.triggerJuryCriterionDemo(item.demoType);
-          });
-        }
-        critContainer.appendChild(card);
-      });
-    }
-
-    if (pitchContainer) {
-      pitchContainer.innerHTML = '';
-      JURY_PITCH_STEPS.forEach(stepObj => {
-        const card = document.createElement('div');
-        card.className = 'criterion-card';
-        card.innerHTML = `
-          <div class="criterion-top">
-            <span class="criterion-name">${isTr ? stepObj.title_tr : stepObj.title_en}</span>
-            <span class="criterion-score">${stepObj.step}</span>
-          </div>
-          <p class="criterion-desc" style="font-style:italic; color:#fde68a;">${isTr ? stepObj.script_tr : stepObj.script_en}</p>
-          <div class="criterion-action-row">
-            <span class="criterion-proof-tag">🎙️ ${isTr ? 'Sunumda Söylenecek Metin & Canlı Sahne' : 'Live Pitch Speaker Script & Scene Trigger'}</span>
-            <button class="criterion-demo-btn">${isTr ? stepObj.btn_tr : stepObj.btn_en}</button>
-          </div>
-        `;
-        const btn = card.querySelector('.criterion-demo-btn');
-        if (btn) {
-          btn.addEventListener('click', () => {
-            if (juryModal) juryModal.classList.remove('open');
-            const art = ARTIFACTS.find(a => a.id === stepObj.artifactId) || ARTIFACTS[0];
-            this.selectArtifact(art);
-            if (stepObj.mode === 'walk' && window.SpaceSimulation) {
-              window.SpaceSimulation.startSurfaceWalk(art);
-            } else if (stepObj.mode === 'sim' && window.SpaceSimulation) {
-              window.SpaceSimulation.cameraMode = 'cinematic';
-              window.SpaceSimulation.startSimulation(art);
-            } else if (stepObj.mode === 'xray' && this.sceneManager) {
-              setTimeout(() => {
-                const isWire = this.sceneManager.toggleMiniWireframe();
-                const xrayBtn = document.getElementById('btn-mini-wireframe');
-                if (xrayBtn) xrayBtn.classList.toggle('active', isWire);
-              }, 350);
-            }
-          });
-        }
-        pitchContainer.appendChild(card);
-      });
-    }
-
-    const complianceContainer = document.getElementById('jury-compliance-container');
-    if (complianceContainer && typeof SPACE_APPS_SUBMISSION_DOSSIER !== 'undefined') {
-      complianceContainer.innerHTML = '';
-      const sections = [
-        SPACE_APPS_SUBMISSION_DOSSIER.nasa_data,
-        SPACE_APPS_SUBMISSION_DOSSIER.references,
-        SPACE_APPS_SUBMISSION_DOSSIER.super_intelligence
-      ];
-      sections.forEach(sec => {
-        if (!sec) return;
-        const card = document.createElement('div');
-        card.className = 'criterion-card';
-        const titleText = isTr ? sec.title_tr : sec.title_en;
-        const bodyText = isTr ? sec.body_tr : sec.body_en;
-        card.innerHTML = `
-          <div class="criterion-top">
-            <span class="criterion-name">${titleText}</span>
-            <span class="criterion-score">✓ NASA SPACE APPS 2026</span>
-          </div>
-          <pre class="dossier-pre-box">${bodyText}</pre>
-          <div class="criterion-action-row">
-            <span class="criterion-proof-tag">🛡️ ${isTr ? 'Global Ödül Uygunluğu • NASA Logosu Kullanılmamıştır • Görünür Filigran Aktif' : 'Global Award Compliant • Zero NASA Logos Used • Visible Watermark Active'}</span>
-            <button class="criterion-demo-btn copy-dossier-btn">📋 ${isTr ? 'Metni Kopyala (Copy)' : 'Copy Submission Text'}</button>
-          </div>
-        `;
-        const copyBtn = card.querySelector('.copy-dossier-btn');
-        if (copyBtn) {
-          copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(bodyText).then(() => {
-              const orig = copyBtn.innerText;
-              copyBtn.innerText = isTr ? '✓ KOPYALANDI!' : '✓ COPIED!';
-              setTimeout(() => { copyBtn.innerText = orig; }, 2000);
-            });
-          });
-        }
-        complianceContainer.appendChild(card);
-      });
-    }
-  }
-
-  triggerJuryCriterionDemo(demoType) {
-    if (demoType === 'impact') {
-      const apollo11 = ARTIFACTS.find(a => a.id === 'apollo-11') || ARTIFACTS[0];
-      this.selectArtifact(apollo11);
-    } else if (demoType === 'creativity') {
-      const apollo11 = ARTIFACTS.find(a => a.id === 'apollo-11') || ARTIFACTS[0];
-      this.selectArtifact(apollo11);
-      if (window.SpaceSimulation) {
-        window.SpaceSimulation.startSurfaceWalk(apollo11);
-      }
-    } else if (demoType === 'validity') {
-      const percy = ARTIFACTS.find(a => a.id === 'perseverance-parachute') || ARTIFACTS[0];
-      this.selectArtifact(percy);
-    } else if (demoType === 'relevance') {
-      this.renderSourcesList();
-      const sourcesModal = document.getElementById('sources-modal');
-      if (sourcesModal) sourcesModal.classList.add('open');
-    } else if (demoType === 'presentation') {
-      this.startTour(true);
-    }
-  }
-
   // --- Floating Hover Tooltip ---
   showTooltip(artifact, clientX, clientY) {
     const tooltip = document.getElementById('beacon-tooltip');
@@ -1169,7 +869,7 @@ class AbandonedInSpaceApp {
 
     const isTr = this.currentLang === 'tr';
     document.getElementById('tooltip-title').innerText = isTr ? artifact.name_tr : artifact.name_en;
-    document.getElementById('tooltip-meta').innerText = `${artifact.mission} • ${artifact.locationName}`;
+    document.getElementById('tooltip-meta').innerText = `${artifact.mission} • ${isTr ? artifact.locationName : (artifact.locationName_en || artifact.locationName)}`;
 
     tooltip.style.left = `${clientX}px`;
     tooltip.style.top = `${clientY}px`;
@@ -1208,7 +908,41 @@ class AbandonedInSpaceApp {
     this.updateBodyTelemetry();
     this.updateLiveMarsCard();
     this.renderArtifactsList();
-    this.renderJuryModal();
+
+    // Update Tour Chapter Pills & Default Banner Text
+    document.querySelectorAll('.chapter-pill').forEach((pill, idx) => {
+      if (STORY_CHAPTERS[idx]) {
+        pill.innerText = isTr ? STORY_CHAPTERS[idx].pill_tr : STORY_CHAPTERS[idx].pill_en;
+      }
+    });
+    const defaultCh = STORY_CHAPTERS[0];
+    const chTitleEl = document.getElementById('narrative-chapter-title');
+    const chDescEl = document.getElementById('narrative-chapter-desc');
+    if (chTitleEl && !this.isTourActive) chTitleEl.innerText = isTr ? defaultCh.title_tr : defaultCh.title_en;
+    if (chDescEl && !this.isTourActive) chDescEl.innerText = isTr ? defaultCh.desc_tr : defaultCh.desc_en;
+
+    // Update Simulation Camera Select Options
+    const camSelect = document.getElementById('sim-cam-select');
+    if (camSelect) {
+      Array.from(camSelect.options).forEach(opt => {
+        const k = opt.getAttribute('data-i18n');
+        if (k && TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][k]) {
+          opt.innerText = TRANSLATIONS[this.currentLang][k];
+        }
+      });
+    }
+
+    // Update Audio Toggle Button text
+    const soundBtn = document.getElementById('btn-sound-toggle');
+    if (soundBtn) {
+      const isMuted = window.SpaceAudio ? window.SpaceAudio.isMuted : false;
+      const textSpan = soundBtn.querySelector('.btn-text-collapsible');
+      if (textSpan) {
+        textSpan.innerText = isMuted
+          ? (isTr ? 'SESSİZ' : 'MUTE')
+          : (isTr ? 'SES' : 'AUDIO');
+      }
+    }
 
     if (this.isTourActive) {
       this.updateTourStep();
@@ -1255,7 +989,6 @@ const TRANSLATIONS = {
     planet_outer: "TİTAN & DIŞ SİSTEM",
     btn_sim: "SİMÜLASYON",
     btn_walk_top: "1:1 YÜZEY / VR",
-    btn_jury: "JÜRİ & HİKÂYE",
     btn_sources: "RESMİ KAYNAKLAR",
     btn_tour: "HİKAYE TURU",
     btn_reset: "GÖRÜNÜMÜ SIFIRLA",
@@ -1263,6 +996,7 @@ const TRANSLATIONS = {
     sound_on: "SES: AÇIK",
     sound_off: "SES: KAPALI",
     telemetry_header: "GÖK CİSMİ TELEMETRİSİ",
+    live_radar_badge: "CANLI RADAR",
     live_mars_header: "📡 CANLI MARS HAVA & TELEMETRİ",
     weather_temp: "HAVA SICAKLIĞI",
     weather_wind: "RÜZGAR HIZI",
@@ -1278,6 +1012,13 @@ const TRANSLATIONS = {
     relics_list_header: "TARİHİ EKİPMANLAR LİSTESİ",
     filter_decade: "DÖNEM:",
     decade_all: "TÜMÜ",
+    decade_1960: "1960'LAR",
+    decade_1970: "1970'LER",
+    decade_1980: "1980'LER",
+    decade_1990: "1990'LAR",
+    decade_2000: "2000'LER",
+    decade_2010: "2010'LAR",
+    decade_2020: "2020'LER",
     sim_action_btn: "İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)",
     sim_action_sub: "Gerçek fizik, itici alevleri ve sismik darbe canlandırması",
     walk_action_btn: "1:1 ÖLÇEKTE YANINDA YÜRÜ (WebXR)",
@@ -1286,6 +1027,10 @@ const TRANSLATIONS = {
     condition_label: "BUGÜNKÜ DURUMU (YILLAR SONRA)",
     discarded_label: "TERK EDİLEN TEÇHİZAT LİSTESİ",
     specs_label: "TEKNİK TELEMETRİ BİLGİSİ",
+    spec_mass_title: "KORUNAN KÜTLE",
+    spec_power_title: "GÜÇ KAYNAĞI",
+    spec_duration_title: "AKTİF GÖREV ÖMRÜ",
+    spec_coords_title: "KOORDİNATLAR",
     nasa_proof_badge: "📜 NASA VERİ DOĞRULAMA & BİLİMSEL GEÇERLİLİK KANITI",
     ver_monograph_label: "AKADEMİK MONOGRAFİ:",
     ver_dataset_label: "UYDU & SENSÖR VERİSİ:",
@@ -1294,20 +1039,48 @@ const TRANSLATIONS = {
     play_audio_btn: "TELSİZİ DİNLE",
     btn_prev_site: "Önceki Kalıntı",
     btn_next_site: "Sonraki Kalıntı",
+    hint_controls_kbd: "Fare / Dokun",
     hint_controls: "360° Gezin • Yakınlaş • Noktalara Tıkla",
+    m_label_map: "Harita",
+    m_label_relics: "Kalıntılar",
+    m_label_telemetry: "Telemetri",
+    m_label_tour: "Tur",
+    m_label_sources: "Kaynaklar",
     tour_active_title: "📖 5 BÖLÜMLÜK HİKÂYE AKIŞI",
-    jury_modal_title: "NASA 5 DEĞERLENDİRME KRİTERİ & HİKÂYE ANLATIMI REHBERİ",
-    jtab_criteria: "🎯 5 Kriter Kanıt Matrisi (1–5 Puan)",
-    jtab_pitch: "🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu",
-    jtab_compliance: "📋 NASA Veri, Referans & Yapay Zekâ Beyanı",
-    jury_criteria_intro: "Projemiz NASA yarışma jürisinin 5 temel değerlendirme kriterinin tamamında (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak şekilde doğrulanmış NASA verileri, fizik motoru ve sıralı hikâye kurgusuyla tasarlanmıştır:",
-    jury_pitch_intro: "Presentation (Sunum) kriterinde tam puan almak için sunumunuzu rastgele noktalar yerine aşağıdaki 5 perdelik açık, sıralı ve duygusal hikâye akışıyla yapabilirsiniz. Her adımdaki butona tıklayarak o sahneyi anında ekranda canlı gösterebilirsiniz:",
-    jury_compliance_intro: "NASA Space Apps Challenge 2026 Global Ödül uygunluğu için başvuru formundaki 'NASA & Space Agency Partner Data', 'References' ve 'Use of Super Intelligence' alanlarına doğrudan kopyalayıp yapıştırabileceğiniz resmi beyan ve proje içi doğrulama kayıtları:",
-    watermark_badge: "⚙️ AI-DESTEKLİ PROSEDÜREL WEBGL / THREE.JS SİMÜLASYONU • NASA LOGOSU İÇERMEZ",
+    tour_prev_btn: "◀ Önceki",
+    tour_next_btn: "Sonraki ▶",
+    tour_all_btn: "🌌 5 Bölümlük Tam Hikâye (25)",
+    tour_exit_btn: "Turu Bitir ✕",
+    tour_ch1: "I. İlk Dokunuş",
+    tour_ch2: "II. Bilim İçin Feda",
+    tour_ch3: "III. Kızıl Gezegen",
+    tour_ch4: "IV. Venüs & Dış Sistem",
+    tour_ch5: "V. Uzay Arkeolojisi & Gelecek",
+    sim_badge_title: "🛰️ İNİŞ SİMÜLASYONU",
+    sim_cam_label: "KAMERA:",
+    cam_opt_cinematic: "Sinematik Yönetmen",
+    cam_opt_follow: "Takip Kamerası",
+    cam_opt_ground: "Yüzey Sabit Kamerası",
+    cam_opt_free: "Serbest 360° Kamera (Mouse/Touch)",
+    cam_opt_walk: "🥽 1:1 Yüzey Yürüyüşü (WASD / WebXR)",
+    btn_sim_walk: "1:1 Yürüyüş",
+    btn_sim_replay: "Tekrar Oynat",
+    btn_sim_exit: "✕ ÇIKIŞ",
+    vr_game_mission_text: "🎮 VR OYUN MODU AKTİF • Numune: 0/8",
+    btn_enter_quest_vr: "🥽 META QUEST 3S — VR'A GİR",
+    walk_btn_jump: "SIÇRA",
+    gauge_alt_label: "İRTİFA / GÖZ HİZASI",
+    gauge_speed_label: "HIZ / MESAFE",
+    gauge_thrust_label: "İTME GÜCÜ / MOD",
+    hud_phase_terminal: "ALÇALMA VE FRENLEME AŞAMASI (TERMINAL DESCENT)",
     sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & TARİH SERİSİ ARŞİVLERİ",
     sources_intro: "Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referansları ve telsiz konuşmaları NASA'nın resmi bilimsel arşivlerinden doğrulanmıştır:",
+    sources_license_note: "✦ NASA Açık Veri Politikası (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.",
     nasa_photos_label: "📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI",
-    nasa_photos_subtext: "NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):"
+    nasa_photos_subtext: "NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):",
+    lb_nasa_archive: "NASA ARŞİVİ",
+    lb_catalog_label: "KATALOG NO:",
+    lb_instrument_label: "ENSTRÜMAN:"
   },
   en: {
     app_subtitle: "Historical Space Artifacts & Storytelling Map Across the Moon, Mars, Venus & Outer System",
@@ -1317,7 +1090,6 @@ const TRANSLATIONS = {
     planet_outer: "TITAN & OUTER SYSTEM",
     btn_sim: "SIMULATION",
     btn_walk_top: "1:1 WALK / VR",
-    btn_jury: "JURY & PITCH",
     btn_sources: "OFFICIAL SOURCES",
     btn_tour: "STORY TOUR",
     btn_reset: "RESET VIEW",
@@ -1325,6 +1097,7 @@ const TRANSLATIONS = {
     sound_on: "AUDIO: ON",
     sound_off: "AUDIO: OFF",
     telemetry_header: "CELESTIAL TELEMETRY",
+    live_radar_badge: "LIVE RADAR",
     live_mars_header: "📡 LIVE MARS WEATHER & TELEMETRY",
     weather_temp: "AIR TEMP",
     weather_wind: "WIND SPEED",
@@ -1340,6 +1113,13 @@ const TRANSLATIONS = {
     relics_list_header: "HISTORICAL ARTIFACTS LIST",
     filter_decade: "DECADE:",
     decade_all: "ALL",
+    decade_1960: "1960s",
+    decade_1970: "1970s",
+    decade_1980: "1980s",
+    decade_1990: "1990s",
+    decade_2000: "2000s",
+    decade_2010: "2010s",
+    decade_2020: "2020s",
     sim_action_btn: "WATCH LANDING / IMPACT (3D)",
     sim_action_sub: "Authentic physics, thruster plumes, and seismic impact reenactment",
     walk_action_btn: "WALK BESIDE AT 1:1 SCALE (WebXR)",
@@ -1348,6 +1128,10 @@ const TRANSLATIONS = {
     condition_label: "CURRENT CONDITION (DECADES LATER)",
     discarded_label: "DISCARDED EQUIPMENT CHECKLIST",
     specs_label: "TECHNICAL SPECS & TELEMETRY",
+    spec_mass_title: "PRESERVED MASS",
+    spec_power_title: "POWER SOURCE",
+    spec_duration_title: "ACTIVE MISSION DURATION",
+    spec_coords_title: "COORDINATES",
     nasa_proof_badge: "📜 NASA DATA VERIFICATION & SCIENTIFIC VALIDITY PROOF",
     ver_monograph_label: "ACADEMIC MONOGRAPH:",
     ver_dataset_label: "ORBITER & SENSOR DATA:",
@@ -1356,20 +1140,48 @@ const TRANSLATIONS = {
     play_audio_btn: "LISTEN TO TRANSMISSION",
     btn_prev_site: "Previous Site",
     btn_next_site: "Next Site",
+    hint_controls_kbd: "Mouse / Touch",
     hint_controls: "Rotate 360° • Zoom • Tap Beacons",
+    m_label_map: "Map",
+    m_label_relics: "Relics",
+    m_label_telemetry: "Telemetry",
+    m_label_tour: "Tour",
+    m_label_sources: "Sources",
     tour_active_title: "📖 5-ACT STORYTELLING TOUR",
-    jury_modal_title: "NASA 5 JUDGING CRITERIA & STORYTELLING PITCH GUIDE",
-    jtab_criteria: "🎯 5 Criteria Proof Matrix (Score 1–5)",
-    jtab_pitch: "🎤 Sequential Storytelling & Live Pitch Script",
-    jtab_compliance: "📋 NASA Data, References & AI Disclosure",
-    jury_criteria_intro: "Our project is engineered to achieve a 5/5 score across all 5 official NASA judging criteria (Impact, Creativity, Validity, Relevance, Presentation) through verified NASA archives, physics simulation, and sequential storytelling:",
-    jury_pitch_intro: "To maximize your Presentation score, deliver your pitch using this clear, sequential 5-Act narrative arc. Click any button below to launch that exact scene live during your presentation:",
-    jury_compliance_intro: "Copy-paste-ready official responses for the NASA Space Apps Challenge 2026 submission form ('NASA & Space Agency Partner Data', 'References', and 'Use of Super Intelligence') verifying Global Award eligibility:",
-    watermark_badge: "⚙️ AI-ASSISTED PROCEDURAL WEBGL / THREE.JS RENDER • NO OFFICIAL NASA LOGO USED",
+    tour_prev_btn: "◀ Previous",
+    tour_next_btn: "Next ▶",
+    tour_all_btn: "🌌 Full 5-Act Story (25)",
+    tour_exit_btn: "Exit Tour ✕",
+    tour_ch1: "I. First Contact",
+    tour_ch2: "II. Sacrificed for Science",
+    tour_ch3: "III. Red Planet",
+    tour_ch4: "IV. Venus & Outer System",
+    tour_ch5: "V. Space Archaeology & Future",
+    sim_badge_title: "🛰️ DESCENT SIMULATION",
+    sim_cam_label: "CAMERA:",
+    cam_opt_cinematic: "Cinematic Director",
+    cam_opt_follow: "Chase Cam",
+    cam_opt_ground: "Ground Cam",
+    cam_opt_free: "Free 360° Camera (Mouse/Touch)",
+    cam_opt_walk: "🥽 1:1 Surface Walk (WASD / WebXR)",
+    btn_sim_walk: "1:1 Walk",
+    btn_sim_replay: "Replay",
+    btn_sim_exit: "✕ EXIT",
+    vr_game_mission_text: "🎮 VR GAME MODE ACTIVE • Samples: 0/8",
+    btn_enter_quest_vr: "🥽 META QUEST 3S — ENTER VR",
+    walk_btn_jump: "JUMP",
+    gauge_alt_label: "ALTITUDE / EYE LEVEL",
+    gauge_speed_label: "SPEED / DISTANCE",
+    gauge_thrust_label: "THRUST / MODE",
+    hud_phase_terminal: "TERMINAL DESCENT & BRAKING PHASE",
     sources_modal_title: "OFFICIAL NASA DATA SOURCES & HISTORY SERIES ARCHIVES",
     sources_intro: "All coordinates, mission dates, discarded hardware manifests, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) citations, and radio transmissions are compiled from NASA's official public archives:",
+    sources_license_note: "✦ Compiled under NASA Open Data Policy, data.nasa.gov, and images.nasa.gov for educational and scientific research purposes.",
     nasa_photos_label: "📷 AUTHENTIC NASA SATELLITE & SURFACE PHOTOS",
-    nasa_photos_subtext: "Verified archive photography from NASA LROC, HiRISE, Magellan, Cassini & Rosetta (Click to enlarge):"
+    nasa_photos_subtext: "Verified archive photography from NASA LROC, HiRISE, Magellan, Cassini & Rosetta (Click to enlarge):",
+    lb_nasa_archive: "NASA ARCHIVE",
+    lb_catalog_label: "CATALOG ID:",
+    lb_instrument_label: "INSTRUMENT:"
   }
 };
 

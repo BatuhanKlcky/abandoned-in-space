@@ -22,7 +22,6 @@
 
   <!-- WebGL 3D Planetary Canvas -->
   <div id="canvas-container"></div>
-  <div class="procedural-watermark-badge main-globe-watermark" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
   <div class="scanlines-overlay"></div>
 
   <!-- UI HUD Layer -->
@@ -73,10 +72,6 @@
           <span>🥽</span>
           <span data-i18n="btn_walk_top">1:1 YÜZEY / VR</span>
         </button>
-        <button class="hud-btn btn-jury-pitch" id="btn-jury-toggle" title="NASA 5 Jüri Kriteri (Impact, Creativity, Validity, Relevance, Presentation) Kanıt Paneli ve Hikâye Sunum Akışı">
-          <span>🏆</span>
-          <span data-i18n="btn_jury">JÜRİ & HİKÂYE</span>
-        </button>
         <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivi">
           <span>📚</span>
           <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
@@ -105,17 +100,17 @@
       <div class="tour-top-row">
         <span class="tour-badge" data-i18n="tour_active_title">📖 5 BÖLÜMLÜK HİKÂYE AKIŞI</span>
         <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
-        <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
-        <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
-        <button class="tour-btn" id="tour-all-btn" title="5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)">🌌 5 Bölümlük Tam Hikâye (25)</button>
-        <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
+        <button class="tour-btn" id="tour-prev-btn" data-i18n="tour_prev_btn">◀ Önceki</button>
+        <button class="tour-btn" id="tour-next-btn" data-i18n="tour_next_btn">Sonraki ▶</button>
+        <button class="tour-btn" id="tour-all-btn" title="5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)" data-i18n="tour_all_btn">🌌 5 Bölümlük Tam Hikâye (25)</button>
+        <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;" data-i18n="tour_exit_btn">Turu Bitir ✕</button>
       </div>
       <div class="tour-chapter-strip" id="tour-chapter-strip">
-        <button class="chapter-pill active" data-chapter="0">I. İlk Dokunuş</button>
-        <button class="chapter-pill" data-chapter="1">II. Bilim İçin Feda</button>
-        <button class="chapter-pill" data-chapter="2">III. Kızıl Gezegen</button>
-        <button class="chapter-pill" data-chapter="3">IV. Venüs & Dış Sistem</button>
-        <button class="chapter-pill" data-chapter="4">V. Uzay Arkeolojisi & Gelecek</button>
+        <button class="chapter-pill active" data-chapter="0" data-i18n="tour_ch1">I. İlk Dokunuş</button>
+        <button class="chapter-pill" data-chapter="1" data-i18n="tour_ch2">II. Bilim İçin Feda</button>
+        <button class="chapter-pill" data-chapter="2" data-i18n="tour_ch3">III. Kızıl Gezegen</button>
+        <button class="chapter-pill" data-chapter="3" data-i18n="tour_ch4">IV. Venüs & Dış Sistem</button>
+        <button class="chapter-pill" data-chapter="4" data-i18n="tour_ch5">V. Uzay Arkeolojisi & Gelecek</button>
       </div>
       <div class="tour-narrative-box" id="tour-narrative-box">
         <span class="narrative-chapter-title" id="narrative-chapter-title">BÖLÜM I: İNSANLIĞIN BAŞKA BİR DÜNYAYA İLK DOKUNUŞU (1967–1970)</span>
@@ -130,7 +125,7 @@
       <div class="glass-card" id="card-telemetry">
         <div class="card-label">
           <span data-i18n="telemetry_header">GÖK CİSMİ TELEMETRİSİ</span>
-          <span class="live-badge">CANLI RADAR</span>
+          <span class="live-badge" data-i18n="live_radar_badge">CANLI RADAR</span>
         </div>
         
         <div style="margin-bottom: 8px;">
@@ -227,42 +222,42 @@
       <div class="filter-bar">
         <span class="filter-tag" data-i18n="filter_decade">DÖNEM:</span>
         <button class="pill-btn decade-pill active" data-decade="all" data-i18n="decade_all">TÜMÜ</button>
-        <button class="pill-btn decade-pill" data-decade="1960">1960'LAR</button>
-        <button class="pill-btn decade-pill" data-decade="1970">1970'LER</button>
-        <button class="pill-btn decade-pill" data-decade="1980">1980'LER</button>
-        <button class="pill-btn decade-pill" data-decade="1990">1990'LAR</button>
-        <button class="pill-btn decade-pill" data-decade="2000">2000'LER</button>
-        <button class="pill-btn decade-pill" data-decade="2010">2010'LAR</button>
-        <button class="pill-btn decade-pill" data-decade="2020">2020'LER</button>
+        <button class="pill-btn decade-pill" data-decade="1960" data-i18n="decade_1960">1960'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="1970" data-i18n="decade_1970">1970'LER</button>
+        <button class="pill-btn decade-pill" data-decade="1980" data-i18n="decade_1980">1980'LER</button>
+        <button class="pill-btn decade-pill" data-decade="1990" data-i18n="decade_1990">1990'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="2000" data-i18n="decade_2000">2000'LER</button>
+        <button class="pill-btn decade-pill" data-decade="2010" data-i18n="decade_2010">2010'LAR</button>
+        <button class="pill-btn decade-pill" data-decade="2020" data-i18n="decade_2020">2020'LER</button>
       </div>
     </footer>
 
     <!-- Controls Hint (Bottom Right corner) -->
     <div class="controls-hint">
-      <kbd>Fare / Dokun</kbd> <span data-i18n="hint_controls">360° Gezin • Yakınlaş • Noktalara Tıkla</span>
+      <kbd data-i18n="hint_controls_kbd">Fare / Dokun</kbd> <span data-i18n="hint_controls">360° Gezin • Yakınlaş • Noktalara Tıkla</span>
     </div>
 
     <!-- Mobile Bottom Navigation Dock (Visible only on mobile) -->
     <nav class="mobile-nav-bar interactive">
       <button class="mobile-nav-btn active" id="m-btn-map">
         <span class="m-icon">🪐</span>
-        <span class="m-label">Harita</span>
+        <span class="m-label" data-i18n="m_label_map">Harita</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-relics">
         <span class="m-icon">📋</span>
-        <span class="m-label">Kalıntılar</span>
+        <span class="m-label" data-i18n="m_label_relics">Kalıntılar</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-telemetry">
         <span class="m-icon">📡</span>
-        <span class="m-label">Telemetri</span>
+        <span class="m-label" data-i18n="m_label_telemetry">Telemetri</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-tour">
         <span class="m-icon">🚀</span>
-        <span class="m-label">Tur</span>
+        <span class="m-label" data-i18n="m_label_tour">Tur</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-sources">
         <span class="m-icon">📚</span>
-        <span class="m-label">Kaynaklar</span>
+        <span class="m-label" data-i18n="m_label_sources">Kaynaklar</span>
       </button>
     </nav>
 
@@ -383,19 +378,19 @@
           <div class="section-heading" data-i18n="specs_label">TEKNİK TELEMETRİ BİLGİSİ</div>
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-title">KORUNAN KÜTLE</div>
+              <div class="stat-title" data-i18n="spec_mass_title">KORUNAN KÜTLE</div>
               <div class="stat-val" id="spec-mass">2,034 kg</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">GÜÇ KAYNAĞI</div>
+              <div class="stat-title" data-i18n="spec_power_title">GÜÇ KAYNAĞI</div>
               <div class="stat-val" id="spec-power">Gümüş-Çinko Pilleri</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">AKTİF GÖREV ÖMRÜ</div>
+              <div class="stat-title" data-i18n="spec_duration_title">AKTİF GÖREV ÖMRÜ</div>
               <div class="stat-val" id="spec-duration">21 saat 36 dk</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">KOORDİNATLAR</div>
+              <div class="stat-title" data-i18n="spec_coords_title">KOORDİNATLAR</div>
               <div class="stat-val" id="spec-coords">0°40' K, 23°28' D</div>
             </div>
           </div>
@@ -477,25 +472,25 @@
       <!-- Simulation Top Bar -->
       <div class="sim-top-bar">
         <div class="sim-header-info">
-          <span class="sim-badge" id="sim-badge">🛰️ İNİŞ SİMÜLASYONU</span>
+          <span class="sim-badge" id="sim-badge" data-i18n="sim_badge_title">🛰️ İNİŞ SİMÜLASYONU</span>
           <h2 class="sim-title" id="sim-title">Apollo 11 'Eagle' Landing Reenactment</h2>
         </div>
 
         <div class="sim-top-controls">
           <!-- Camera Selector -->
           <div class="sim-cam-group">
-            <span class="sim-cam-label">KAMERA:</span>
+            <span class="sim-cam-label" data-i18n="sim_cam_label">KAMERA:</span>
             <select class="sim-select" id="sim-cam-select">
-              <option value="cinematic">Sinematik Yönetmen</option>
-              <option value="follow">Takip Kamerası</option>
-              <option value="ground">Yüzey Sabit Kamerası</option>
-              <option value="free">Serbest 360° Kamera (Mouse/Touch)</option>
-              <option value="walk">🥽 1:1 Yüzey Yürüyüşü (WASD / WebXR)</option>
+              <option value="cinematic" data-i18n="cam_opt_cinematic">Sinematik Yönetmen</option>
+              <option value="follow" data-i18n="cam_opt_follow">Takip Kamerası</option>
+              <option value="ground" data-i18n="cam_opt_ground">Yüzey Sabit Kamerası</option>
+              <option value="free" data-i18n="cam_opt_free">Serbest 360° Kamera (Mouse/Touch)</option>
+              <option value="walk" data-i18n="cam_opt_walk">🥽 1:1 Yüzey Yürüyüşü (WASD / WebXR)</option>
             </select>
           </div>
 
           <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronot Göz Hizasında Yüzey Yürüyüşü Modu">
-            <span>🚶</span> <span>1:1 Yürüyüş</span>
+            <span>🚶</span> <span data-i18n="btn_sim_walk">1:1 Yürüyüş</span>
           </button>
 
           <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Meta Quest veya Apple Vision Pro ile WebXR VR/AR Başlat">
@@ -503,11 +498,11 @@
           </button>
 
           <button class="sim-action-btn" id="btn-replay-sim" title="Simülasyonu Baştan Başlat">
-            <span>🔄</span> <span>Tekrar Oynat</span>
+            <span>🔄</span> <span data-i18n="btn_sim_replay">Tekrar Oynat</span>
           </button>
 
           <button class="sim-close-btn" id="btn-close-sim" title="Simülasyonu Kapat">
-            <span>✕ ÇIKIŞ</span>
+            <span data-i18n="btn_sim_exit">✕ ÇIKIŞ</span>
           </button>
         </div>
       </div>
@@ -515,7 +510,6 @@
       <!-- WebGL Simulation Viewport -->
       <div class="sim-canvas-wrapper">
         <canvas id="sim-canvas"></canvas>
-        <div class="procedural-watermark-badge" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
 
         <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
         <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
@@ -526,7 +520,7 @@
           </div>
 
           <!-- Always-visible Meta Quest 3S immersive VR entry button -->
-          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Meta Quest 3S gözlüğünde tam sürükleyici VR oturumunu başlat">🥽 META QUEST 3S — VR'A GİR</button>
+          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Meta Quest 3S gözlüğünde tam sürükleyici VR oturumunu başlat" data-i18n="btn_enter_quest_vr">🥽 META QUEST 3S — VR'A GİR</button>
 
           <div class="walk-visor-banner interactive">
             <div class="walk-xr-status" id="walk-xr-status">🚀 HAVADAN İNİŞ AKTİF (KABİN İÇİNDESİNİZ) • İniş Sonrası Kapıya Yürü, Volana Tıkla veya E: Kapağı Açıp Dışarı Çık</div>
@@ -554,7 +548,7 @@
             <button class="dpad-btn dpad-up" id="walk-btn-up" title="İleri Yürü (W)">▲</button>
             <div class="dpad-mid-row">
               <button class="dpad-btn dpad-left" id="walk-btn-left" title="Sola Yürü (A)">◄</button>
-              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Düşük Yerçekimi Sıçraması (SPACE)">SIÇRA</button>
+              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Düşük Yerçekimi Sıçraması (SPACE)" data-i18n="walk_btn_jump">SIÇRA</button>
               <button class="dpad-btn dpad-right" id="walk-btn-right" title="Sağa Yürü (D)">►</button>
             </div>
             <button class="dpad-btn dpad-down" id="walk-btn-down" title="Geri Yürü (S)">▼</button>
@@ -565,22 +559,22 @@
         <div class="sim-hud-overlay">
           <div class="hud-gauge-row">
             <div class="hud-gauge">
-              <span class="gauge-label">İRTİFA / GÖZ HİZASI</span>
+              <span class="gauge-label" data-i18n="gauge_alt_label">İRTİFA / GÖZ HİZASI</span>
               <span class="gauge-val" id="hud-alt">75.0 m</span>
             </div>
             <div class="hud-gauge">
-              <span class="gauge-label">HIZ / MESAFE</span>
+              <span class="gauge-label" data-i18n="gauge_speed_label">HIZ / MESAFE</span>
               <span class="gauge-val" id="hud-speed">-3.2 m/s</span>
             </div>
             <div class="hud-gauge">
-              <span class="gauge-label">İTME GÜCÜ / MOD</span>
+              <span class="gauge-label" data-i18n="gauge_thrust_label">İTME GÜCÜ / MOD</span>
               <span class="gauge-val" id="hud-thrust">78%</span>
             </div>
           </div>
 
           <div class="hud-phase-bar">
             <span class="phase-indicator-dot"></span>
-            <span class="phase-text" id="hud-phase">ALÇALMA VE FRENLEME AŞAMASI (TERMINAL DESCENT)</span>
+            <span class="phase-text" id="hud-phase" data-i18n="hud_phase_terminal">ALÇALMA VE FRENLEME AŞAMASI (TERMINAL DESCENT)</span>
           </div>
         </div>
       </div>
@@ -607,7 +601,7 @@
         <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
       </div>
       <div class="modal-footer-note">
-        <span>✦ NASA Açık Veri Politikası (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
+        <span data-i18n="sources_license_note">✦ NASA Açık Veri Politikası (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
       </div>
     </div>
   </div>
@@ -619,7 +613,7 @@
     <div class="photo-modal-card glass-card interactive">
       <div class="photo-modal-header">
         <div class="photo-title-group">
-          <span class="photo-cat-badge" id="lightbox-cat">NASA ARŞİVİ</span>
+          <span class="photo-cat-badge" id="lightbox-cat" data-i18n="lb_nasa_archive">NASA ARŞİVİ</span>
           <h3 class="photo-title" id="lightbox-title">Fotoğraf Başlığı</h3>
         </div>
         <button class="close-btn" id="btn-close-photo" title="Kapat">✕</button>
@@ -630,11 +624,11 @@
       <div class="photo-modal-footer">
         <div class="photo-meta-row">
           <div class="photo-meta-item">
-            <span class="meta-label">KATALOG NO:</span>
+            <span class="meta-label" data-i18n="lb_catalog_label">KATALOG NO:</span>
             <span class="meta-val" id="lightbox-id">NASA PIA12909</span>
           </div>
           <div class="photo-meta-item">
-            <span class="meta-label">ENSTRÜMAN:</span>
+            <span class="meta-label" data-i18n="lb_instrument_label">ENSTRÜMAN:</span>
             <span class="meta-val" id="lightbox-instrument">LROC NAC Camera</span>
           </div>
         </div>
@@ -643,67 +637,12 @@
     </div>
   </div>
 
-  <!-- =====================================================================
-       NASA 5 JUDGING CRITERIA & STORYTELLING PITCH MODAL (Root level)
-       ===================================================================== -->
-  <div class="modal-overlay" id="jury-modal">
-    <div class="modal-content jury-modal-card glass-card interactive">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <span>🏆</span>
-          <h2 data-i18n="jury_modal_title">NASA 5 DEĞERLENDİRME KRİTERİ & HİKÂYE ANLATIMI REHBERİ</h2>
-        </div>
-        <button class="close-btn" id="btn-close-jury">✕</button>
-      </div>
-
-      <div class="jury-tabs-bar">
-        <button class="jury-tab-btn active" data-jtab="criteria" data-i18n="jtab_criteria">🎯 5 Kriter Kanıt Matrisi (1–5 Puan)</button>
-        <button class="jury-tab-btn" data-jtab="pitch" data-i18n="jtab_pitch">🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu</button>
-        <button class="jury-tab-btn" data-jtab="compliance" data-i18n="jtab_compliance">📋 Space Apps 2026 Başvuru Metinleri & AI Beyanı</button>
-      </div>
-
-      <!-- TAB 1: NASA 5 Criteria Matrix -->
-      <div class="jury-tab-panel active" id="jpanel-criteria">
-        <p class="sources-intro" data-i18n="jury_criteria_intro">
-          Projemiz NASA yarışma jürisinin 5 temel değerlendirme kriterinin tamamında (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak şekilde doğrulanmış NASA verileri, fizik motoru ve sıralı hikâye kurgusuyla tasarlanmıştır:
-        </p>
-        <div class="jury-criteria-grid" id="jury-criteria-container">
-          <!-- Populated dynamically by app.js -->
-        </div>
-      </div>
-
-      <!-- TAB 2: Sequential Storytelling Pitch Script -->
-      <div class="jury-tab-panel" id="jpanel-pitch">
-        <p class="sources-intro" data-i18n="jury_pitch_intro">
-          Presentation (Sunum) kriterinde tam puan almak için sunumunuzu rastgele noktalar yerine aşağıdaki 5 perdelik açık, sıralı ve duygusal hikâye akışıyla yapabilirsiniz. Her adımdaki butona tıklayarak o sahneyi anında ekranda canlı gösterebilirsiniz:
-        </p>
-        <div class="jury-pitch-steps" id="jury-pitch-container">
-          <!-- Populated dynamically by app.js -->
-        </div>
-      </div>
-
-      <!-- TAB 3: NASA Space Apps 2026 Official Submission & AI Compliance Dossier -->
-      <div class="jury-tab-panel" id="jpanel-compliance">
-        <p class="sources-intro" data-i18n="jury_compliance_intro">
-          Global ödüllere uygunluk (Global Awards Eligibility) için yarışma başvuru formunda istenen 3 zorunlu bölümün (1. NASA & Space Agency Partner Data, 2. References, 3. Use of Super Intelligence) hazır yanıtları aşağıdadır. Sağ üstteki butonlarla doğrudan kopyalayıp başvuru formuna yapıştırabilirsiniz:
-        </p>
-        <div class="jury-pitch-steps" id="jury-compliance-container">
-          <!-- Populated dynamically by app.js from SPACE_APPS_SUBMISSION_DOSSIER -->
-        </div>
-      </div>
-
-      <div class="modal-footer-note">
-        <span>✦ İpucu: Sunum sırasında "🎬 5 Bölümlük Hikâye Turunu Başlat" butonuna basarak tüm anlatımı tek tuşla kronolojik olarak ilerletebilirsiniz.</span>
-      </div>
-    </div>
-  </div>
-
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=6.0"></script>
-  <script src="js/textures.js?v=6.0"></script>
-  <script src="js/audio.js?v=6.0"></script>
-  <script src="js/scene.js?v=6.0"></script>
-  <script src="js/simulation.js?v=6.0"></script>
-  <script src="js/app.js?v=6.0"></script>
+  <script src="js/data.js?v=6.1"></script>
+  <script src="js/textures.js?v=6.1"></script>
+  <script src="js/audio.js?v=6.1"></script>
+  <script src="js/scene.js?v=6.1"></script>
+  <script src="js/simulation.js?v=6.1"></script>
+  <script src="js/app.js?v=6.1"></script>
 </body>
 </html>

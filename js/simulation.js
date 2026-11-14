@@ -3690,13 +3690,10 @@ class MissionSimulationTheater {
       ctx.fillRect(510, my + 12, 470 * m.pct, 26);
     });
 
-    // Bottom Schematic Readout + Visible Procedural Watermark (NASA Space Apps AI Compliance)
+    // Bottom Schematic Readout
     ctx.fillStyle = '#fde68a';
     ctx.font = 'bold 15px monospace';
     ctx.fillText(`COORDS: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | CLICK ANY 3D BUTTON OR SWITCH`, 34, 468);
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('⚙️ WATERMARK: AI-ASSISTED PROCEDURAL WEBGL / CANVAS2D RENDER • NO OFFICIAL NASA LOGO USED', 34, 492);
 
     if (!this.telemetryTexture) {
       this.telemetryTexture = new THREE.CanvasTexture(canvas);

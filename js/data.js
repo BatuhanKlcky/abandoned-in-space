@@ -90,6 +90,23 @@ const ARTIFACTS = [
       "title_en": "A Global Message of Peace Preserved in the Dust",
       "desc_tr": "Neil Armstrong ve Buzz Aldrin, madeni para büyüklüğünde silikon bir mikrodiks bıraktı. İçinde Türkiye Cumhurbaşkanı Cevdet Sunay dahil 73 dünya liderinin iyi niyet mesajları mikroskobik olarak kazınmıştır. Yanında ise barışın sembolü olarak som altından minyatür bir zeytin dalı iğnesi yer almaktadır.",
       "desc_en": "Armstrong and Aldrin placed a silicon micro-disk etched with goodwill messages from 73 world leaders alongside a solid gold olive branch pin as an eternal symbol of peace."
+    },
+    "locationName_en": "Mare Tranquillitatis (Sea of Tranquility)",
+    "discardedItems_en": [
+      "Apollo 11 Lunar Module Descent Stage (LM-5 'Eagle')",
+      "Laser Ranging Retroreflector (LRRR - still measuring Earth-Moon distance via laser)",
+      "Passive Seismic Experiment Package (PSEP)",
+      "Historic Bronze Commemorative Plaque ('Here Men From The Planet Earth First Set Foot Upon The Moon...')",
+      "Microscopic Silicon Disk with Goodwill Messages from 73 World Leaders",
+      "Neil Armstrong & Buzz Aldrin's Lunar Overshoes and Portable Life Support Systems (PLSS)",
+      "Hasselblad 500EL 70mm Lunar Surface Data Camera",
+      "Gold Olive Branch Pin (Symbol of Peace)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "2,034 kg (dry descent stage) + ~150 kg equipment",
+      "powerSource": "Silver-Zinc Batteries (depleted)",
+      "activeDuration": "21 hours 36 minutes surface stay",
+      "coordinatesReadable": "0°40'26.69\" N, 23°28'22.69\" E"
     }
   },
   {
@@ -153,6 +170,22 @@ const ARTIFACTS = [
       "title_en": "First Analysis of Long-Term Space Exposure",
       "desc_tr": "Astronotlar özel aletlerle Surveyor 3'ün TV kamerasını ve kablolarını keserek Dünya'ya getirdi. Yapılan biyolojik incelemelerde, montaj sırasında cihaza bulaşan bir bakterinin Ay vakumunda ve dondurucu soğuğunda 2.5 yıl boyunca spor halinde hayatta kalmış olabileceği keşfedildi.",
       "desc_en": "Astronauts severed Surveyor 3's optical camera to study material fatigue on Earth, offering the first clues on how equipment endures the harsh lunar environment."
+    },
+    "locationName_en": "Oceanus Procellarum (Ocean of Storms)",
+    "discardedItems_en": [
+      "Apollo 12 'Intrepid' Lunar Module Descent Stage",
+      "Surveyor 3 Unmanned Lander Structure (First extraterrestrial archaeology subject)",
+      "Surveyor 3 TV Camera, Soil Sampler Scoop, and Tubing (Retrieved by Conrad & Bean for Earth lab analysis)",
+      "Apollo 12 ALSEP Central Station (SNAP-27 RTG)",
+      "Lunar Surface Magnetometer (LSM)",
+      "Solar Wind Spectrometer Experiment (SWS)",
+      "Astronaut PLSS Backpacks, Lunar Boots, and Urine Collection Assemblies"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "~2,211 kg Apollo 12 + ~280 kg Surveyor 3",
+      "powerSource": "Nuclear RTG (Plutonium-238) & Solar Panels",
+      "activeDuration": "Apollo: 31.5 hrs surface; Surveyor: 65 days",
+      "coordinatesReadable": "3°0'44\" S, 23°25'17\" W"
     }
   },
   {
@@ -214,6 +247,20 @@ const ARTIFACTS = [
       "title_en": "A Reverberation That Lasted Over 3 Hours",
       "desc_tr": "14 tonluk dev roket gövdesi saatte 9.200 km hızla Ay'a çarptığında, 137 km uzaktaki sismometre tam 3 saat 20 dakika boyunca kesintisiz titreşim kaydetti. Bilim insanları Ay'ın iç yapısının kuru ve katı olduğunu bu çarpışma sayesinde öğrendi.",
       "desc_en": "The impact of the 14-ton rocket stage caused the Moon's dry, rigid lithosphere to vibrate for 3 hours and 20 minutes, proving the lunar interior lacks water-dampening mantle layers."
+    },
+    "locationName_en": "Southern Oceanus Procellarum",
+    "discardedItems_en": [
+      "Saturn V S-IVB-508 Third Rocket Stage Debris",
+      "J-2 Liquid Hydrogen/Liquid Oxygen Rocket Engine Remains",
+      "Instrument Unit (IU) Avionics Ring Fragments",
+      "Auxiliary Propulsion System (APS) Module Debris",
+      "30-Meter Impact Crater Formed by 13.9-Ton Kinetic Strike"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "13,925 kg (empty booster stage)",
+      "powerSource": "None (Kinetic Impact)",
+      "activeDuration": "Impact timestamp: April 14, 1970 01:09 UTC",
+      "coordinatesReadable": "2°45' S, 27°50' W"
     }
   },
   {
@@ -277,6 +324,21 @@ const ARTIFACTS = [
       "title_en": "The First Golf Drive on Another World",
       "desc_tr": "Komutan Alan Shepard, çorabının içine saklayarak getirdiği Wilson 6 demir golf sopası ucunu acil durum numune çubuğuna taktı. İki beyaz golf topuna vurdu. İkinci top Ay'ın 1/6 yerçekiminde yüzlerce metre öteye fırladı. Shepard telsizden 'Millerce, millercesine gitti!' diye bağırdı. O 2 golf topu bugün hala Fra Mauro'da yatmaktadır.",
       "desc_en": "Shepard fastened a 6-iron clubhead smuggled in his sock onto an extension handle. Swinging one-handed in his spacesuit, he drove two golf balls into the vacuum, exclaiming 'Miles and miles and miles!' Both balls still lie in Fra Mauro's soil."
+    },
+    "locationName_en": "Fra Mauro Highlands",
+    "discardedItems_en": [
+      "Apollo 14 Lunar Module Descent Stage ('Antares')",
+      "Modular Equipment Transporter (MET - The 'Lunar Wheelbarrow')",
+      "Two Wilson Sporting Goods Golf Balls (Struck by Alan Shepard with improvised 6-iron)",
+      "Apollo 14 ALSEP Science Station (Active Seismic Experiment, Suprathermal Ion Detector)",
+      "Cone Crater Geological Sampling Trench Tools",
+      "PLSS Backpacks, Lunar Overshoes, and Equipment Jettison Pallet"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "2,144 kg descent hardware + 25 kg MET",
+      "powerSource": "SNAP-27 RTG Nuclear Generator",
+      "activeDuration": "33 hours 31 minutes surface stay",
+      "coordinatesReadable": "3°38'43\" S, 17°28'17\" W"
     }
   },
   {
@@ -341,6 +403,21 @@ const ARTIFACTS = [
       "title_en": "A Cold-War Monument to Shared Human Sacrifice",
       "desc_tr": "Belçikalı heykeltıraş Paul Van Hoeydonck tarafından yapılan bu heykel, hiçbir milliyet veya ırk belirtmeyen nötr bir astronot figürüdür. Plakette hem Amerikalı (Grissom, Chaffee vb.) hem de Sovyet (Yuri Gagarin, Vladimir Komarov vb.) uzay kahramanlarının isimleri yan yana yazılıdır.",
       "desc_en": "Sculpted without gender or nationality markers by Paul Van Hoeydonck, this monument honors fallen astronauts and cosmonauts side-by-side, standing as the only artwork placed on another celestial body."
+    },
+    "locationName_en": "Hadley Rille (Apennine Mountains)",
+    "discardedItems_en": [
+      "Apollo 15 Lunar Module Descent Stage ('Falcon')",
+      "Lunar Roving Vehicle #1 (LRV-001 - The First Moon Buggy, driven 27.8 km)",
+      "'Fallen Astronaut' Aluminum Figurine and Commemorative Memorial Plaque",
+      "Apollo 15 ALSEP Nuclear Science Package and Heat Flow Probes",
+      "Lunar Surface Drill Stems and Core Sample Bit",
+      "Galileo Gravity Demonstration Hammer and Falcon Feather Impact Site"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "2,809 kg descent stage + 210 kg LRV",
+      "powerSource": "LRV Silver-Zinc Potassium Hydroxide Batteries (36V)",
+      "activeDuration": "66 hours 55 minutes surface stay",
+      "coordinatesReadable": "26°7'56\" N, 3°38'2\" E"
     }
   },
   {
@@ -404,6 +481,21 @@ const ARTIFACTS = [
       "title_en": "Humanity's Most Intimate Relic on the Moon",
       "desc_tr": "Astronot Charlie Duke, eşi Dorothy ve oğulları Charles ile Thomas'ın fotoğrafını şeffaf plastik koruyucu içine koyup Ay yüzeyine bıraktı. Fotoğrafın arkasına 'Dünya gezegeninden Ay'a inen astronot Charlie Duke'un ailesi' notunu düşmüştü.",
       "desc_en": "Astronaut Charlie Duke left a shrink-wrapped color snapshot of his wife Dotty and sons on the Descartes surface. On the reverse he wrote: 'This is the family of astronaut Charlie Duke from planet Earth who landed on the moon on April 20, 1972.'"
+    },
+    "locationName_en": "Descartes Highlands",
+    "discardedItems_en": [
+      "Apollo 16 Lunar Module Descent Stage ('Orion')",
+      "Lunar Roving Vehicle #2 (LRV-002 - Clocked record 18 km/h top speed)",
+      "Charlie Duke's Color Photograph of His Family in Sealed Plastic Pouch",
+      "Far Ultraviolet Camera / Spectrograph (First Astronomical Telescope on the Moon)",
+      "Apollo 16 ALSEP Nuclear Experiment Station (Active Seismic Mortar Box)",
+      "Cosmic Ray Detector Sheets and Portable Magnetometer"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "2,840 kg descent stage + 210 kg LRV + 22 kg Telescope",
+      "powerSource": "Nuclear RTG SNAP-27",
+      "activeDuration": "71 hours 2 minutes surface stay",
+      "coordinatesReadable": "8°58'22\" S, 15°29'55\" E"
     }
   },
   {
@@ -467,6 +559,21 @@ const ARTIFACTS = [
       "title_en": "A Father's Love Etched in the Vacuum for Eons",
       "desc_tr": "İnsanlığın Ay'daki son ayak izini bırakan Gene Cernan, Ay modülüne binmeden önce 9 yaşındaki kızı Tracy için eğilip parmağıyla 'TDC' harflerini kazıdı. Ay'da hava ve erozyon olmadığı için bu harfler milyonlarca yıl bozulmadan orada kalacaktır.",
       "desc_en": "Before climbing into Challenger as the last man on the Moon, Gene Cernan knelt down and inscribed 'TDC' (Tracy Dawn Cernan) into the regolith for his daughter, where it will endure for millions of years."
+    },
+    "locationName_en": "Taurus-Littrow Valley",
+    "discardedItems_en": [
+      "Apollo 17 Lunar Module Descent Stage ('Challenger')",
+      "Lunar Roving Vehicle #3 (LRV-003 - Fitted with duct-tape and laminated map fender)",
+      "Apollo 17 ALSEP Station (Lunar Ejecta and Meteorites Experiment)",
+      "Traverse Gravimeter Experiment (TGE) Instrument",
+      "Gene Cernan's Camera Pointing Toward Earth & Last Apollo Footstep Traces",
+      "Lunar Atmospheric Composition Experiment (LACE)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "2,798 kg descent stage + 210 kg LRV",
+      "powerSource": "Nuclear RTG SNAP-27",
+      "activeDuration": "75 hours 0 minutes surface stay (Departed Dec 14, 1972)",
+      "coordinatesReadable": "20°11'27\" N, 30°46'18\" E"
     }
   },
   {
@@ -510,7 +617,21 @@ const ARTIFACTS = [
       "coordinatesReadable": "87°42' G, 42°0' D"
     },
     "audioSnippet": "[Lunar Prospector Orbit Insertion Telemetry Beacon]",
-    "realPhotos": []
+    "realPhotos": [],
+    "locationName_en": "Shoemaker Crater (Lunar South Pole)",
+    "discardedItems_en": [
+      "Lunar Prospector Spacecraft Bus and Spectrometer Booms",
+      "Memorial Capsule Carrying Ashes of Dr. Eugene Shoemaker",
+      "Neutron Spectrometer and Gamma Ray Spectrometer Assemblies",
+      "Alpha Particle Spectrometer and Magnetometer Mast",
+      "Impact Debris within Permanently Shadowed Region (PSR)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "158 kg (dry spacecraft bus)",
+      "powerSource": "Solar Cell Cylinder (until controlled impact)",
+      "activeDuration": "1.5 years polar orbit mapping",
+      "coordinatesReadable": "87°42' S, 42°0' E"
+    }
   },
   {
     "id": "lcross-centaur",
@@ -553,7 +674,21 @@ const ARTIFACTS = [
       "coordinatesReadable": "84°40'30\" G, 48°43'30\" B"
     },
     "audioSnippet": "[Cabeus Impact Telemetry Loss Event Tone]",
-    "realPhotos": []
+    "realPhotos": [],
+    "locationName_en": "Cabeus Crater (Lunar South Pole)",
+    "discardedItems_en": [
+      "Atlas V Centaur Upper Rocket Stage Remains",
+      "LCROSS Shepherding Spacecraft Structure",
+      "9 Kinetic Instruments (NIR/VIS Spectrometers, Mid-IR Cameras)",
+      "Impactor Crater Debris (~20m crater in permanent ice-bearing shadow)",
+      "Excavated Water Vapor, Hydroxyl, and Hydrocarbon Signatures"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "Centaur: 2,270 kg + LCROSS: 891 kg (Total ~3,161 kg)",
+      "powerSource": "Kinetic Energy Impact",
+      "activeDuration": "Impact: October 9, 2009 11:31 & 11:36 UTC",
+      "coordinatesReadable": "84°40'30\" S, 48°43'30\" W"
+    }
   },
   {
     "id": "viking-1-lander",
@@ -615,6 +750,21 @@ const ARTIFACTS = [
       "title_en": "July 20, 1976: Humanity's First Soft Touchdown on Mars",
       "desc_tr": "Apollo 11'in inişinden tam 7 yıl sonra aynı gün Mars'a inen Viking 1, biyolojik yaşam arayışı için Mars toprağını kepçesiyle fırınına aldı. 6 yıl boyunca aralıksız hava durumu raporu göndererek Mars'ta bırakılan ilk kalıcı istasyon oldu.",
       "desc_en": "Landing exactly 7 years after Apollo 11, Viking 1 operated for 6 continuous years, transmitting thousands of weather logs and biological soil analyses."
+    },
+    "locationName_en": "Chryse Planitia (Plains of Gold)",
+    "discardedItems_en": [
+      "Viking 1 Lander Main Body & Three-Legged Landing Gear",
+      "Biology Gas Exchange (GEX) and Labeled Release (LR) Test Chambers",
+      "Surface Sampler Robotic Collector Arm and Trench Collector Head",
+      "Twin High-Gain S-Band Dish and UHF Antennae",
+      "2 x SNAP-19 Radioisotope Thermoelectric Generators (RTG)",
+      "Meteorology Sensor Boom and Wind Velocity Sensors"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "572 kg (lander dry mass)",
+      "powerSource": "2 x SNAP-19 RTG (Plutonium-238)",
+      "activeDuration": "2,245 sols (6 years, 116 days)",
+      "coordinatesReadable": "22°41'49\" N, 48°13'19\" W"
     }
   },
   {
@@ -677,6 +827,21 @@ const ARTIFACTS = [
       "title_en": "The 10.6 kg Micro-Rover That Paved the Way",
       "desc_tr": "Pathfinder iniş üssü görevin ardından Carl Sagan Anıt İstasyonu olarak adlandırıldı. Minik Sojourner, Dünya ile iletişimi kesildikten sonra bile hafızasındaki döngüyle istasyonun çevresinde dönmeye devam etti.",
       "desc_en": "Named the Carl Sagan Memorial Station upon touchdown, the mission's 10.6 kg rover Sojourner circled the base station tirelessly until batteries froze in the martian night."
+    },
+    "locationName_en": "Ares Vallis (Ancient Outflow Channel)",
+    "discardedItems_en": [
+      "Mars Pathfinder 'Carl Sagan Memorial Station' Lander Body",
+      "Sojourner Micro-Rover (10.6 kg, 6-wheel rocker-bogie chassis)",
+      "Three Deployable Petal Solar Panels and Deflated Airbag Cushions",
+      "Alpha Proton X-Ray Spectrometer (APXS) Deployed on 'Barnacle Bill' Rock",
+      "Stereoscopic Imager for Mars Pathfinder (IMP) Camera Mast",
+      "High-Gain Antenna and Atmospheric Structure Instrument"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "Pathfinder: 360 kg + Sojourner: 10.6 kg",
+      "powerSource": "GaAs Solar Panels + Lithium SO2 Battery",
+      "activeDuration": "83 sols (Pathfinder) / 85 sols (Sojourner)",
+      "coordinatesReadable": "19°7'48\" N, 33°31'12\" W"
     }
   },
   {
@@ -721,7 +886,22 @@ const ARTIFACTS = [
       "coordinatesReadable": "14°34'6\" G, 175°28'21\" D"
     },
     "audioSnippet": "[Spirit Final S-Band Telemetry Carrier Wave Fadeout]",
-    "realPhotos": []
+    "realPhotos": [],
+    "locationName_en": "Gusev Crater ('Troy' Sand Trap)",
+    "discardedItems_en": [
+      "Spirit Mars Exploration Rover (MER-A) Chassis",
+      "Pancake Solar Array Covered in Fine Martian Dust",
+      "Pancam Mast Assembly & Navigation Stereo Cameras",
+      "Mössbauer Spectrometer and Alpha Particle X-Ray Spectrometer (APXS)",
+      "Microscopic Imager and Rock Abrasion Tool (RAT)",
+      "Disabled Right Front Wheel Buried in Soft Sulfate Sand ('Troy')"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "185 kg (rover mass)",
+      "powerSource": "Triple-Junction Solar Panels (Dust-covered)",
+      "activeDuration": "2,210 sols (Over 6 years, planned for 90 sols)",
+      "coordinatesReadable": "14°34'19\" S, 175°28'41\" E"
+    }
   },
   {
     "id": "opportunity-rover",
@@ -783,6 +963,21 @@ const ARTIFACTS = [
       "title_en": "From a 90-Day Lifespan to a 15-Year Odyssey (5,111 Sols)",
       "desc_tr": "Sadece 90 gün çalışması planlanan küçük rover, tam 15 yıl boyunca 45.16 km mesafe kat ederek Dünya dışı sürüş rekorunu kırdı. 2018 yılındaki gezegen ölçeğindeki devasa toz fırtınasında güneş ışığı kesilince pilleri tükendi ve Perseverance Vadisi'nde sessizliğe gömüldü.",
       "desc_en": "Planned for 90 days, Opportunity survived 15 years and covered 45.16 km. In 2018, an all-encompassing martian dust storm blotted out the sun, sending its final telemetry: 'My battery is low and it's getting dark.'"
+    },
+    "locationName_en": "Meridiani Planum (Perseverance Valley)",
+    "discardedItems_en": [
+      "Opportunity Mars Exploration Rover (MER-B) Chassis",
+      "45.16 km Wheel Track Trajectory Across Meridiani Planum",
+      "Pancam and Microscopic Imager Mast Assembly",
+      "Miniature Thermal Emission Spectrometer (Mini-TES)",
+      "Rock Abrasion Tool (RAT - diamond grind bit worn down)",
+      "High-Gain Steerable Parabolic Antenna"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "185 kg",
+      "powerSource": "Triple-Junction Solar Array (Silenced by 2018 global dust storm)",
+      "activeDuration": "5,111 sols (14 years 138 days — 45.16 km traversed)",
+      "coordinatesReadable": "2°14'42\" S, 5°20'42\" W"
     }
   },
   {
@@ -827,7 +1022,22 @@ const ARTIFACTS = [
       "coordinatesReadable": "68°13'8\" K, 125°44'57\" B"
     },
     "audioSnippet": "[Phoenix Robotic Arm Digging Motor Sound Telemetry]",
-    "realPhotos": []
+    "realPhotos": [],
+    "locationName_en": "Vastitas Borealis (Green Valley)",
+    "discardedItems_en": [
+      "Phoenix Polar Lander Hexagonal Body & Three Landing Struts",
+      "2.35m Robotic Arm & Ice Trenching Rotary Drill",
+      "Thermal and Evolved-Gas Analyzer (TEGA) Mass Spectrometer Ovens",
+      "Microscopy, Electrochemistry, and Conductivity Analyzer (MECA)",
+      "Crushed Circular Ultraflex Solar Panels (Damaged by Martian winter dry ice)",
+      "Canadian Space Agency Meteorological Lidar Station Mast"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "350 kg (lander dry mass)",
+      "powerSource": "Twin Circular Ultraflex Solar Arrays",
+      "activeDuration": "157 sols (5 months polar summer)",
+      "coordinatesReadable": "68°13'12\" N, 125°44'56\" W"
+    }
   },
   {
     "id": "curiosity-skycrane",
@@ -889,6 +1099,20 @@ const ARTIFACTS = [
       "title_en": "The Sacrificial Rocket Platform That Saved Curiosity",
       "desc_tr": "Gezginin tekerlekleri yere değdiği mikrosaniyede patlayıcı cıvatalar kordonları kesti. Sky Crane roketlerini tam güç ateşleyerek uzağa fırladı ve saatte 160 km hızla yere çakıldı. Bu fedakarlık olmasaydı Curiosity roket motorlarının alevleri ve dumanı altında hasar görecekti.",
       "desc_en": "The instant wheels touched ground, pyro-cutters severed the tethers. The Sky Crane throttled to maximum thrust, darting 650 meters away to crash in a sacrificial explosion."
+    },
+    "locationName_en": "Gale Crater (Aeolis Palus)",
+    "discardedItems_en": [
+      "Curiosity Descent Stage Rocket Cradle (Sky Crane)",
+      "8 x Mars Lander C-Engine Hydrazine Thrusters (400N each)",
+      "Kevlar Rover Lowering Bridle and Data Cord Severed Remains",
+      "Radar Altimeter Antenna and Inertial Measurement Unit",
+      "Titanium Fuel Tanks and Impact Shrapnel Field"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "~829 kg (Sky Crane descent stage structure)",
+      "powerSource": "Kinetic Impact after rocket fuel exhaustion",
+      "activeDuration": "Impact timestamp: August 6, 2012 05:17 UTC",
+      "coordinatesReadable": "4°34'59\" S, 137°24'0\" E"
     }
   },
   {
@@ -933,7 +1157,22 @@ const ARTIFACTS = [
       "coordinatesReadable": "4°30'7\" K, 135°37'23\" D"
     },
     "audioSnippet": "[InSight Real Audio Recording of Martian Wind & Marsquake M4.2]",
-    "realPhotos": []
+    "realPhotos": [],
+    "locationName_en": "Elysium Planitia (Mars Equator)",
+    "discardedItems_en": [
+      "InSight Geophysical Lander Hexagonal Body & Shock Struts",
+      "SEIS (Seismic Experiment for Interior Structure) French Ultra-Sensitive Dome",
+      "HP3 'The Mole' Heat Flow and Physical Properties Probe",
+      "Twin 2.15-meter UltraFlex Solar Arrays (Thickly coated with red iron dust)",
+      "Robotic Instrument Deployment Arm (IDA)",
+      "TWINS Weather and Wind Sensor Booms"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "358 kg",
+      "powerSource": "Twin 2.15m UltraFlex Solar Arrays (Dust depleted)",
+      "activeDuration": "1,440 sols (Over 4 years, detected 1,319 marsquakes)",
+      "coordinatesReadable": "4°30'9\" N, 135°37'24\" E"
+    }
   },
   {
     "id": "perseverance-backshell-chute",
@@ -987,7 +1226,21 @@ const ARTIFACTS = [
         "desc_tr": "Ingenuity 26. uçuşunda, Perseverance'ın Mars atmosferine giriş sırasında saatte binlerce km hızla ayrılan sırt kapağının ve süpersonik paraşütünün parçalanmış enkazını gökyüzünden fotoğrafladı.",
         "desc_en": "Ingenuity captured detailed aerial reconnaissance of Perseverance's shattered backshell and supersonic parachute wreckage during Flight 26."
       }
-    ]
+    ],
+    "locationName_en": "Jezero Crater",
+    "discardedItems_en": [
+      "Perseverance Protective Backshell Cone",
+      "21.5-Meter Supersonic Nylon/Kevlar Parachute Canopy ('Dare Mighty Things' coded)",
+      "Parachute Mortar Pack and Suspension Line Rigging",
+      "Thermal Blanket Insulation and Structural Honeycomb Fragments",
+      "Photographed by Ingenuity Helicopter During Flight 26"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "Backshell: ~320 kg + Parachute: ~88 kg",
+      "powerSource": "Kinetic Impact",
+      "activeDuration": "Impact timestamp: February 18, 2021 20:53 UTC",
+      "coordinatesReadable": "18°26'41\" N, 77°27'3\" E"
+    }
   },
   {
     "id": "ingenuity-helicopter",
@@ -1049,6 +1302,21 @@ const ARTIFACTS = [
       "title_en": "From Kitty Hawk to the Skies of Mars",
       "desc_tr": "Ingenuity'nin güneş panelinin altındaki kablolara, Orville ve Wilbur Wright'ın 1903 yılında uçurduğu tarihin ilk motorlu uçağı 'Flyer'ın kanadından bir kumaş parçacığı bantlanmıştı. Bu kumaş bugün Mars'ın Valinor Tepeleri'nde ebediyen durmaktadır.",
       "desc_en": "Taped beneath Ingenuity's solar panel is a postage-stamp-sized swatch of muslin fabric from the wing of the 1903 Wright Brothers Flyer, uniting the first powered flight on Earth with the first powered flight on Mars."
+    },
+    "locationName_en": "Jezero Crater (Valinor Hills)",
+    "discardedItems_en": [
+      "Ingenuity Helicopter Fuselage and Avionics Enclosure",
+      "Damaged Carbon Fiber Rotor Blade Tip (Crashed on Flight 72)",
+      "Integrated Solar Panel and Micro Antenna",
+      "4 Carbon Composite Landing Legs",
+      "Return-to-Earth Data Log Battery Transmitter (Still logging avionics)",
+      "Piece of 1903 Wright Brothers Flyer 1 Wing Fabric (Under solar panel)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "1.8 kg",
+      "powerSource": "Integrated Solar Array + 6 x Sony Li-ion Cells (350W peak)",
+      "activeDuration": "72 flights (128.8 minutes aloft, 17.0 km flown)",
+      "coordinatesReadable": "18°25'26\" N, 77°26'20\" E"
     }
   },
   {
@@ -1111,6 +1379,20 @@ const ARTIFACTS = [
       "title_en": "An Indestructible Titanium Time Capsule in a Lead-Melting World",
       "desc_tr": "Venera 7'nin küresel zırhının içine yerleştirilen beşgen metal plaket, dışarıdaki 90 atmosferlik ezici basınca ve 475°C cehennem sıcağına rağmen titanyum küre içinde mühürlü olarak korunmaktadır.",
       "desc_en": "Sealed inside the high-strength titanium sphere rests a pentagonal commemorative pennant that survived the 90-bar crushing atmosphere."
+    },
+    "locationName_en": "Guinevere Planitia (Venus Equatorial Plains)",
+    "discardedItems_en": [
+      "Venera 7 Spherical Titanium Pressure Vessel (490 kg)",
+      "Shock-Absorbing Base Ring and Buckled Helical Antenna",
+      "Refrigerated Pre-Cooling System Core",
+      "Internal Platinum Resistance Thermometers and Barometers",
+      "Melted Parachute Suspension Rigging (Vaporized by 465°C atmosphere)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "490 kg (descent capsule)",
+      "powerSource": "Lead-Zinc Battery (pre-charged)",
+      "activeDuration": "35 min descent + 23 min surface transmission",
+      "coordinatesReadable": "5°00' S, 351°00' E"
     }
   },
   {
@@ -1173,6 +1455,20 @@ const ARTIFACTS = [
       "title_en": "Cut from a 205-Carat Industrial Diamond to Survive Sulfuric Acid Clouds",
       "desc_tr": "Normal cam veya kuvars mercekler Venüs'ün kızgın sülfürik asit ve hidroflorik asit bulutlarında aşındığı için, NASA mühendisleri sondanın kızılötesi radyometre sensörü için 13.5 karatlık disk şeklinde saf bir elmas pencere üretti. O elmas bugün hala Venüs yüzeyinde parlamaktadır.",
       "desc_en": "Because ordinary glass corrodes in hot hydrofluoric and sulfuric acid, NASA fitted the probe with a custom 13.5-carat pure diamond optical window that still rests on the Venusian plains."
+    },
+    "locationName_en": "Theia Mons Southern Plains (Venus)",
+    "discardedItems_en": [
+      "Pioneer Venus Day Probe Titanium Pressure Sphere (90 kg)",
+      "13.5-Carat Flawless Natural Diamond Infrared Radiometer Window",
+      "Neutral Mass Spectrometer and Cloud Particle Spectrometer Inlets",
+      "Internal Beryllium Heat-Sink Shell",
+      "Upper Atmosphere Parachute and Release Ring (Separated high above)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "90 kg (Day Probe) + 290 kg (Large Probe)",
+      "powerSource": "Silver-Zinc Battery",
+      "activeDuration": "56 min descent + 67 min 37 sec surface transmission",
+      "coordinatesReadable": "31°18' S, 317°00' E"
     }
   },
   {
@@ -1235,6 +1531,21 @@ const ARTIFACTS = [
       "title_en": "Why Venera 14 Tested the Compressibility of Its Own Lens Cap",
       "desc_tr": "Venera 13'ün panoramik fotoğrafında yerde yarım silindir şeklinde beyaz bir parça görülür: Bu, piroteknik cıvatayla fırlatılan titanyum kamera kapağıdır. 4 gün sonra inen ikizi Venera 14'te ise bu kapak şanssızlık eseri tam toprak ölçüm kolunun altına düştü ve sonda Venüs toprağı yerine kendi lens kapağının sertliğini ölçtü!",
       "desc_en": "In Venera 13's famous panorama, the ejected white titanium lens cap sits right on the basalt floor. Four days later on Venera 14, the identical cap landed directly beneath the spring-loaded soil penetrometer—which faithfully measured the compressibility of its own lens cap instead of the rock!"
+    },
+    "locationName_en": "Phoebe Regio East (Venus)",
+    "discardedItems_en": [
+      "Venera 13 Titanium Pressure Body & Aerodynamic Braking Ring (760 kg)",
+      "Legendary Camera Lens Cap (Ejected under mechanical arm, blocking rock test)",
+      "Dynamic Penetrometer Soil Compressibility Testing Arm",
+      "X-Ray Fluorescence Mineral Spectrometer Sample Drill Chamber",
+      "Grooved Landing Shock Absorber Torus",
+      "Acoustic Microphone (Recorded 127 minutes of Martian/Venusian wind sound)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "760 kg (surface lander)",
+      "powerSource": "High-Capacity Rechargeable Battery",
+      "activeDuration": "127 minutes (4x longer than design spec)",
+      "coordinatesReadable": "7°30' S, 303°00' E"
     }
   },
   {
@@ -1298,6 +1609,21 @@ const ARTIFACTS = [
       "title_en": "Music Composed to Travel 1.2 Billion Kilometers to Saturn's Largest Moon",
       "desc_tr": "Huygens'in hafıza belleğine gençliği ve gelecek nesilleri uzay keşfine teşvik etmek amacıyla \"LalD\" projesi kapsamında 4 adet müzik eseri (\"Hot Time\", \"Bald James Deans\", \"No Love\" ve \"Planetalyan\") kaydedilmişti. Bu şarkılar şu an Satürn'ün uydusu Titan'da yatmaktadır.",
       "desc_en": "Stored inside Huygens's solid-state memory are four musical tracks by French composers Julien Civange and Louis Haéri, forever resting on the hydrocarbon plains of Titan."
+    },
+    "locationName_en": "Adiri / Shangri-La (Titan - Moon of Saturn)",
+    "discardedItems_en": [
+      "Huygens Surface Descent Module (199 kg)",
+      "2.7-Meter Beryllium/Titanium Front Thermal Shield & Back Cover (Jettisoned)",
+      "Surface Science Package (SSP) Penetrometer Foot",
+      "Descent Imager / Spectral Radiometer (DISR) Optical Mast",
+      "Titan Methane Ocean/Pebble Acoustic Sounder",
+      "Main Parachute, Drogue Chute, and Stabilizing Rigging"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "318 kg (entry mass; ~199 kg descent module)",
+      "powerSource": "5 × LiSO2 (Lithium Sulfur Dioxide) Batteries (1.8 kWh)",
+      "activeDuration": "2 hr 27 min descent + 72 min surface relay",
+      "coordinatesReadable": "10°15' S, 192°19' W (Shangri-La / Titan)"
     }
   },
   {
@@ -1361,6 +1687,21 @@ const ARTIFACTS = [
       "title_en": "An Archive of 1,000 Human Languages Riding a Comet Through Deep Time",
       "desc_tr": "Rosetta uzay aracının gövdesine Long Now Vakfı tarafından üretilen saf nikel alaşımlı bir disk monte edilmiştir. Üzerinde Dünya'daki 1.000 farklı dilin 13.000 sayfalık sözlük ve metin arşivi mikroskobik olarak kazınmıştır; bir büyüteçle doğrudan okunabilmektedir.",
       "desc_en": "Mounted on Rosetta is a solid nickel-alloy disk micro-etched with 13,000 pages documenting 1,000 human languages—preserving Earth's linguistic heritage aboard an ancient comet."
+    },
+    "locationName_en": "Abydos Cliff & Sais Region (Comet 67P/Churyumov–Gerasimenko)",
+    "discardedItems_en": [
+      "Philae Carbon Fiber Lander Body & Three-Legged Gear (100 kg)",
+      "Rosetta Main Orbiter Spacecraft & 28-meter Solar Wings (~1,670 kg dry)",
+      "MUPUS Thermal Hammer and Surface Penetrator",
+      "Twin Unfired Ice Harpoons and Cold Gas Thruster Assembly",
+      "COSAC Cometary Gas Chromatograph and Mass Spectrometer Ovens",
+      "CONSERT Radar Transponder System (Resting in dark Abydos crevice)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "100 kg (Philae) + ~1,670 kg (Rosetta)",
+      "powerSource": "Solar Panels + LiSO2 & Li-ion Batteries",
+      "activeDuration": "Philae: 63 hrs surface; Rosetta: 12 yrs 6 mos",
+      "coordinatesReadable": "Abydos & Sais (Comet 67P Head & Body)"
     }
   },
   {
@@ -1423,6 +1764,21 @@ const ARTIFACTS = [
       "title_en": "Ashes on the Moon, Legacy Resting Forever on Asteroid 433 Eros",
       "desc_tr": "NASA SP-2022-4235 monografisinde anlatıldığı üzere, gezegen çarpışma jeolojisinin kurucusu Eugene Shoemaker'ın 1997'deki vefatının ardından külleri Lunar Prospector ile Ay'a gönderilmiş, NEAR uzay aracına ise onun onuruna \"NEAR Shoemaker\" adı verilmiştir.",
       "desc_en": "As chronicled in NASA SP-2022-4235, following Eugene Shoemaker's passing in 1997, NASA honored the legendary astrogeologist by placing his ashes on the Moon and renaming the NEAR asteroid mission 'NEAR Shoemaker.'"
+    },
+    "locationName_en": "Himeros Saddle (433 Eros Near-Earth Asteroid)",
+    "discardedItems_en": [
+      "NEAR Shoemaker Octagonal Spacecraft Bus (487 kg dry mass)",
+      "4 × Gallium-Arsenide Solar Array Wings",
+      "X-Ray / Gamma-Ray Spectrometer (XGRS) Sensors",
+      "Near-Infrared Spectrometer (NIS) and Multispectral Imager (MSI)",
+      "Laser Rangefinder (NLR) Optical Bench",
+      "1.5-meter High-Gain Parabolic Telemetry Antenna"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "487 kg (dry mass)",
+      "powerSource": "4 × Solar Panels (1,800 W) + NiCd Batteries",
+      "activeDuration": "1 year orbit + 16 days surface operation",
+      "coordinatesReadable": "35°00' S, 27°00' W (433 Eros - Himeros)"
     }
   },
   {
@@ -1485,6 +1841,21 @@ const ARTIFACTS = [
       "title_en": "Losing 80 Kilograms of Carbon-Phenolic Shielding in Seconds Inside a Jovian Fireball",
       "desc_tr": "Galileo sondasının toplam ağırlığının neredeyse yarısı (%45'i, yani 152 kg) sadece ısı kalkanıydı. Jüpiter'e girerken oluşan 15.500°C'lik plazma topunda bu kalkanın 80 kilogramı saniyeler içinde eriyip buharlaştı ancak içindeki bilimsel cihazları tek bir çizik bile almadan Jüpiter bulutlarına ulaştırdı.",
       "desc_en": "Nearly half of the Galileo Probe's total mass (152 kg out of 339 kg) consisted solely of its carbon-phenolic heat shield—80 kg of which vaporized during the 230g Jovian entry."
+    },
+    "locationName_en": "Jupiter North Equatorial Belt (NEB)",
+    "discardedItems_en": [
+      "Galileo Atmospheric Entry Probe & 152 kg Carbon-Phenolic Heat Shield",
+      "Galileo Main Orbiter Spacecraft (2,223 kg)",
+      "Neutral Mass Spectrometer and Helium Abundance Detector",
+      "Nephelometer and Atmospheric Structure Sensors",
+      "Melted Titanium Bus Structure (Vaporized deep inside Jovian mantle)",
+      "2 x SNAP-19 Radioisotope Thermoelectric Generators (RTG)"
+    ],
+    "technicalSpecs_en": {
+      "massLeftKg": "339 kg (Probe) + 2,223 kg (Orbiter)",
+      "powerSource": "LiSO2 Battery (Probe) / 2 × RTG (Orbiter)",
+      "activeDuration": "57.6 min (Probe) / 14 years (Orbiter)",
+      "coordinatesReadable": "6°30' N, 4°24' W (Jupiter NEB)"
     }
   }
 ];

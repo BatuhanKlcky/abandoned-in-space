@@ -418,7 +418,7 @@ class MissionSimulationTheater {
     } catch (_) {}
   }
 
-  triggerInnerAirlockDoor(autoStepIntoAirlock = false) {
+  triggerInnerAirlockDoor() {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const statusEl = document.getElementById('walk-xr-status');
     const btn = document.getElementById('btn-walk-cabin');
@@ -451,32 +451,18 @@ class MissionSimulationTheater {
 
     this.updateVRGameMiniPill(
       isTr
-        ? '1. KAPI (İç Basınç Kapısı) Açıldı — Hava Kilidi Odasına Girin!'
-        : 'DOOR 1 (Inner Bulkhead) Open — Step Into Airlock Chamber!'
+        ? '1. KAPI (İç Basınç Kapısı) Açıldı — Hava Kilidi Odasına Yürüyün!'
+        : 'DOOR 1 (Inner Bulkhead) Open — Walk Into Airlock Chamber!'
     );
 
     if (btn) {
       btn.classList.add('active');
-      btn.innerText = isTr ? '🚪 2. Dış Kapıyı Aç & Çık (E)' : '🚪 Open Outer Door #2 & Exit (E)';
-    }
-
-    if (autoStepIntoAirlock && this.walkState.isInsideCabin) {
-      this.walkState.x = 0;
-      this.walkState.z = 1.18;
-      this.walkState.yaw = Math.PI;
-      this.walkState.pitch = -0.04;
-      setTimeout(() => {
-        if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
-          this.walkState.x = 0;
-          this.walkState.z = 2.12; // Inside Airlock Chamber between Door #1 and Door #2!
-          this.triggerOuterAirlockDoor(true);
-        }
-      }, 620);
+      btn.innerText = isTr ? '🚪 2. Dış Kapıyı Aç (E)' : '🚪 Open Outer Door #2 (E)';
     }
     return true;
   }
 
-  triggerOuterAirlockDoor(autoStepOut = false) {
+  triggerOuterAirlockDoor() {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const statusEl = document.getElementById('walk-xr-status');
     const btn = document.getElementById('btn-walk-cabin');
@@ -514,43 +500,21 @@ class MissionSimulationTheater {
 
     if (btn) {
       btn.classList.add('active');
-      btn.innerText = isTr ? '🪜 Merdivenden Yüzeye İn (E)' : '🪜 Step Out & Climb Down (E)';
-    }
-
-    if (autoStepOut) {
-      this.walkState.x = 0;
-      this.walkState.z = Math.max(this.walkState.z, 2.08);
-      this.walkState.yaw = Math.PI;
-      this.walkState.pitch = -0.05;
-      setTimeout(() => {
-        if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
-          this.walkState.isInsideCabin = false;
-          this.walkState.isOnLadder = true;
-          this.walkState.x = 0;
-          this.walkState.z = 3.15;
-          this.walkState.yaw = 0;
-          this.walkState.smoothYaw = 0;
-          this.walkState.pitch = -0.22;
-          this.walkState.smoothPitch = -0.22;
-          if (btn) {
-            btn.classList.remove('active');
-            btn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
-          }
-        }
-      }, 680);
+      btn.innerText = isTr ? '🚪 1. İç Kapıyı Aç / Kapat (E)' : '🚪 Toggle Airlock Doors (E)';
     }
     return true;
   }
 
-  triggerOpenHatch(autoStepOut = false) {
+  triggerOpenHatch() {
     if (!this.cabinState) return false;
-    // Sequential 2-Door Airlock Logic:
-    // If astronaut is inside the main cabin (z < 1.65) and Inner Door #1 isn't open yet, open Door #1 first!
-    if (this.walkState.isInsideCabin && this.walkState.z < 1.68 && !this.cabinState.innerHatchOpen && !this.cabinState.outerHatchOpen) {
-      return this.triggerInnerAirlockDoor(autoStepOut);
+    // Sequential 2-Door Airlock Logic (ONLY opens/closes doors — NEVER teleports the astronaut!):
+    if (this.walkState.isInsideCabin && this.walkState.z < 1.65 && !this.cabinState.innerHatchOpen) {
+      return this.triggerInnerAirlockDoor();
     }
-    // Otherwise seal Inner Door #1, depressurize airlock, and open Outer Door #2!
-    return this.triggerOuterAirlockDoor(autoStepOut);
+    if (!this.cabinState.outerHatchOpen) {
+      return this.triggerOuterAirlockDoor();
+    }
+    return this.triggerInnerAirlockDoor();
   }
 
   resolveCabinCollision(candX, candZ) {
@@ -578,34 +542,37 @@ class MissionSimulationTheater {
     }
 
     // 3. REAR STOWED EQUIPMENT LOCKERS & INNER AIRLOCK BULKHEAD WALL (Door #1 at z = 1.65):
-    // The Dual-Leaf Inner Airlock Doorway (#1) spans |x| <= 0.50.
-    const innerDoorOpenEnough = this.cabinState && (this.cabinState.innerHatchOpen || (this.cabinState.innerHatchProgress || 0) >= 0.52);
-    const outerDoorOpenEnough = this.cabinState && (this.cabinState.outerHatchOpen || (this.cabinState.outerHatchProgress || 0) >= 0.52);
+    // IMPORTANT: Only allow walking through Door #1 or Door #2 once the 3D door leaves are physically >= 72% swung open!
+    const innerDoorOpenEnough = this.cabinState && (this.cabinState.innerHatchProgress || 0) >= 0.72;
+    const outerDoorOpenEnough = this.cabinState && (this.cabinState.outerHatchProgress || 0) >= 0.72;
 
-    if (z > 1.24) {
-      if (Math.abs(x) > 0.48) {
-        // If already inside the Airlock Chamber (z >= 1.52), clamp x within the airlock tunnel walls (|x| <= 0.48)
+    if (z > 1.20) {
+      if (Math.abs(x) > 0.46) {
+        // If already inside the Airlock Chamber (z >= 1.50), clamp x within the airlock tunnel walls (|x| <= 0.46)
         if (this.walkState.z >= 1.50) {
-          x = Math.max(-0.48, Math.min(0.48, x));
+          x = Math.max(-0.46, Math.min(0.46, x));
         } else {
-          // In main cabin outside the doorway width: block against the rear bulkhead wall at z = 1.24
-          z = 1.24;
+          // In main cabin outside the doorway width: block against the rear bulkhead wall at z = 1.20
+          z = 1.20;
         }
       } else if (!innerDoorOpenEnough && this.walkState.z < 1.65) {
-        // In front of closed Inner Door #1: stop cleanly at z = 1.24
-        z = Math.min(1.24, z);
+        // In front of closed/opening Inner Door #1: hold cleanly at z = 1.20 so astronaut NEVER clips through the door!
+        z = Math.min(1.20, z);
       }
     }
 
     // 4. INSIDE THE AIRLOCK CHAMBER (z in [1.65, 2.68]):
-    if (this.walkState.z >= 1.68 && !innerDoorOpenEnough) {
-      // Inner Door #1 has sealed behind the astronaut in the Airlock Chamber
-      z = Math.max(1.86, z);
-      x = Math.max(-0.48, Math.min(0.48, x));
+    if (this.walkState.z >= 1.65) {
+      x = Math.max(-0.46, Math.min(0.46, x));
+      if (!innerDoorOpenEnough) {
+        // Inner Door #1 is closed behind the astronaut: hold at z >= 1.98 so astronaut never clips through Door #1
+        z = Math.max(1.98, z);
+      }
     }
 
     // 5. OUTER EVA AIRLOCK DOOR (#2 at z = 2.68):
-    const maxAirlockZ = outerDoorOpenEnough ? 2.86 : 2.30;
+    // When Door #2 is closed/opening (< 72%), hold cleanly at z = 2.24 inside the airlock so astronaut never clips through Door #2!
+    const maxAirlockZ = outerDoorOpenEnough ? 2.86 : 2.24;
     z = Math.min(maxAirlockZ, z);
 
     return { x, z };
@@ -620,68 +587,40 @@ class MissionSimulationTheater {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const btn = document.getElementById('btn-walk-cabin');
 
+    // Pressing E or clicking the door button ONLY opens/closes the Airlock Doors — it NEVER teleports the astronaut!
     if (ws.isInsideCabin) {
-      // If Outer Door #2 is not open yet, run the 2-Door Airlock sequence (Inner Door #1 -> Airlock -> Outer Door #2)!
-      if (!this.cabinState.outerHatchOpen) {
-        this.triggerOpenHatch(true);
-        return;
-      }
-      // Outer Door #2 is already open: step down the ladder onto the planetary surface!
-      ws.isInsideCabin = false;
-      ws.isOnLadder = false;
-      ws.x = 0;
-      ws.z = 7.2;
-      ws.y = this.getExactSurfaceHeight(0, 7.2);
-      ws.vy = 0;
-      ws.isGrounded = true;
-      ws.yaw = 0;
-      ws.smoothYaw = 0;
-      ws.pitch = 0.05;
-      ws.smoothPitch = 0.05;
-      this.spawnFootprint(0, 7.2, 0, true);
-      this.spawnFootprint(0, 7.2, 0, false);
-      this.spawnBootDust(0, 7.2, 8);
-      if (btn) {
-        btn.classList.remove('active');
-        btn.innerText = isTr ? '🪜 Hava Kilidinden Kabine Gir (E)' : '🪜 Enter Airlock & Cabin (E)';
-      }
-    } else if (ws.isOnLadder) {
-      // If currently on the ladder, step all the way down onto the planetary surface
-      ws.isOnLadder = false;
-      ws.isInsideCabin = false;
-      ws.x = 0;
-      ws.z = 7.2;
-      ws.y = this.getExactSurfaceHeight(0, 7.2);
-      ws.vy = 0;
-      ws.isGrounded = true;
-      this.spawnFootprint(0, 7.2, ws.smoothYaw, true);
-      this.spawnFootprint(0, 7.2, ws.smoothYaw, false);
-      this.spawnBootDust(0, 7.2, 8);
-      if (btn) {
-        btn.classList.remove('active');
-        btn.innerText = isTr ? '🪜 Hava Kilidinden Kabine Gir (E)' : '🪜 Enter Airlock & Cabin (E)';
+      if (ws.z < 1.65) {
+        // Inside Main Cabin: if Door #1 is closed, open Door #1; if Door #1 is already open, cycle to Door #2 (or close Door #1)
+        if (!this.cabinState.innerHatchOpen) {
+          this.triggerInnerAirlockDoor();
+        } else {
+          this.cabinState.innerHatchOpen = false;
+          this.playSwitchClickSound(460);
+          this.refreshCabinDisplays();
+          this.updateVRGameMiniPill(isTr ? '1. İç Basınç Kapısı Kapatıldı' : 'Inner Door #1 Closed');
+          if (btn) btn.innerText = isTr ? '🚪 1. İç Kapıyı Aç (E)' : '🚪 Open Inner Door #1 (E)';
+        }
+      } else {
+        // Inside Airlock Chamber (between Door #1 and Door #2):
+        // Toggle between opening Outer Door #2 (sealing Door #1) and opening Inner Door #1 (sealing Door #2)!
+        if (!this.cabinState.outerHatchOpen) {
+          this.triggerOuterAirlockDoor();
+        } else {
+          this.triggerInnerAirlockDoor();
+        }
       }
     } else {
-      // Outside on the surface -> climb up ladder, pass through airlock, and enter the NASA Spacecraft Interior Cabin!
-      this.cabinState.outerHatchOpen = false;
-      this.cabinState.innerHatchOpen = true;
-      this.cabinState.hatchOpen = false;
-      this.cabinState.airlockPressurePsi = 4.8;
-      ws.isInsideCabin = true;
-      ws.isOnLadder = false;
-      ws.x = -0.52;
-      ws.z = -0.78;
-      ws.y = 4.5 + this.getDescentOffset();
-      ws.vy = 0;
-      ws.isGrounded = true;
-      ws.yaw = 0;
-      ws.smoothYaw = 0;
-      ws.pitch = -0.04;
-      ws.smoothPitch = -0.04;
-      this.refreshCabinDisplays();
-      if (btn) {
-        btn.classList.add('active');
-        btn.innerText = isTr ? '🚪 Çift Kapılı Hava Kilidinden Çık (E)' : '🚪 Exit via Dual-Door Airlock (E)';
+      // Outside on the EVA Porch, Boarding Ladder, or Planetary Surface:
+      // Toggle Outer EVA Door #2 open/closed without teleporting!
+      if (!this.cabinState.outerHatchOpen) {
+        this.triggerOuterAirlockDoor();
+      } else {
+        this.cabinState.outerHatchOpen = false;
+        this.cabinState.hatchOpen = false;
+        this.playSwitchClickSound(460);
+        this.refreshCabinDisplays();
+        this.updateVRGameMiniPill(isTr ? '2. Dış EVA Kapısı Kapatıldı' : 'Outer EVA Door #2 Closed');
+        if (btn) btn.innerText = isTr ? '🚪 2. Dış Kapıyı Aç (E)' : '🚪 Open Outer Door #2 (E)';
       }
     }
   }
@@ -2543,16 +2482,22 @@ class MissionSimulationTheater {
       const silverAlum = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.25 });
       const engineAlloy = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.85, roughness: 0.2 });
 
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 5.2, 2.9, 8), goldKapton);
+      // Octagonal Descent Stage sized & rotated (Math.PI / 8) so its flat +Z face sits cleanly beneath the Airlock & EVA Porch (z = 2.62m)
+      // and NEVER intersects the Boarding Ladder or Astronaut!
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(2.65, 2.95, 2.6, 8), goldKapton);
+      base.rotation.y = Math.PI / 8;
+      base.position.y = -0.15;
       base.castShadow = true;
       base.receiveShadow = true;
       this.spacecraft.add(base);
 
-      const quadShield = new THREE.Mesh(new THREE.BoxGeometry(4.7, 2.92, 2.4), blackShield);
+      const quadShield = new THREE.Mesh(new THREE.BoxGeometry(2.75, 2.62, 1.8), blackShield);
+      quadShield.position.y = -0.15;
       this.spacecraft.add(quadShield);
 
-      const mesa = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.8, 1.2), silverAlum);
-      mesa.position.set(0, 0, 4.4);
+      // MESA Equipment Stowage Bay mounted on the left (-X) quadrant clear of the +Z Boarding Ladder!
+      const mesa = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.5, 1.6), silverAlum);
+      mesa.position.set(-2.72, -0.15, 0);
       mesa.castShadow = true;
       this.spacecraft.add(mesa);
 
@@ -2583,8 +2528,8 @@ class MissionSimulationTheater {
       cabin.castShadow = true;
       this.dummyAscentSolidGroup.add(cabin);
 
-      const porch = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 1.6), silverAlum);
-      porch.position.set(0, 1.4, 2.5);
+      const porch = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 1.2), silverAlum);
+      porch.position.set(0, 1.3, 2.8);
       this.dummyAscentSolidGroup.add(porch);
 
       const winMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
@@ -2616,14 +2561,14 @@ class MissionSimulationTheater {
         const legGroup = new THREE.Group();
         legGroup.rotation.y = ang;
 
-        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6.6), silverAlum);
-        strut.position.set(4.4, -1.2, 0);
+        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 6.2), silverAlum);
+        strut.position.set(3.4, -1.2, 0);
         strut.rotation.z = Math.PI / 4.1;
         strut.castShadow = true;
         legGroup.add(strut);
 
-        const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.2, 16), goldKapton);
-        pad.position.set(6.8, -3.2, 0);
+        const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.2, 16), goldKapton);
+        pad.position.set(5.4, -3.2, 0);
         pad.castShadow = true;
         legGroup.add(pad);
 
@@ -2631,19 +2576,8 @@ class MissionSimulationTheater {
           new THREE.CylinderGeometry(0.04, 0.04, 2.0),
           new THREE.MeshStandardMaterial({ color: 0x38bdf8 })
         );
-        probe.position.set(6.8, -4.2, 0);
+        probe.position.set(5.4, -4.2, 0);
         legGroup.add(probe);
-
-        if (i === 0) {
-          const ladder = new THREE.Group();
-          for (let r = 0; r < 8; r++) {
-            const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8), silverAlum);
-            rung.rotation.x = Math.PI / 2;
-            rung.position.set(2.0 + r * 0.55, 0.4 - r * 0.45, 0);
-            ladder.add(rung);
-          }
-          legGroup.add(ladder);
-        }
 
         this.spacecraft.add(legGroup);
       }
@@ -3408,7 +3342,7 @@ class MissionSimulationTheater {
       ladderGroup.add(rung);
     }
 
-    // Interactive Green Footpad at the Base of the Ladder (clicking it climbs directly into the cabin!)
+    // Interactive Green Footpad at the Base of the Ladder (opens Outer EVA Door #2 so you can walk up the ladder!)
     const entryPad = new THREE.Mesh(
       new THREE.RingGeometry(0.52, 0.85, 32),
       new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.88 })
@@ -3416,11 +3350,11 @@ class MissionSimulationTheater {
     entryPad.rotation.x = -Math.PI / 2;
     entryPad.position.set(0, this.getExactSurfaceHeight(0, 6.95) + 0.04, 6.95);
     entryPad.userData.interactive = {
-      label_tr: '🪜 [SOL TIK / VR TETİK] EVA MERDİVENİNDEN ÇİFT KAPILI HAVA KİLİDİNE TIRMAN',
-      label_en: '🪜 [CLICK / VR TRIGGER] CLIMB EVA LADDER INTO DUAL-DOOR AIRLOCK & CABIN',
+      label_tr: '🪜 [SOL TIK / E / VR TETİK] 2. DIŞ KAPIYI AÇ & MERDİVENDEN YÜRÜYEREK ÇIK',
+      label_en: '🪜 [CLICK / E / VR TRIGGER] OPEN OUTER DOOR #2 & WALK UP EVA LADDER',
       onClick: () => {
         this.playSwitchClickSound(620);
-        this.toggleCabinInterior();
+        this.triggerOuterAirlockDoor();
       }
     };
     this.interactables.push(entryPad);
@@ -3587,13 +3521,16 @@ class MissionSimulationTheater {
     innerLeafR.add(innerHatchWheel);
 
     const innerDoorInteract = {
-      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 1. KAPI (İÇ BASINÇ KAPISI): HAVA KİLİDİ ODASINA GEÇİŞ',
-      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #1 (INNER CABIN BULKHEAD): OPEN / SEAL AIRLOCK',
+      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 1. KAPI (İÇ BASINÇ KAPISI): SADECE KAPIYI AÇ / KAPAT',
+      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #1 (INNER CABIN BULKHEAD): OPEN / CLOSE DOOR ONLY',
       onClick: () => {
         if (!this.cabinState.innerHatchOpen) {
           this.triggerInnerAirlockDoor(false);
         } else {
-          this.triggerOuterAirlockDoor(false);
+          this.playSwitchClickSound(520);
+          this.cabinState.innerHatchOpen = false;
+          this.refreshCabinDisplays();
+          this.updateVRGameMiniPill('1. İç Basınç Kapısı Kapatıldı');
         }
       }
     };
@@ -3757,19 +3694,17 @@ class MissionSimulationTheater {
     outerLeafR.add(hatchWheel);
 
     const outerHatchInteract = {
-      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 2. KAPI (ÇİFT KANATLI DIŞ EVA VAKUM KAPISI): AÇ & DIŞARI ÇIK',
-      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #2 (DUAL-LEAF OUTER EVA HATCH): OPEN & STEP OUTSIDE',
+      label_tr: '🚪 [SOL TIK / E / VR DOKUN] 2. KAPI (ÇİFT KANATLI DIŞ EVA VAKUM KAPISI): SADECE KAPIYI AÇ / KAPAT',
+      label_en: '🚪 [CLICK / E / VR TOUCH] DOOR #2 (DUAL-LEAF OUTER EVA HATCH): OPEN / CLOSE DOOR ONLY',
       onClick: () => {
         if (!this.cabinState.outerHatchOpen) {
           this.triggerOuterAirlockDoor(false);
-        } else if (this.walkState.isInsideCabin) {
-          this.playSwitchClickSound(580);
-          this.walkState.isInsideCabin = false;
-          this.walkState.isOnLadder = true;
-          this.walkState.x = 0;
-          this.walkState.z = 3.10;
         } else {
-          this.triggerInnerAirlockDoor(false);
+          this.playSwitchClickSound(520);
+          this.cabinState.outerHatchOpen = false;
+          this.cabinState.hatchOpen = false;
+          this.refreshCabinDisplays();
+          this.updateVRGameMiniPill('2. Dış EVA Vakum Kapısı Kapatıldı');
         }
       }
     };
@@ -5061,7 +4996,7 @@ class MissionSimulationTheater {
       if (this.innerHatchWheel) {
         this.innerHatchWheel.rotation.z = ip * Math.PI * 3.5;
       }
-      const innerSwing = Math.max(0, (ip - 0.14) / 0.86) * (Math.PI * 0.58);
+      const innerSwing = Math.max(0, (ip - 0.12) / 0.88) * (Math.PI * 0.66);
       if (this.innerDoorLeftPivot) this.innerDoorLeftPivot.rotation.y = innerSwing;
       if (this.innerDoorRightPivot) this.innerDoorRightPivot.rotation.y = -innerSwing;
       if (this.innerHatchStatusLamp && this.innerHatchStatusLamp.material) {
@@ -5074,7 +5009,7 @@ class MissionSimulationTheater {
       const targetOuter = this.cabinState.outerHatchOpen ? 1.0 : 0.0;
       const diffOuter = targetOuter - (this.cabinState.outerHatchProgress || 0);
       if (Math.abs(diffOuter) > 0.001) {
-        this.cabinState.outerHatchProgress = (this.cabinState.outerHatchProgress || 0) + Math.sign(diffOuter) * Math.min(Math.abs(diffOuter), dt * 1.75);
+        this.cabinState.outerHatchProgress = (this.cabinState.outerHatchProgress || 0) + Math.sign(diffOuter) * Math.min(Math.abs(diffOuter), dt * 1.85);
       } else {
         this.cabinState.outerHatchProgress = targetOuter;
       }
@@ -5083,7 +5018,7 @@ class MissionSimulationTheater {
       if (this.hatchWheel) {
         this.hatchWheel.rotation.z = op * Math.PI * 3.5;
       }
-      const outerSwing = Math.max(0, (op - 0.16) / 0.84) * (Math.PI * 0.62);
+      const outerSwing = Math.max(0, (op - 0.12) / 0.88) * (Math.PI * 0.68);
       if (this.outerDoorLeftPivot) this.outerDoorLeftPivot.rotation.y = outerSwing;
       if (this.outerDoorRightPivot) this.outerDoorRightPivot.rotation.y = -outerSwing;
       if (this.hatchStatusLamp && this.hatchStatusLamp.material) {
@@ -5121,34 +5056,35 @@ class MissionSimulationTheater {
       // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin or Dual-Door Airlock Chamber
       if (ws.isInsideCabin) {
         // STEP A: Approaching Inner Airlock Door #1 (z = 1.65) from inside the Main Cabin
-        if (ws.z < 1.65 && candidateZ > 1.02 && Math.abs(candidateX) < 0.72 && !this.cabinState.innerHatchOpen) {
+        if (ws.z < 1.65 && candidateZ > 1.15 && Math.abs(candidateX) < 0.62 && !this.cabinState.innerHatchOpen) {
           this.triggerInnerAirlockDoor(false);
         }
 
-        // STEP B: Inside the Airlock Chamber (z >= 1.72) approaching Outer EVA Door #2 (z = 2.68):
-        // Obeys the NASA Airlock Interlock Rule: Seals Inner Door #1 behind the astronaut, depressurizes, and opens Outer Door #2!
-        if (ws.z >= 1.70 && candidateZ > 1.98 && Math.abs(candidateX) < 0.68 && !this.cabinState.outerHatchOpen) {
+        // STEP B: Fully inside the Airlock Chamber (z >= 1.98) approaching Outer EVA Door #2 (z = 2.68):
+        // Obeys the NASA Airlock Interlock Rule: Only seals Inner Door #1 once the astronaut has cleared the z = 1.65 doorway!
+        if (ws.z >= 1.98 && candidateZ > 2.08 && Math.abs(candidateX) < 0.56 && !this.cabinState.outerHatchOpen) {
           this.triggerOuterAirlockDoor(false);
         }
 
-        // STEP C: Returning from Airlock Chamber (z >= 1.72) toward Main Cabin (-Z) when Inner Door #1 is closed:
-        if (ws.z >= 1.72 && candidateZ < 1.92 && nz < -0.1 && !this.cabinState.innerHatchOpen) {
+        // STEP C: Returning from Airlock Chamber (z >= 1.76) toward Main Cabin (-Z) when Inner Door #1 is closed:
+        if (ws.z >= 1.76 && candidateZ < 1.95 && nz < -0.1 && !this.cabinState.innerHatchOpen) {
           this.triggerInnerAirlockDoor(false);
         }
 
-        const outerReadyToStepOut = !isDescending && this.cabinState && this.cabinState.outerHatchOpen && (this.cabinState.outerHatchProgress || 0) >= 0.55;
+        const outerReadyToStepOut = !isDescending && this.cabinState && (this.cabinState.outerHatchProgress || 0) >= 0.72;
 
-        // If Outer Door #2 is open and astronaut walks out through z > 2.72, step onto the exterior EVA Porch & Boarding Ladder!
-        if (outerReadyToStepOut && candidateZ > 2.72 && Math.abs(candidateX) < 0.68) {
+        // If Outer Door #2 has physically swung open (>= 72%) and astronaut walks naturally past z > 2.72,
+        // step continuously onto the flat EVA Porch (zero position snap/teleport!)
+        if (outerReadyToStepOut && candidateZ > 2.72 && Math.abs(candidateX) < 0.52) {
           ws.isInsideCabin = false;
           ws.isOnLadder = true;
-          ws.x = Math.max(-0.45, Math.min(0.45, candidateX));
-          ws.z = 3.08;
+          ws.x = Math.max(-0.46, Math.min(0.46, candidateX));
+          ws.z = candidateZ;
           if (cabinBtn) {
             cabinBtn.classList.remove('active');
-            cabinBtn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
+            cabinBtn.innerText = isTr ? '🚪 Hava Kilidi Kapısını Aç / Kapat (E)' : '🚪 Open / Close Airlock Door (E)';
           }
-          this.updateVRGameMiniPill(isTr ? '2. Dış Kapıdan Merdivene Çıkıldı — Yüzeye İnin!' : 'Stepped Out Door #2 Onto Ladder — Climb Down!');
+          this.updateVRGameMiniPill(isTr ? '2. Dış Kapıdan EVA Balkonuna Çıkıldı — Merdivenden İnin!' : 'Stepped Onto EVA Porch — Walk Down Ladder!');
         } else {
           // Resolve strict collision against Console Desk (z >= -0.98), Center Pedestal, Cabin Walls & Airlock Doors!
           const resolved = this.resolveCabinCollision(candidateX, candidateZ);
@@ -5173,36 +5109,43 @@ class MissionSimulationTheater {
           }
         }
       } else {
-        // 2. Check if astronaut is in the Exterior Boarding Ladder & EVA Porch Corridor (|x| < 0.95, z between 2.75 and 7.05)
-        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.70 && candidateZ <= 7.05;
+        // 2. Check if astronaut is in the Exterior Boarding Ladder & Flat EVA Porch Corridor (|x| < 0.90, z between 2.65 and 6.95)
+        const inLadderCorridor = Math.abs(candidateX) < 0.90 && candidateZ >= 2.65 && candidateZ <= 6.95;
         if (inLadderCorridor) {
           ws.isOnLadder = true;
-          ws.x = Math.max(-0.55, Math.min(0.55, candidateX));
-          ws.z = candidateZ;
-          // Climbing back up to the top EVA Porch (z <= 2.92 while moving toward -Z) enters the Airlock Chamber!
-          if (ws.z <= 2.92 && nz < 0) {
-            this.cabinState.outerHatchOpen = false;
-            this.cabinState.innerHatchOpen = true;
-            this.cabinState.hatchOpen = false;
-            this.cabinState.airlockPressurePsi = 4.8;
-            this.refreshCabinDisplays();
+          ws.x = Math.max(-0.48, Math.min(0.48, candidateX));
+
+          const outerOpenEnough = !isDescending && this.cabinState && (this.cabinState.outerHatchProgress || 0) >= 0.72;
+
+          // Approaching Outer Door #2 (z = 2.68) on the EVA Porch while moving toward -Z:
+          if (candidateZ < 3.12 && nz < -0.1 && !this.cabinState.outerHatchOpen) {
+            this.triggerOuterAirlockDoor(false);
+          }
+
+          if (!outerOpenEnough && candidateZ < 3.06) {
+            // Solidly block the astronaut outside Outer Door #2 until the door leaves physically swing open!
+            ws.z = Math.max(3.06, ws.z);
+          } else if (outerOpenEnough && candidateZ <= 2.72) {
+            // Smoothly walk across the threshold of open Outer Door #2 into the Airlock Chamber (zero teleport/snap!)
             ws.isInsideCabin = true;
             ws.isOnLadder = false;
-            ws.z = 2.15;
+            ws.z = candidateZ;
             ws.y = cabinFloorY + descentOffset;
             if (cabinBtn) {
               cabinBtn.classList.add('active');
-              cabinBtn.innerText = isTr ? '🚪 Çift Kapılı Hava Kilidinden Çık (E)' : '🚪 Exit via Dual-Door Airlock (E)';
+              cabinBtn.innerText = isTr ? '🚪 Hava Kilidi Kapısını Aç / Kapat (E)' : '🚪 Open / Close Airlock Door (E)';
             }
-            this.updateVRGameMiniPill(isTr ? 'Hava Kilidinden Kabin İçine Girildi' : 'Entered Airlock & Spacecraft Cabin');
+            this.updateVRGameMiniPill(isTr ? '2. Dış Kapıdan Hava Kilidi Odasına Girildi' : 'Stepped Inside Airlock Decompression Chamber');
+          } else {
+            ws.z = candidateZ;
           }
         } else {
           if (ws.isOnLadder) {
             this.updateVRGameMiniPill(isTr ? 'Gezegen Yüzeyine İnildi — Numuneleri Toplayın!' : 'On Planetary Surface — Collect Samples!');
           }
           ws.isOnLadder = false;
-          // Standard surface movement outside central lander hull (radius 4.4m)
-          if (candidateDist > 4.4 && candidateDist < 120) {
+          // Standard surface movement outside compact octagonal lander hull (radius 3.25m)
+          if (candidateDist > 3.25 && candidateDist < 120) {
             ws.x = candidateX;
             ws.z = candidateZ;
           }
@@ -5243,9 +5186,14 @@ class MissionSimulationTheater {
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isOnLadder) {
-      // Smoothly climb up/down the 12 ladder rungs based on z position (z = 6.95 -> groundY0, z = 3.15 -> cabinFloorY)
-      const climbFrac = Math.max(0, Math.min(1, (6.95 - ws.z) / (6.95 - 3.15)));
-      ws.y = groundY0 + climbFrac * (cabinFloorY - groundY0);
+      // Flat EVA Porch from z = 2.68 to 3.45 (at full cabinFloorY = 4.5m),
+      // then smoothly climb up/down the 12 ladder rungs along z = 3.45 -> 6.85!
+      if (ws.z <= 3.45) {
+        ws.y = cabinFloorY + descentOffset;
+      } else {
+        const climbFrac = Math.max(0, Math.min(1, (6.85 - ws.z) / (6.85 - 3.45)));
+        ws.y = groundY0 + climbFrac * (cabinFloorY + descentOffset - groundY0);
+      }
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (!ws.isGrounded || ws.y > groundY + 0.04) {

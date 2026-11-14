@@ -195,15 +195,32 @@ class MissionSimulationTheater {
     });
 
     if (this.canvas) {
+      this.mouseNDC = new THREE.Vector2(0, 0);
+      this.interactRaycaster = new THREE.Raycaster();
+      this.interactables = [];
+
       this.canvas.addEventListener('pointerdown', (e) => {
         if (this.cameraMode !== 'walk') return;
         this.walkState.isLooking = true;
+        this.walkState.downMouseX = e.clientX;
+        this.walkState.downMouseY = e.clientY;
         this.walkState.lastMouseX = e.clientX;
         this.walkState.lastMouseY = e.clientY;
       });
 
       window.addEventListener('pointermove', (e) => {
-        if (!this.walkState.isLooking || this.cameraMode !== 'walk') return;
+        if (this.cameraMode !== 'walk') return;
+
+        // Track cursor NDC for hovering 3D cabin buttons & switches
+        if (this.canvas) {
+          const rect = this.canvas.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            this.mouseNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            this.mouseNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          }
+        }
+
+        if (!this.walkState.isLooking) return;
         // Clamp pointer delta per frame to prevent any sudden jumps or violent camera jerks
         const rawDx = e.clientX - this.walkState.lastMouseX;
         const rawDy = e.clientY - this.walkState.lastMouseY;
@@ -218,7 +235,17 @@ class MissionSimulationTheater {
         this.walkState.pitch = Math.max(-1.01, Math.min(1.01, this.walkState.pitch - dy * 0.0028));
       });
 
-      window.addEventListener('pointerup', () => {
+      window.addEventListener('pointerup', (e) => {
+        if (this.walkState.isLooking && this.cameraMode === 'walk') {
+          const moveDist = Math.hypot(
+            e.clientX - (this.walkState.downMouseX || e.clientX),
+            e.clientY - (this.walkState.downMouseY || e.clientY)
+          );
+          // If user clicked without dragging, trigger 3D button/switch interaction!
+          if (moveDist < 7) {
+            this.triggerCabinInteraction(this.mouseNDC);
+          }
+        }
         this.walkState.isLooking = false;
       });
 
@@ -226,6 +253,8 @@ class MissionSimulationTheater {
         this.walkState.isLooking = false;
       });
     }
+
+    this.setupXRControllers();
 
     const bindDpad = (id, keyName) => {
       const btn = document.getElementById(id);
@@ -1992,6 +2021,110 @@ class MissionSimulationTheater {
   }
 
   // ===========================================================================
+  // WEBXR VR LASER POINTER CONTROLLERS & 3D INTERACTIVE CABIN RAYCASTER
+  // ===========================================================================
+  setupXRControllers() {
+    if (!this.renderer || !this.renderer.xr || this.xrControllersSetup) return;
+    this.xrControllersSetup = true;
+    this.xrControllers = [];
+
+    const laserGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -4.5)
+    ]);
+    const laserMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.85 });
+
+    for (let i = 0; i < 2; i++) {
+      const controller = this.renderer.xr.getController(i);
+      const laserLine = new THREE.Line(laserGeo, laserMat);
+      controller.add(laserLine);
+
+      // 3D VR Hand / Controller Grip Mesh
+      const gripMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.055, 0.055, 0.16),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.25 })
+      );
+      controller.add(gripMesh);
+
+      controller.addEventListener('selectstart', () => {
+        if (this.cameraMode === 'walk') {
+          this.triggerCabinInteraction(null, controller);
+        }
+      });
+
+      this.cameraRig.add(controller);
+      this.xrControllers.push(controller);
+    }
+  }
+
+  generateIsogridTexture() {
+    if (this.isogridTexture) return this.isogridTexture;
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Machined Aerospace Aluminum Base
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // CNC-Milled Triangular Isogrid Pockets (Authentic NASA S-IVB / LM / Orion Structural Pattern)
+    const step = 64;
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 5;
+    for (let y = 0; y <= 512; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+    }
+    for (let x = -512; x <= 512; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 512, 512); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 512, 0); ctx.lineTo(x, 512); ctx.stroke();
+    }
+
+    // Recessed pocket shadows & node bosses
+    ctx.fillStyle = '#64748b';
+    for (let y = 0; y <= 512; y += step) {
+      for (let x = 0; x <= 512; x += step) {
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#64748b';
+      }
+    }
+
+    this.isogridTexture = new THREE.CanvasTexture(canvas);
+    this.isogridTexture.wrapS = THREE.RepeatWrapping;
+    this.isogridTexture.wrapT = THREE.RepeatWrapping;
+    this.isogridTexture.repeat.set(3, 2);
+    return this.isogridTexture;
+  }
+
+  generateKeyCapTexture(label, isHighlight = false) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = isHighlight ? '#1e293b' : '#0f172a';
+    ctx.fillRect(0, 0, 128, 128);
+
+    ctx.strokeStyle = isHighlight ? '#00f0ff' : '#94a3b8';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(8, 8, 112, 112);
+
+    ctx.fillStyle = isHighlight ? '#00ff88' : '#f8fafc';
+    ctx.font = label.length > 2 ? 'bold 28px monospace' : 'bold 46px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, 64, 66);
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  // ===========================================================================
   // 1:1 CLIMBABLE EVA LADDER & NASA SPACECRAFT / ROCKET / SATELLITE INTERIOR CABIN
   // ===========================================================================
   generateDSKYTexture(artifact) {
@@ -2000,7 +2133,19 @@ class MissionSimulationTheater {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Authentic AGC Block II DSKY Charcoal Anodized Bezel
+    const cs = this.cabinState || {
+      prog: '68',
+      verb: '16',
+      noun: '65',
+      r1: '+00000',
+      r2: '+01969',
+      r3: '+00412',
+      compActy: true,
+      masterAlarm: false,
+      throttlePct: 0
+    };
+
+    // Authentic AGC Block II DSKY Charcoal Anodized Upper Display Housing
     ctx.fillStyle = '#1e242b';
     ctx.fillRect(0, 0, 512, 512);
     ctx.strokeStyle = '#64748b';
@@ -2011,14 +2156,14 @@ class MissionSimulationTheater {
     ctx.fillStyle = '#0f1419';
     ctx.fillRect(24, 28, 205, 250);
     const lamps = [
-      { label: 'UPLINK ACTY', on: false, col: '#e2e8f0' },
-      { label: 'TEMP', on: false, col: '#f59e0b' },
+      { label: 'UPLINK ACTY', on: cs.compActy, col: '#e2e8f0' },
+      { label: 'TEMP', on: cs.masterAlarm, col: '#f59e0b' },
       { label: 'NO ATT', on: false, col: '#e2e8f0' },
-      { label: 'GIMBAL LOCK', on: false, col: '#f59e0b' },
+      { label: 'GIMBAL LOCK', on: cs.masterAlarm, col: '#f59e0b' },
       { label: 'STBY', on: false, col: '#e2e8f0' },
       { label: 'PROG', on: true, col: '#f59e0b' },
       { label: 'KEY REL', on: false, col: '#e2e8f0' },
-      { label: 'RESTART', on: false, col: '#f59e0b' },
+      { label: 'RESTART', on: cs.masterAlarm, col: '#ef4444' },
       { label: 'OPR ERR', on: false, col: '#e2e8f0' },
       { label: 'TRACKER', on: true, col: '#f59e0b' }
     ];
@@ -2043,7 +2188,7 @@ class MissionSimulationTheater {
     ctx.strokeRect(248, 28, 238, 250);
 
     // COMP ACTY green indicator
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = cs.compActy ? '#10b981' : '#064e3b';
     ctx.fillRect(262, 42, 68, 42);
     ctx.fillStyle = '#022c22';
     ctx.font = 'bold 13px monospace';
@@ -2059,38 +2204,23 @@ class MissionSimulationTheater {
 
     ctx.fillStyle = '#00ff88';
     ctx.font = 'bold 34px monospace';
-    ctx.fillText('68', 425, 82);
-    ctx.fillText('16', 296, 140);
-    ctx.fillText('65', 425, 140);
+    ctx.fillText(cs.prog, 425, 82);
+    ctx.fillText(cs.verb, 296, 140);
+    ctx.fillText(cs.noun, 425, 140);
 
     // Three 5-Digit Signed Registers (R1, R2, R3)
     ctx.font = 'bold 30px monospace';
     ctx.textAlign = 'right';
-    ctx.fillText('+00000', 468, 182);
-    ctx.fillText('+01969', 468, 222);
-    ctx.fillText('+00412', 468, 262);
+    ctx.fillText(cs.r1, 468, 182);
+    ctx.fillText(cs.r2, 468, 222);
+    ctx.fillText(cs.r3, 468, 262);
 
-    // Bottom 19-Key Pushbutton Matrix
-    const keys = [
-      'VERB', '+', '7', '8', '9', 'CLR', 'ENTR',
-      'NOUN', '-', '4', '5', '6', 'PRO', 'RSET',
-      'KEY', '0', '1', '2', '3', 'REL', 'STBY'
-    ];
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 15px monospace';
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 7; c++) {
-        const kx = 22 + c * 67;
-        const ky = 304 + r * 64;
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(kx, ky, 60, 54);
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(kx, ky, 60, 54);
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillText(keys[r * 7 + c], kx + 30, ky + 33);
-      }
-    }
+    // Recessed Keybay Frame Background (3D physical keycaps sit on top of this!)
+    ctx.fillStyle = '#090d14';
+    ctx.fillRect(18, 296, 476, 200);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(18, 296, 476, 200);
 
     return new THREE.CanvasTexture(canvas);
   }
@@ -2101,7 +2231,17 @@ class MissionSimulationTheater {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#030914';
+    const cs = this.cabinState || {
+      prog: '68',
+      throttlePct: 0,
+      rcsArmed: true,
+      glycolPump: true,
+      sBandLocked: true,
+      masterAlarm: false,
+      lightMode: 0
+    };
+
+    ctx.fillStyle = cs.masterAlarm ? '#1f070b' : '#030914';
     ctx.fillRect(0, 0, 1024, 512);
 
     // Grid lines
@@ -2115,35 +2255,51 @@ class MissionSimulationTheater {
     }
 
     // Header Bar
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+    ctx.fillStyle = cs.masterAlarm ? 'rgba(239, 68, 68, 0.35)' : 'rgba(16, 185, 129, 0.2)';
     ctx.fillRect(16, 16, 992, 54);
-    ctx.strokeStyle = '#10b981';
+    ctx.strokeStyle = cs.masterAlarm ? '#ef4444' : '#10b981';
     ctx.lineWidth = 2;
     ctx.strokeRect(16, 16, 992, 54);
 
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 24px monospace';
+    ctx.fillStyle = cs.masterAlarm ? '#fca5a5' : '#10b981';
+    ctx.font = 'bold 23px monospace';
     const name = artifact ? (artifact.name_en || artifact.id).toUpperCase() : 'NASA SPACECRAFT';
-    ctx.fillText(`NASA INTERNAL AVIONICS & TELEMETRY BUS // ${name}`, 34, 51);
+    const statusBanner = cs.masterAlarm ? '⚠️ MASTER ALARM / STAGE ABORT ARMED' : `NASA INTERNAL AVIONICS & TELEMETRY BUS // ${name}`;
+    ctx.fillText(statusBanner, 34, 51);
 
-    // Left Radar / Descent Trajectory Plot
-    ctx.strokeStyle = '#00f0ff';
+    // Left Radar / Descent & Thrust Waveform Plot
+    ctx.strokeStyle = cs.throttlePct > 0 ? '#f59e0b' : '#00f0ff';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    for (let i = 0; i < 420; i += 8) {
+    const freq = cs.throttlePct > 0 ? 0.09 : 0.045;
+    const amp = 32 + cs.throttlePct * 0.45;
+    for (let i = 0; i < 440; i += 6) {
       const px = 36 + i;
-      const py = 220 + Math.sin(i * 0.045) * 48 + Math.cos(i * 0.11) * 18;
+      const py = 215 + Math.sin(i * freq + cs.throttlePct) * amp + Math.cos(i * 0.13) * 16;
       if (i === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
     }
     ctx.stroke();
 
+    // Left Sub-Readout Box: Active AGC Program & Engine Throttle
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.fillRect(34, 310, 440, 125);
+    ctx.strokeStyle = '#0284c7';
+    ctx.strokeRect(34, 310, 440, 125);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 19px monospace';
+    ctx.fillText(`AGC PROGRAM: P${cs.prog} | DPS THROTTLE: ${cs.throttlePct}%`, 50, 348);
+    ctx.fillStyle = '#a7f3d0';
+    ctx.fillText(`RCS THRUSTER QUADS: ${cs.rcsArmed ? 'ARMED (4/4)' : 'ISOLATED'}`, 50, 382);
+    ctx.fillStyle = '#fde68a';
+    ctx.fillText(`GLYCOL COOLING LOOP: ${cs.glycolPump ? 'PUMP A+B ACTIVE' : 'STANDBY'}`, 50, 416);
+
     // Right Internal Subsystem Bars (ECS O2, He TANK, RTG/FUEL, BUS VOLT)
     const metrics = [
       { label: 'CABIN / HULL PRESSURE', val: '4.8 PSI (33.1 kPa)', pct: 0.88, col: '#10b981' },
-      { label: 'PRIMARY POWER BUS (DC)', val: '28.4 V / 42.0 A', pct: 0.92, col: '#00f0ff' },
-      { label: 'THERMAL SHIELD / RTG CORE', val: '294.2 K (NOMINAL)', pct: 0.74, col: '#f59e0b' },
-      { label: 'HIGH-GAIN S-BAND TELEMETRY', val: 'LOCKED (DSN GOLDSTONE)', pct: 0.96, col: '#10b981' }
+      { label: 'DESCENT / ASCENT THRUST', val: `${cs.throttlePct}% (${Math.round(cs.throttlePct * 45.0)} N)`, pct: Math.max(0.08, cs.throttlePct / 100), col: '#f59e0b' },
+      { label: 'THERMAL SHIELD / RTG CORE', val: cs.glycolPump ? '294.2 K (NOMINAL)' : '318.6 K (WARMING)', pct: cs.glycolPump ? 0.72 : 0.91, col: '#00f0ff' },
+      { label: 'HIGH-GAIN S-BAND TELEMETRY', val: cs.sBandLocked ? 'LOCKED (DSN GOLDSTONE)' : 'OMNI ANTENNA BACKUP', pct: cs.sBandLocked ? 0.96 : 0.45, col: '#10b981' }
     ];
     metrics.forEach((m, idx) => {
       const my = 110 + idx * 92;
@@ -2158,10 +2314,43 @@ class MissionSimulationTheater {
 
     // Bottom Schematic Readout
     ctx.fillStyle = '#fde68a';
-    ctx.font = 'bold 17px monospace';
-    ctx.fillText(`COORDINATES: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | STATUS: 1:1 CABIN INTERIOR`, 36, 475);
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(`COORDS: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | CLICK ANY 3D BUTTON OR SWITCH TO OPERATE`, 34, 478);
 
     return new THREE.CanvasTexture(canvas);
+  }
+
+  refreshCabinDisplays() {
+    if (this.dskyScreenMesh && this.dskyScreenMesh.material) {
+      if (this.dskyScreenMesh.material.map) this.dskyScreenMesh.material.map.dispose();
+      this.dskyScreenMesh.material.map = this.generateDSKYTexture(this.currentArtifact);
+      this.dskyScreenMesh.material.needsUpdate = true;
+    }
+    if (this.mainTelemetryMesh && this.mainTelemetryMesh.material) {
+      if (this.mainTelemetryMesh.material.map) this.mainTelemetryMesh.material.map.dispose();
+      this.mainTelemetryMesh.material.map = this.generateTelemetryScreenTexture(this.currentArtifact);
+      this.mainTelemetryMesh.material.needsUpdate = true;
+    }
+  }
+
+  playSwitchClickSound(freq = 880) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.uiAudioCtx) this.uiAudioCtx = new AudioCtx();
+      if (this.uiAudioCtx.state === 'suspended') this.uiAudioCtx.resume();
+      const osc = this.uiAudioCtx.createOscillator();
+      const gain = this.uiAudioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, this.uiAudioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.6, this.uiAudioCtx.currentTime + 0.055);
+      gain.gain.setValueAtTime(0.14, this.uiAudioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.uiAudioCtx.currentTime + 0.06);
+      osc.connect(gain);
+      gain.connect(this.uiAudioCtx.destination);
+      osc.start();
+      osc.stop(this.uiAudioCtx.currentTime + 0.065);
+    } catch (_) {}
   }
 
   buildWalkableLadderAndInterior(artifact) {
@@ -2169,29 +2358,68 @@ class MissionSimulationTheater {
       this.scene.remove(this.walkableInteriorGroup);
     }
     this.walkableInteriorGroup = new THREE.Group();
+    this.interactables = [];
+
+    // Live Interactive Cabin State
+    this.cabinState = {
+      prog: '68',
+      verb: '16',
+      noun: '65',
+      r1: '+00000',
+      r2: '+01969',
+      r3: '+00412',
+      compActy: true,
+      masterAlarm: false,
+      throttlePct: 0,
+      rcsArmed: true,
+      glycolPump: true,
+      sBandLocked: true,
+      lightMode: 0, // 0: Nominal White, 1: Deep-Space Cyan, 2: Red Night-Adaptation
+      hatchOpen: true
+    };
 
     const body = artifact ? (artifact.body || 'moon') : 'moon';
     const category = artifact ? (artifact.category || 'lander') : 'lander';
     const groundY0 = this.getTerrainHeight(0, 0);
-    const cabinFloorY = 4.5; // 4.5m above terrain so astronaut climbs the 12-rung ladder up into the cabin!
+    const cabinFloorY = 4.5;
 
-    // PBR Materials for NASA Spacecraft Interior & Boarding Ladder
-    const isogridAlum = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.78, roughness: 0.32 });
+    const isogridTex = this.generateIsogridTexture();
+    const kaptonBump = window.ProceduralTextures ? window.ProceduralTextures.generateKaptonFoilBump() : null;
+
+    // High-Precision PBR Materials for NASA Spacecraft Interior & Boarding Ladder
+    const isogridWallMat = new THREE.MeshStandardMaterial({
+      color: 0xdbeafe,
+      map: isogridTex,
+      bumpMap: isogridTex,
+      bumpScale: 0.035,
+      metalness: 0.72,
+      roughness: 0.34
+    });
+    const isogridAlum = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.84, roughness: 0.26 });
+    const chromeSwitchMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.95, roughness: 0.12 });
+    const brassNutMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.88, roughness: 0.24 });
     const darkPanelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
-    const charcoalRack = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.65, roughness: 0.4 });
-    const goldKapton = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
+    const charcoalRack = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.65, roughness: 0.38 });
+    const goldKapton = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.88,
+      roughness: 0.22,
+      bumpMap: kaptonBump,
+      bumpScale: 0.04
+    });
     const copperPipe = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.25 });
     const blueValve = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.22 });
     const redValve = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.85, roughness: 0.22 });
     const cyanGlow = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
     const greenGlow = new THREE.MeshBasicMaterial({ color: 0x10b981 });
     const amberGlow = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const redGlow = new THREE.MeshBasicMaterial({ color: 0xef4444 });
     const glassMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.18,
-      roughness: 0.1,
-      metalness: 0.9
+      opacity: 0.16,
+      roughness: 0.08,
+      metalness: 0.92
     });
 
     // =========================================================================
@@ -2200,108 +2428,127 @@ class MissionSimulationTheater {
     const ladderGroup = new THREE.Group();
     this.walkableInteriorGroup.add(ladderGroup);
 
-    // Slanted Twin Ladder Rails from (z = 6.2, y = groundY0) to Porch (z = 2.4, y = cabinFloorY)
     const ladderBottomZ = 6.2;
     const ladderTopZ = 2.45;
     const dy = cabinFloorY - groundY0;
     const dz = ladderBottomZ - ladderTopZ;
     const ladderLen = Math.hypot(dy, dz);
-    const ladderAngle = Math.atan2(dz, dy); // tilt angle from vertical
+    const ladderAngle = Math.atan2(dz, dy);
 
     for (let side = -1; side <= 1; side += 2) {
-      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, ladderLen, 14), isogridAlum);
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, ladderLen, 16), isogridAlum);
       rail.position.set(side * 0.48, groundY0 + dy * 0.5, (ladderBottomZ + ladderTopZ) * 0.5);
       rail.rotation.x = -ladderAngle;
       rail.castShadow = true;
       ladderGroup.add(rail);
 
-      // Raised Cyan Safety Handrail alongside the ladder for easy VR/Walk climbing
-      const handrail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, ladderLen, 12), cyanGlow);
+      const handrail = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, ladderLen, 12), cyanGlow);
       handrail.position.set(side * 0.56, groundY0 + dy * 0.5 + 0.35, (ladderBottomZ + ladderTopZ) * 0.5);
       handrail.rotation.x = -ladderAngle;
       ladderGroup.add(handrail);
     }
 
-    // 12 Grooved Non-Slip Aluminum Ladder Rungs
     const rungCount = 12;
     for (let r = 0; r < rungCount; r++) {
       const frac = (r + 0.5) / rungCount;
       const ry = groundY0 + frac * dy;
       const rz = ladderBottomZ - frac * dz;
-      const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.96, 12), isogridAlum);
+      const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.96, 14), isogridAlum);
       rung.rotation.z = Math.PI / 2;
       rung.position.set(0, ry, rz);
       rung.castShadow = true;
       ladderGroup.add(rung);
     }
 
-    // Glowing Green Footpad & Entry Marker at the Base of the Ladder (z = 6.2)
+    // Interactive Green Footpad at the Base of the Ladder (clicking it climbs directly into the cabin!)
     const entryPad = new THREE.Mesh(
-      new THREE.RingGeometry(0.55, 0.82, 32),
-      new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+      new THREE.RingGeometry(0.52, 0.85, 32),
+      new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.88 })
     );
     entryPad.rotation.x = -Math.PI / 2;
     entryPad.position.set(0, this.getExactSurfaceHeight(0, 6.3) + 0.04, 6.3);
+    entryPad.userData.interactive = {
+      label_tr: '🪜 [SOL TIK / VR TETİK] EVA MERDİVENİNDEN KABİN İÇİNE TIRMAN',
+      label_en: '🪜 [CLICK / VR TRIGGER] CLIMB EVA LADDER INTO CABIN',
+      onClick: () => {
+        this.playSwitchClickSound(620);
+        this.toggleCabinInterior();
+      }
+    };
+    this.interactables.push(entryPad);
     ladderGroup.add(entryPad);
 
-    // Top Ingress Porch Platform (z = 2.15 to 2.65, y = cabinFloorY)
-    const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.12, 0.75), isogridAlum);
-    porchDeck.position.set(0, cabinFloorY - 0.06, 2.38);
+    const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.12, 0.82), isogridWallMat);
+    porchDeck.position.set(0, cabinFloorY - 0.06, 2.40);
     porchDeck.castShadow = true;
     ladderGroup.add(porchDeck);
 
-    // Lower Exterior Support Columns so the cabin stays supported even when exterior hull is cut away
+    // Porch Handrails
+    for (let side = -1; side <= 1; side += 2) {
+      const pRail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.78), isogridAlum);
+      pRail.position.set(side * 0.78, cabinFloorY + 0.35, 2.40);
+      ladderGroup.add(pRail);
+    }
+
     for (let sx = -1; sx <= 1; sx += 2) {
       for (let sz = -1; sz <= 1; sz += 2) {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, cabinFloorY, 12), goldKapton);
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, cabinFloorY, 14), goldKapton);
         pillar.position.set(sx * 1.95, cabinFloorY * 0.5, sz * 1.95);
         this.walkableInteriorGroup.add(pillar);
       }
     }
 
     // =========================================================================
-    // 2. WALK-IN PRESSURIZED NASA CABIN SHELL (4.5m Wide x 3.1m High x 4.5m Deep)
+    // 2. WALK-IN PRESSURIZED NASA CABIN SHELL (CNC-Milled Triangular Isogrid)
     // =========================================================================
     const cabinGroup = new THREE.Group();
     cabinGroup.position.set(0, cabinFloorY, 0);
     this.walkableInteriorGroup.add(cabinGroup);
 
-    // Milled Aluminum Isogrid Cabin Floor Deck (with Blue Velcro EVA Restraint Pads)
-    const floorDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), isogridAlum);
+    const floorDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), isogridWallMat);
     floorDeck.position.set(0, -0.08, 0);
     floorDeck.receiveShadow = true;
     cabinGroup.add(floorDeck);
 
     for (let vx = -1; vx <= 1; vx += 2) {
-      const velcroPad = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.015, 1.8), blueValve);
+      const velcroPad = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.016, 1.85), blueValve);
       velcroPad.position.set(vx * 0.95, 0.01, 0.2);
       cabinGroup.add(velcroPad);
     }
 
-    // Cabin Ceiling Deck + Overhead Rendezvous Window + Interior LED Floodlights
     const ceilingDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), darkPanelMat);
     ceilingDeck.position.set(0, 3.1, 0);
     cabinGroup.add(ceilingDeck);
 
-    // Overhead Docking / COAS Viewport Window
-    const topWindowFrame = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.06, 12, 28), isogridAlum);
+    // Overhead Docking / COAS Viewport Window + 3D COAS Collimator Sight
+    const topWindowFrame = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.06, 14, 32), isogridAlum);
     topWindowFrame.rotation.x = Math.PI / 2;
     topWindowFrame.position.set(0, 3.01, -0.4);
-    const topWindowGlass = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), cyanGlow);
+    const topWindowGlass = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), glassMat);
     topWindowGlass.rotation.x = Math.PI / 2;
     topWindowGlass.position.set(0, 3.01, -0.4);
     cabinGroup.add(topWindowFrame, topWindowGlass);
 
-    // Bright Warm & Cool Interior Cabin PointLights (so all switches & screens shine crisply)
-    const cabinLightMain = new THREE.PointLight(0xf8fafc, 2.4, 12);
-    cabinLightMain.position.set(0, 2.75, 0);
-    cabinGroup.add(cabinLightMain);
+    // 3D Crew Optical Alignment Sight (COAS) mounted above Commander's station
+    const coasGroup = new THREE.Group();
+    coasGroup.position.set(-0.95, 2.35, -1.88);
+    const coasBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.26, 16), charcoalRack);
+    coasBarrel.rotation.x = Math.PI / 3;
+    const coasGlass = new THREE.Mesh(new THREE.CircleGeometry(0.052, 16), greenGlow);
+    coasGlass.position.set(0, -0.09, 0.11);
+    coasGroup.add(coasBarrel, coasGlass);
+    cabinGroup.add(coasGroup);
 
-    const cabinLightConsole = new THREE.PointLight(0x38bdf8, 1.4, 7);
-    cabinLightConsole.position.set(0, 1.85, -1.55);
-    cabinGroup.add(cabinLightConsole);
+    // Dynamic Interior Cabin PointLights (controllable via 3D Lighting Switch!)
+    this.cabinLightMain = new THREE.PointLight(0xf8fafc, 2.5, 12);
+    this.cabinLightMain.position.set(0, 2.75, 0);
+    cabinGroup.add(this.cabinLightMain);
 
-    // Structural Isogrid Ring Frames (Ribs) around the Cabin Perimeter
+    this.cabinLightConsole = new THREE.PointLight(0x38bdf8, 1.5, 7);
+    this.cabinLightConsole.position.set(0, 1.85, -1.55);
+    cabinGroup.add(this.cabinLightConsole);
+
+    // Structural Milled Isogrid Ring Frames (Ribs) around the Cabin Perimeter
     for (let rz = -1.8; rz <= 1.8; rz += 1.2) {
       const leftRib = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.1, 0.12), isogridAlum);
       leftRib.position.set(-2.15, 1.55, rz);
@@ -2312,43 +2559,81 @@ class MissionSimulationTheater {
       cabinGroup.add(leftRib, rightRib, topRib);
     }
 
-    // Back (+Z) Wall with Open Central Ingress/Egress Hatch Doorway (x from -0.75 to +0.75 is OPEN!)
-    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), darkPanelMat);
+    // Back (+Z) Bulkhead with Open Ingress/Egress Hatch Doorway + Stowed PLSS & ALSRC Rock Boxes
+    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), isogridWallMat);
     backWallLeft.position.set(-1.5, 1.55, 2.18);
-    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), darkPanelMat);
+    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), isogridWallMat);
     backWallRight.position.set(1.5, 1.55, 2.18);
-    const backWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.85, 0.14), darkPanelMat);
+    const backWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.85, 0.14), isogridWallMat);
     backWallHeader.position.set(0, 2.68, 2.18);
     cabinGroup.add(backWallLeft, backWallRight, backWallHeader);
 
-    // Outward-Swung Open Squared Hatch Door with Pressure Relief Valve Wheel
+    // Interactive Squared Ingress Hatch Door & Red Pressure-Relief Valve Wheel
     const hatchDoor = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.15, 0.09), isogridAlum);
     hatchDoor.position.set(1.15, 1.12, 2.65);
     hatchDoor.rotation.y = -Math.PI * 0.35;
-    const hatchWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 10, 20), redValve);
+    const hatchWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.028, 12, 24), redValve);
     hatchWheel.position.set(0, 0, -0.06);
+    // Cross spokes for valve wheel
+    for (let sp = 0; sp < 2; sp++) {
+      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 8), chromeSwitchMat);
+      spoke.rotation.z = (sp * Math.PI) / 2;
+      spoke.position.z = -0.06;
+      hatchDoor.add(spoke);
+    }
     hatchDoor.add(hatchWheel);
+
+    const hatchInteract = {
+      label_tr: '🚪 [SOL TIK / VR TETİK] BASINÇLI GİRİŞ KAPAĞINI & VALFİNİ ÇEVİR (YÜZEYE ÇIK / AÇ-KAPAT)',
+      label_en: '🚪 [CLICK / VR TRIGGER] OPERATE PRESSURIZED HATCH & VALVE WHEEL',
+      onClick: () => {
+        this.playSwitchClickSound(440);
+        this.cabinState.hatchOpen = !this.cabinState.hatchOpen;
+        hatchWheel.rotation.z += Math.PI * 0.5;
+        hatchDoor.rotation.y = this.cabinState.hatchOpen ? -Math.PI * 0.35 : 0;
+        hatchDoor.position.set(
+          this.cabinState.hatchOpen ? 1.15 : 0,
+          1.12,
+          this.cabinState.hatchOpen ? 2.65 : 2.18
+        );
+      }
+    };
+    hatchDoor.userData.interactive = hatchInteract;
+    hatchWheel.userData.interactive = hatchInteract;
+    this.interactables.push(hatchDoor, hatchWheel);
     cabinGroup.add(hatchDoor);
 
+    // Stowed EVA PLSS Backpacks & Apollo Lunar Sample Return Containers (ALSRC Rock Boxes) on Rear Wall
+    for (let side = -1; side <= 1; side += 2) {
+      const stowedPlss = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.56, 0.22), isogridAlum);
+      stowedPlss.position.set(side * 1.48, 1.55, 1.96);
+      const plssBand = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.05, 0.23), redValve);
+      plssBand.position.y = 0.22;
+      stowedPlss.add(plssBand);
+      cabinGroup.add(stowedPlss);
+
+      // ALSRC Metallic Lunar Rock Sample Box with Latches on Floor
+      const rockBox = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 0.34), chromeSwitchMat);
+      rockBox.position.set(side * 1.48, 0.15, 1.85);
+      cabinGroup.add(rockBox);
+    }
+
     // =========================================================================
-    // 3. FORWARD FLIGHT DECK (-Z WALL) WITH CANTILEVERED WINDOWS, DSKY & FDAI 8-BALLS
+    // 3. FORWARD FLIGHT DECK (-Z WALL): 3D DSKY KEYS, 3D SWITCHES, KNOBS, ACA JOYSTICK
     // =========================================================================
-    // Lower & Center Front Bulkhead (leaving Left & Right Observation Windows open!)
-    const frontLowerWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.15, 0.16), darkPanelMat);
+    const frontLowerWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.15, 0.16), isogridWallMat);
     frontLowerWall.position.set(0, 0.58, -2.18);
-    const frontTopWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.72, 0.16), darkPanelMat);
+    const frontTopWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.72, 0.16), isogridWallMat);
     frontTopWall.position.set(0, 2.74, -2.18);
-    const frontCenterPillar = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.35, 0.18), charcoalRack);
+    const frontCenterPillar = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.38, 0.18), charcoalRack);
     frontCenterPillar.position.set(0, 1.80, -2.12);
     cabinGroup.add(frontLowerWall, frontTopWall, frontCenterPillar);
 
-    // Left (Commander) & Right (LMP) Cantilevered Transparent Observation Windows (y = 1.15 to 2.38)
     for (let side = -1; side <= 1; side += 2) {
       const winGlass = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 1.18), glassMat);
       winGlass.position.set(side * 1.42, 1.76, -2.16);
       cabinGroup.add(winGlass);
 
-      // Glowing Reticle / COAS Landing LPD Scale Marks etched on the left Commander Window
       if (side === -1) {
         for (let tick = -4; tick <= 4; tick++) {
           const tickBar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.006, 0.004), amberGlow);
@@ -2359,156 +2644,561 @@ class MissionSimulationTheater {
     }
 
     // Sloped Main Flight Instrument Console Desk (y = 1.05, z = -1.85)
-    const consoleDesk = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.18, 0.68), charcoalRack);
-    consoleDesk.position.set(0, 1.06, -1.86);
+    const consoleDesk = new THREE.Mesh(new THREE.BoxGeometry(4.15, 0.18, 0.72), charcoalRack);
+    consoleDesk.position.set(0, 1.04, -1.84);
     consoleDesk.rotation.x = 0.22;
     cabinGroup.add(consoleDesk);
 
     // High-Resolution Wide NASA Telemetry & Radar Altimeter Display on Center Pillar
     const mainScreenMat = new THREE.MeshBasicMaterial({ map: this.generateTelemetryScreenTexture(artifact) });
-    const mainScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 0.66), mainScreenMat);
-    mainScreen.position.set(0, 2.02, -2.01);
-    cabinGroup.add(mainScreen);
+    this.mainTelemetryMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 0.68), mainScreenMat);
+    this.mainTelemetryMesh.position.set(0, 2.04, -2.01);
+    cabinGroup.add(this.mainTelemetryMesh);
 
-    // Authentic Apollo Guidance Computer DSKY (Display & Keyboard) mounted at Center Console
-    const dskyBox = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.16), charcoalRack);
-    dskyBox.position.set(0, 1.38, -1.96);
-    dskyBox.rotation.x = -0.18;
-    const dskyFace = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.39, 0.41),
+    // -------------------------------------------------------------------------
+    // 3A. INTERACTIVE APOLLO GUIDANCE COMPUTER DSKY WITH 19 PHYSICAL 3D BEVELED KEYS!
+    // -------------------------------------------------------------------------
+    const dskyGroup = new THREE.Group();
+    dskyGroup.position.set(0, 1.38, -1.94);
+    dskyGroup.rotation.x = -0.18;
+    cabinGroup.add(dskyGroup);
+
+    const dskyHousing = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.48, 0.14), charcoalRack);
+    dskyGroup.add(dskyHousing);
+
+    // Metallic Bezel Frame around DSKY
+    const dskyBezel = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.50, 0.12), isogridAlum);
+    dskyBezel.position.z = -0.01;
+    dskyGroup.add(dskyBezel);
+
+    this.dskyScreenMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.43, 0.45),
       new THREE.MeshBasicMaterial({ map: this.generateDSKYTexture(artifact) })
     );
-    dskyFace.position.z = 0.082;
-    dskyBox.add(dskyFace);
-    cabinGroup.add(dskyBox);
+    this.dskyScreenMesh.position.z = 0.072;
+    dskyGroup.add(this.dskyScreenMesh);
 
-    // Dual 3D Gimbaled FDAI "8-Ball" Attitude Director Indicators (Left & Right of DSKY)
+    // 19 Individual 3D Sculpted Pushbutton Keycaps on the Lower DSKY Matrix!
+    const dskyKeys = [
+      'VERB', '+', '7', '8', '9', 'CLR', 'ENTR',
+      'NOUN', '-', '4', '5', '6', 'PRO', 'RSET',
+      'KEY', '0', '1', '2', '3', 'REL', 'STBY'
+    ];
+    const progs = [
+      { prog: '63', verb: '06', noun: '63', r1: '-00485', r2: '-00124', r3: '+04250' },
+      { prog: '64', verb: '16', noun: '64', r1: '+00042', r2: '-00018', r3: '+00520' },
+      { prog: '66', verb: '06', noun: '60', r1: '-00003', r2: '-00001', r3: '+00045' },
+      { prog: '68', verb: '16', noun: '65', r1: '+00000', r2: '+01969', r3: '+00412' },
+      { prog: '12', verb: '37', noun: '12', r1: '+01850', r2: '+00640', r3: '+05520' }
+    ];
+    let progIdx = 3;
+
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 7; c++) {
+        const keyLabel = dskyKeys[r * 7 + c];
+        const isActionKey = ['VERB', 'NOUN', 'PRO', 'ENTR', 'CLR', 'RSET'].includes(keyLabel);
+        const keyCapGroup = new THREE.Group();
+        const kx = (c - 3) * 0.056;
+        const ky = -0.072 - r * 0.056;
+        keyCapGroup.position.set(kx, ky, 0.082);
+
+        // Metallic Key Collar
+        const collar = new THREE.Mesh(new THREE.BoxGeometry(0.050, 0.048, 0.018), isogridAlum);
+        // Depressable 3D Illuminated Keycap
+        const capMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.044, 0.042, 0.024),
+          new THREE.MeshBasicMaterial({ map: this.generateKeyCapTexture(keyLabel, isActionKey) })
+        );
+        capMesh.position.z = 0.008;
+        keyCapGroup.add(collar, capMesh);
+
+        capMesh.userData.interactive = {
+          label_tr: `⌨️ [SOL TIK / VR TETİK] DSKY 3B TUŞU: "${keyLabel}" (AGC Bilgisayar Komutu Gönder)`,
+          label_en: `⌨️ [CLICK / VR TRIGGER] DSKY 3D KEY: "${keyLabel}" (Execute AGC Command)`,
+          onClick: () => {
+            this.playSwitchClickSound(isActionKey ? 1040 : 780);
+            // Mechanical 3D keycap depression animation!
+            capMesh.position.z = 0.001;
+            setTimeout(() => { capMesh.position.z = 0.008; }, 140);
+
+            if (keyLabel === 'PRO' || keyLabel === 'ENTR' || keyLabel === 'VERB' || keyLabel === 'NOUN') {
+              progIdx = (progIdx + 1) % progs.length;
+              const p = progs[progIdx];
+              this.cabinState.prog = p.prog;
+              this.cabinState.verb = p.verb;
+              this.cabinState.noun = p.noun;
+              this.cabinState.r1 = p.r1;
+              this.cabinState.r2 = p.r2;
+              this.cabinState.r3 = p.r3;
+              this.cabinState.compActy = !this.cabinState.compActy;
+            } else if (keyLabel === 'CLR' || keyLabel === 'RSET') {
+              this.cabinState.r1 = '+00000';
+              this.cabinState.r2 = '+00000';
+              this.cabinState.r3 = '+00000';
+              this.cabinState.masterAlarm = false;
+            } else if (/^[0-9]$/.test(keyLabel)) {
+              this.cabinState.r1 = '+' + (this.cabinState.r1.slice(2) + keyLabel).slice(-5);
+            }
+            this.refreshCabinDisplays();
+          }
+        };
+        this.interactables.push(capMesh);
+        dskyGroup.add(keyCapGroup);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 3B. DUAL 3D GIMBALED FDAI "8-BALL" ATTITUDE INDICATORS (Interactive!)
+    // -------------------------------------------------------------------------
+    this.fdaiBalls = [];
     for (let side = -1; side <= 1; side += 2) {
-      const fdaiBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 24), isogridAlum);
+      const fdaiBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.155, 0.12, 28), isogridAlum);
       fdaiBezel.rotation.x = Math.PI / 2;
-      fdaiBezel.position.set(side * 0.45, 1.46, -1.98);
+      fdaiBezel.position.set(side * 0.48, 1.46, -1.98);
       cabinGroup.add(fdaiBezel);
 
-      const navBall = new THREE.Mesh(new THREE.SphereGeometry(0.125, 24, 24), charcoalRack);
-      navBall.position.set(side * 0.45, 1.46, -1.94);
-      // Equator & meridian rings on the 8-Ball
-      const eqRing = new THREE.Mesh(new THREE.TorusGeometry(0.126, 0.006, 8, 24), cyanGlow);
+      const navBall = new THREE.Mesh(new THREE.SphereGeometry(0.128, 28, 28), charcoalRack);
+      navBall.position.set(side * 0.48, 1.46, -1.94);
+      const eqRing = new THREE.Mesh(new THREE.TorusGeometry(0.130, 0.006, 10, 28), cyanGlow);
       navBall.add(eqRing);
-      const merRing = new THREE.Mesh(new THREE.TorusGeometry(0.126, 0.006, 8, 24), amberGlow);
+      const merRing = new THREE.Mesh(new THREE.TorusGeometry(0.130, 0.006, 10, 28), amberGlow);
       merRing.rotation.x = Math.PI / 2;
       navBall.add(merRing);
+
+      navBall.userData.interactive = {
+        label_tr: '🧭 [SOL TIK / VR TETİK] FDAI "8-BALL" JİROSKOP YÖNELİM KÜRESİNİ KALİBRE ET',
+        label_en: '🧭 [CLICK / VR TRIGGER] CALIBRATE FDAI 8-BALL ATTITUDE GYRO',
+        onClick: () => {
+          this.playSwitchClickSound(720);
+          navBall.rotation.x += 0.45;
+          navBall.rotation.y += 0.65;
+        }
+      };
+      this.interactables.push(navBall);
+      this.fdaiBalls.push(navBall);
       cabinGroup.add(navBall);
     }
 
-    // Center Thrust / Descent Engine Throttle Lever & Red Guarded ABORT STAGE Button
+    // -------------------------------------------------------------------------
+    // 3C. MULTI-PART 3D TOGGLE SWITCHES WITH HEX NUTS, U-GUARDS & LED JEWELS
+    // -------------------------------------------------------------------------
+    const consoleSwitches = [
+      {
+        x: -0.92,
+        name_tr: 'ANA MOTOR İTKİ KONTROLÜ (DESCENT ENGINE ARM)',
+        name_en: 'DESCENT ENGINE ARM SWITCH',
+        onToggle: (st) => {
+          this.cabinState.throttlePct = st ? 65 : 0;
+        }
+      },
+      {
+        x: -0.74,
+        name_tr: 'RCS YÖNELİM İTİCİLERİ (4 QUAD THRUSTER BUS)',
+        name_en: 'RCS 4-QUAD THRUSTER BUS SWITCH',
+        onToggle: (st) => {
+          this.cabinState.rcsArmed = st;
+        }
+      },
+      {
+        x: 0.74,
+        name_tr: 'GLİKOL TERMAL SOĞUTMA POMPASI (ECS GLYCOL PUMP)',
+        name_en: 'ECS GLYCOL COOLING PUMP SWITCH',
+        onToggle: (st) => {
+          this.cabinState.glycolPump = st;
+        }
+      },
+      {
+        x: 0.92,
+        name_tr: 'S-BAND YÜKSEK KAZANÇLI TELEMETRİ ANTENİ',
+        name_en: 'S-BAND HIGH-GAIN ANTENNA LOCK SWITCH',
+        onToggle: (st) => {
+          this.cabinState.sBandLocked = st;
+        }
+      },
+      {
+        x: 1.12,
+        name_tr: 'KABİN İÇ AYDINLATMA MODU (BEYAZ / SİBER / GECE KIRMIZI)',
+        name_en: 'CABIN FLOODLIGHT MODE SWITCH',
+        onToggle: () => {
+          this.cabinState.lightMode = (this.cabinState.lightMode + 1) % 3;
+          if (this.cabinLightMain) {
+            const colors = [0xf8fafc, 0x00f0ff, 0xef4444];
+            this.cabinLightMain.color.setHex(colors[this.cabinState.lightMode]);
+          }
+        }
+      }
+    ];
+
+    consoleSwitches.forEach((swCfg) => {
+      const swGroup = new THREE.Group();
+      swGroup.position.set(swCfg.x, 1.16, -1.72);
+      swGroup.rotation.x = 0.22;
+
+      // 6-Sided Hexagonal Mounting Nut & Bushing
+      const hexNut = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.018, 6), brassNutMat);
+      const bushing = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.032, 12), isogridAlum);
+      bushing.position.y = 0.015;
+      swGroup.add(hexNut, bushing);
+
+      // U-Shaped Safety Switch Guard Brackets on Left & Right of Toggle
+      for (let gSide = -1; gSide <= 1; gSide += 2) {
+        const guard = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.0045, 8, 16, Math.PI), chromeSwitchMat);
+        guard.position.set(gSide * 0.026, 0.01, 0);
+        guard.rotation.y = Math.PI / 2;
+        swGroup.add(guard);
+      }
+
+      //Glowing Status LED Jewel behind the switch
+      const ledJewel = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 12), greenGlow);
+      ledJewel.position.set(0, 0.012, -0.055);
+      swGroup.add(ledJewel);
+
+      // Pivoting 3D Tapered Chrome Bat-Handle Lever
+      const leverPivot = new THREE.Group();
+      leverPivot.position.y = 0.025;
+      leverPivot.rotation.x = -0.45; // Start in ON position
+      const leverShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.065, 12), chromeSwitchMat);
+      leverShaft.position.y = 0.032;
+      const leverTip = new THREE.Mesh(new THREE.SphereGeometry(0.010, 12, 12), chromeSwitchMat);
+      leverTip.position.y = 0.065;
+      leverPivot.add(leverShaft, leverTip);
+      swGroup.add(leverPivot);
+
+      let isOn = true;
+      const toggleAction = {
+        label_tr: `🎚️ [SOL TIK / VR TETİK] 3B ŞALTER: ${swCfg.name_tr}`,
+        label_en: `🎚️ [CLICK / VR TRIGGER] 3D SWITCH: ${swCfg.name_en}`,
+        onClick: () => {
+          this.playSwitchClickSound(isOn ? 640 : 960);
+          isOn = !isOn;
+          leverPivot.rotation.x = isOn ? -0.45 : 0.45;
+          ledJewel.material = isOn ? greenGlow : amberGlow;
+          swCfg.onToggle(isOn);
+          this.refreshCabinDisplays();
+        }
+      };
+      leverShaft.userData.interactive = toggleAction;
+      leverTip.userData.interactive = toggleAction;
+      hexNut.userData.interactive = toggleAction;
+      this.interactables.push(leverShaft, leverTip, hexNut);
+      cabinGroup.add(swGroup);
+    });
+
+    // -------------------------------------------------------------------------
+    // 3D. KNURLED ROTARY SELECTOR KNOBS ON MAIN CONSOLE
+    // -------------------------------------------------------------------------
+    for (let k = -1; k <= 1; k += 2) {
+      const knobGroup = new THREE.Group();
+      knobGroup.position.set(k * 1.32, 1.15, -1.72);
+      knobGroup.rotation.x = 0.22;
+
+      const knobBase = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, 0.025, 16), charcoalRack);
+      const knobDial = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.042, 12), isogridAlum);
+      knobDial.position.y = 0.022;
+      const pointerBar = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.012, 0.038), cyanGlow);
+      pointerBar.position.set(0, 0.042, -0.01);
+      knobDial.add(pointerBar);
+      knobGroup.add(knobBase, knobDial);
+
+      knobDial.userData.interactive = {
+        label_tr: `🎛️ [SOL TIK / VR TETİK] DÖNER FREKANS & SENSÖR SEÇİCİ KADRAN (ROTARY DIAL)`,
+        label_en: `🎛️ [CLICK / VR TRIGGER] ROTATE AVIONICS MODE SELECTOR DIAL`,
+        onClick: () => {
+          this.playSwitchClickSound(820);
+          knobDial.rotation.y += Math.PI / 4;
+          if (this.fdaiBalls.length > 0) {
+            this.fdaiBalls.forEach((b) => { b.rotation.z += 0.25; });
+          }
+        }
+      };
+      this.interactables.push(knobDial);
+      cabinGroup.add(knobGroup);
+    }
+
+    // -------------------------------------------------------------------------
+    // 3E. INTERACTIVE 3D THROTTLE QUADRANT, ABORT STAGE BUTTON & ACA JOYSTICK
+    // -------------------------------------------------------------------------
     const throttleBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.26), darkPanelMat);
     throttleBase.position.set(-0.42, 1.16, -1.68);
-    const throttleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24, 10), isogridAlum);
-    throttleHandle.position.set(0, 0.14, 0);
-    throttleHandle.rotation.x = 0.35;
-    const throttleGrip = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.045, 0.045), redValve);
-    throttleGrip.position.set(0, 0.24, 0.04);
-    throttleBase.add(throttleHandle, throttleGrip);
+    const throttlePivot = new THREE.Group();
+    throttlePivot.position.set(0, 0.05, 0);
+    throttlePivot.rotation.x = 0.45;
+    const throttleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24, 12), chromeSwitchMat);
+    throttleHandle.position.set(0, 0.12, 0);
+    const throttleGrip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.048, 0.048), redValve);
+    throttleGrip.position.set(0, 0.24, 0);
+    throttlePivot.add(throttleHandle, throttleGrip);
+    throttleBase.add(throttlePivot);
     cabinGroup.add(throttleBase);
 
-    const abortButton = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.12), redValve);
-    abortButton.position.set(0.42, 1.15, -1.68);
-    cabinGroup.add(abortButton);
+    const throttleAction = {
+      label_tr: '🚀 [SOL TIK / VR TETİK] ANA İTKİ GAZ KOLU (DPS THROTTLE: %0 -> %25 -> %65 -> %100)',
+      label_en: '🚀 [CLICK / VR TRIGGER] ADVANCE DESCENT ENGINE THROTTLE LEVER',
+      onClick: () => {
+        const steps = [0, 25, 65, 100];
+        const nextIdx = (steps.indexOf(this.cabinState.throttlePct) + 1) % steps.length;
+        this.cabinState.throttlePct = steps[nextIdx];
+        this.playSwitchClickSound(420 + this.cabinState.throttlePct * 4);
+        throttlePivot.rotation.x = 0.45 - (this.cabinState.throttlePct / 100) * 0.95;
+        this.refreshCabinDisplays();
+      }
+    };
+    throttleGrip.userData.interactive = throttleAction;
+    throttleHandle.userData.interactive = throttleAction;
+    this.interactables.push(throttleGrip, throttleHandle);
+
+    // Guarded Red ABORT STAGE / MASTER ALARM Illuminated Pushbutton
+    const abortHousing = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.14), isogridAlum);
+    abortHousing.position.set(0.42, 1.14, -1.68);
+    const abortPlunger = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.06, 0.10), redGlow);
+    abortPlunger.position.y = 0.025;
+    abortHousing.add(abortPlunger);
+    cabinGroup.add(abortHousing);
+
+    abortPlunger.userData.interactive = {
+      label_tr: '🚨 [SOL TIK / VR TETİK] MASTER ALARM & ABORT STAGE ACİL DURUM BUTONU',
+      label_en: '🚨 [CLICK / VR TRIGGER] MASTER ALARM & STAGE ABORT PUSHBUTTON',
+      onClick: () => {
+        this.cabinState.masterAlarm = !this.cabinState.masterAlarm;
+        this.playSwitchClickSound(this.cabinState.masterAlarm ? 1320 : 520);
+        abortPlunger.position.y = 0.008;
+        setTimeout(() => { abortPlunger.position.y = 0.025; }, 160);
+        if (this.cabinLightConsole) {
+          this.cabinLightConsole.color.setHex(this.cabinState.masterAlarm ? 0xef4444 : 0x38bdf8);
+        }
+        this.refreshCabinDisplays();
+      }
+    };
+    this.interactables.push(abortPlunger);
+
+    // 3D Apollo ACA (Attitude Controller Assembly) 3-Axis Pistol-Grip Joystick on Right Armrest
+    const acaBase = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.22), charcoalRack);
+    acaBase.position.set(1.62, 1.08, -1.62);
+    const acaBoot = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.08, 14), darkPanelMat);
+    acaBoot.position.y = 0.08;
+    const acaStick = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.19, 12), charcoalRack);
+    acaStick.position.set(0, 0.16, 0);
+    acaStick.rotation.x = -0.15;
+    const acaTrigger = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.035, 0.025), redValve);
+    acaTrigger.position.set(0, 0.05, -0.022);
+    acaStick.add(acaTrigger);
+    acaBase.add(acaBoot, acaStick);
+    cabinGroup.add(acaBase);
+
+    acaStick.userData.interactive = {
+      label_tr: '🕹️ [SOL TIK / VR TETİK] ACA 3-EKSENLİ YÖNELİM JOYSTICK KOLU (RCS PITCH/ROLL TESTİ)',
+      label_en: '🕹️ [CLICK / VR TRIGGER] ACA 3-AXIS ATTITUDE CONTROLLER JOYSTICK',
+      onClick: () => {
+        this.playSwitchClickSound(740);
+        acaStick.rotation.z = acaStick.rotation.z > 0 ? -0.25 : 0.25;
+        this.fdaiBalls.forEach((b) => {
+          b.rotation.x += 0.35;
+          b.rotation.z -= 0.28;
+        });
+      }
+    };
+    this.interactables.push(acaStick);
 
     // =========================================================================
-    // 4. LEFT & RIGHT SIDE WALLS + MISSION-SPECIFIC INTERNAL PAYLOAD BAYS
+    // 4. LEFT & RIGHT SIDE WALLS + INTERACTIVE 120-BREAKER PANEL & CORE MODULE
     // =========================================================================
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), darkPanelMat);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), isogridWallMat);
     leftWall.position.set(-2.18, 1.55, 0);
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), darkPanelMat);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), isogridWallMat);
     rightWall.position.set(2.18, 1.55, 0);
     cabinGroup.add(leftWall, rightWall);
 
-    // Left Wall: Panels 11 & 16 Circuit Breaker Array (120+ Individual 3D Toggle Switches!)
-    const cbBoard = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.45, 2.6), charcoalRack);
+    // Left Wall: Panels 11 & 16 Circuit Breaker Array (120 Individual Interactive 3D Breakers with Hex Collars!)
+    const cbBoard = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.48, 2.65), charcoalRack);
     cbBoard.position.set(-2.06, 1.72, -0.2);
     cabinGroup.add(cbBoard);
 
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 15; col++) {
-        const swMat = (row + col) % 7 === 0 ? redValve : (row + col) % 5 === 0 ? amberGlow : isogridAlum;
-        const breaker = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.045, 8), swMat);
+        const isRed = (row + col) % 7 === 0;
+        const isAmber = (row + col) % 5 === 0;
+        const swMat = isRed ? redValve : isAmber ? amberGlow : chromeSwitchMat;
+        const breaker = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.052, 10), swMat);
         breaker.rotation.z = Math.PI / 2;
-        breaker.position.set(-2.01, 1.15 + row * 0.16, -1.32 + col * 0.16);
+        breaker.position.set(-2.00, 1.15 + row * 0.16, -1.32 + col * 0.16);
+
+        let pushedIn = true;
+        breaker.userData.interactive = {
+          label_tr: `⚡ [SOL TIK / VR TETİK] PANEL 11 DEVRE KESİCİ #${row * 15 + col + 1} (AÇ / KAPAT)`,
+          label_en: `⚡ [CLICK / VR TRIGGER] PANEL 11 CIRCUIT BREAKER #${row * 15 + col + 1} (PULL / PUSH)`,
+          onClick: () => {
+            this.playSwitchClickSound(pushedIn ? 580 : 920);
+            pushedIn = !pushedIn;
+            breaker.position.x = pushedIn ? -2.00 : -1.96;
+          }
+        };
+        this.interactables.push(breaker);
         cabinGroup.add(breaker);
       }
     }
 
-    // Right Wall: Environmental Control System (ECS) LiOH Canisters, O2/Glycol Pipes & Avionics Racks
+    // Right Wall: Environmental Control System (ECS) LiOH Canisters, O2/Glycol Pipes & Interactive Valves
     for (let p = 0; p < 4; p++) {
       const pipe = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, 2.8, 12),
+        new THREE.CylinderGeometry(0.035, 0.035, 2.8, 14),
         p % 2 === 0 ? copperPipe : isogridAlum
       );
       pipe.position.set(2.02, 1.45, -1.2 + p * 0.32);
       cabinGroup.add(pipe);
 
       const valveWheel = new THREE.Mesh(
-        new THREE.TorusGeometry(0.075, 0.016, 8, 16),
+        new THREE.TorusGeometry(0.082, 0.018, 10, 20),
         p % 2 === 0 ? blueValve : redValve
       );
       valveWheel.rotation.y = Math.PI / 2;
-      valveWheel.position.set(1.96, 1.35 + (p % 2) * 0.35, -1.2 + p * 0.32);
+      valveWheel.position.set(1.95, 1.35 + (p % 2) * 0.35, -1.2 + p * 0.32);
+      valveWheel.userData.interactive = {
+        label_tr: `🔧 [SOL TIK / VR TETİK] ECS OKSİJEN / GLİKOL AKIŞ VALFİ #${p + 1} ÇEVİR`,
+        label_en: `🔧 [CLICK / VR TRIGGER] TURN ECS OXYGEN / GLYCOL VALVE #${p + 1}`,
+        onClick: () => {
+          this.playSwitchClickSound(510);
+          valveWheel.rotation.x += Math.PI / 3;
+        }
+      };
+      this.interactables.push(valveWheel);
       cabinGroup.add(valveWheel);
     }
 
-    // LiOH CO2 Scrubber Canisters & Stowed EVA PLSS Life-Support Packs
     for (let c = 0; c < 2; c++) {
-      const canister = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.68, 18), isogridAlum);
+      const canister = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.68, 20), isogridAlum);
       canister.position.set(1.82, 0.55, 0.45 + c * 0.65);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 18), goldKapton);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 20), goldKapton);
       cap.position.y = 0.34;
       canister.add(cap);
       cabinGroup.add(canister);
     }
 
-    // Mission-Specific Center Pedestal / Internal Core Module (at x = 0, z = -0.35)
+    // Mission-Specific Center Pedestal / Internal Core Module (Interactive!)
     if (category === 'impact') {
-      // SATURN V S-IVB / ORBITER INSTRUMENT UNIT: ST-124M Inertial Gyro Platform & Cryogenic Feedlines
       const gyroPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.58, 0.85, 24), charcoalRack);
       gyroPedestal.position.set(0, 0.42, -0.45);
-      const gyroSphere = new THREE.Mesh(new THREE.SphereGeometry(0.38, 24, 24), goldKapton);
+      const gyroSphere = new THREE.Mesh(new THREE.SphereGeometry(0.38, 28, 28), goldKapton);
       gyroSphere.position.set(0, 1.05, -0.45);
       const gyroRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.025, 12, 28), cyanGlow);
       gyroRing.position.set(0, 1.05, -0.45);
       gyroRing.rotation.x = Math.PI / 3;
+      gyroRing.userData.interactive = {
+        label_tr: '🛰️ [SOL TIK / VR TETİK] SATURN V ST-124M ATALETSEL JİROSKOP HALKASINI DÖNDÜR',
+        label_en: '🛰️ [CLICK / VR TRIGGER] SPIN ST-124M INERTIAL PLATFORM GYRO RING',
+        onClick: () => {
+          this.playSwitchClickSound(890);
+          gyroRing.rotation.x += 0.6;
+          gyroRing.rotation.y += 0.6;
+        }
+      };
+      this.interactables.push(gyroRing);
       cabinGroup.add(gyroPedestal, gyroSphere, gyroRing);
     } else if (body === 'mars' || body === 'venus' || body === 'outer') {
-      // ROVER / PROBE / VENERA / HUYGENS INTERNAL CORE: MMRTG Pu-238 Nuclear Heat Core + Sample Caching Carousel
-      const rtgPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.92, 20), charcoalRack);
+      const rtgPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.92, 24), charcoalRack);
       rtgPedestal.position.set(0, 0.46, -0.45);
       cabinGroup.add(rtgPedestal);
 
-      // Glowing Plutonium-238 RTG Core Cylinder with 8 Radial Cooling Fins
       const rtgCore = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 0.65, 18),
-        new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0xea580c, emissiveIntensity: 0.85, roughness: 0.3 })
+        new THREE.CylinderGeometry(0.22, 0.22, 0.65, 20),
+        new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0xea580c, emissiveIntensity: 0.9, roughness: 0.3 })
       );
       rtgCore.position.set(0, 1.15, -0.45);
+      rtgCore.userData.interactive = {
+        label_tr: '☢️ [SOL TIK / VR TETİK] MMRTG PLÜTONYUM-238 NÜKLEER ÇEKİRDEK & NUMUNE KARUSELİ TESTİ',
+        label_en: '☢️ [CLICK / VR TRIGGER] INSPECT MMRTG PU-238 NUCLEAR CORE & SAMPLE CAROUSEL',
+        onClick: () => {
+          this.playSwitchClickSound(660);
+          rtgCore.rotation.y += Math.PI / 4;
+        }
+      };
+      this.interactables.push(rtgCore);
       cabinGroup.add(rtgCore);
 
-      // 12 Titanium Sample Tubes / GCMS Mass Spectrometer Vials in Carousel Ring
       for (let t = 0; t < 12; t++) {
         const ang = (t * Math.PI * 2) / 12;
-        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 10), isogridAlum);
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 12), chromeSwitchMat);
         tube.position.set(Math.cos(ang) * 0.38, 0.98, -0.45 + Math.sin(ang) * 0.38);
         cabinGroup.add(tube);
       }
     } else {
-      // APOLLO LUNAR MODULE: Central Ascent Engine Cover ("Mid-Step" Cylinder) & Gimbal Housing
-      const engineCover = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.62, 0.88, 24), isogridAlum);
+      const engineCover = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.62, 0.88, 28), isogridWallMat);
       engineCover.position.set(0, 0.44, -0.42);
-      const engineTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.59, 0.59, 0.06, 24), goldKapton);
+      const engineTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.59, 0.59, 0.06, 28), goldKapton);
       engineTopCap.position.set(0, 0.89, -0.42);
+      engineTopCap.userData.interactive = {
+        label_tr: '🔥 [SOL TIK / VR TETİK] APS YÜKSELİŞ MOTORU (ASCENT ENGINE) KAPAK TELEMETRİSİ',
+        label_en: '🔥 [CLICK / VR TRIGGER] INSPECT ASCENT PROPULSION SYSTEM (APS) ENGINE COVER',
+        onClick: () => {
+          this.playSwitchClickSound(540);
+          this.cabinState.prog = '12';
+          this.cabinState.verb = '37';
+          this.cabinState.noun = '12';
+          this.refreshCabinDisplays();
+        }
+      };
+      this.interactables.push(engineTopCap);
       cabinGroup.add(engineCover, engineTopCap);
     }
 
     this.scene.add(this.walkableInteriorGroup);
+  }
+
+  // Raycast against interactive 3D cabin buttons/switches from cursor or center visor reticle
+  getHoveredInteractive(ndcVec = null, xrController = null) {
+    if (!this.interactRaycaster || !this.interactables || this.interactables.length === 0) return null;
+
+    if (xrController) {
+      const tempMatrix = new THREE.Matrix4();
+      tempMatrix.identity().extractRotation(xrController.matrixWorld);
+      this.interactRaycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
+      this.interactRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+    } else {
+      const coords = ndcVec || this.mouseNDC || new THREE.Vector2(0, 0);
+      this.interactRaycaster.setFromCamera(coords, this.camera);
+    }
+
+    const hits = this.interactRaycaster.intersectObjects(this.interactables, false);
+    if (hits && hits.length > 0 && hits[0].distance <= 5.5) {
+      return hits[0].object;
+    }
+
+    // Fallback to center visor reticle (0, 0) if cursor isn't directly over a button
+    if (!xrController && ndcVec) {
+      this.interactRaycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+      const centerHits = this.interactRaycaster.intersectObjects(this.interactables, false);
+      if (centerHits && centerHits.length > 0 && centerHits[0].distance <= 5.5) {
+        return centerHits[0].object;
+      }
+    }
+    return null;
+  }
+
+  updateInteractiveReticle() {
+    if (this.cameraMode !== 'walk') return;
+    const hitObj = this.getHoveredInteractive(this.mouseNDC);
+    const dotEl = document.getElementById('walk-reticle-dot');
+    const promptEl = document.getElementById('walk-interact-prompt');
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+
+    if (hitObj && hitObj.userData && hitObj.userData.interactive) {
+      if (dotEl) dotEl.classList.add('active-target');
+      if (promptEl) {
+        promptEl.classList.remove('hidden');
+        promptEl.innerText = isTr
+          ? hitObj.userData.interactive.label_tr
+          : hitObj.userData.interactive.label_en;
+      }
+    } else {
+      if (dotEl) dotEl.classList.remove('active-target');
+      if (promptEl) promptEl.classList.add('hidden');
+    }
+  }
+
+  triggerCabinInteraction(ndcVec = null, xrController = null) {
+    const hitObj = this.getHoveredInteractive(ndcVec, xrController);
+    if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
+      hitObj.userData.interactive.onClick();
+    }
   }
 
   renderFrame() {
@@ -3083,6 +3773,9 @@ class MissionSimulationTheater {
       const gravLabel = body === 'moon' ? '1.62 m/s² (0.16g)' : body === 'mars' ? '3.72 m/s² (0.38g)' : body === 'venus' ? '8.87 m/s² (92 bar)' : '1.35 m/s² (0.14g)';
       gravEl.innerText = isTr ? `YERÇEKİMİ: ${gravLabel} | GÖZ HİZASI: ${(ws.y + 1.75).toFixed(2)} m | AYAK İZİ: ${this.footprints.length}` : `GRAVITY: ${gravLabel} | EYE LEVEL: ${(ws.y + 1.75).toFixed(2)} m | FOOTPRINTS: ${this.footprints.length}`;
     }
+
+    // Raycast against 3D cabin buttons, switches, DSKY keys & ladder hatch for live reticle prompt
+    this.updateInteractiveReticle();
   }
 
   updateHUD(t) {

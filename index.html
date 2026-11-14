@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <link rel="stylesheet" href="css/style.css?v=5.4">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -22,7 +22,7 @@
 
   <!-- WebGL 3D Planetary Canvas -->
   <div id="canvas-container"></div>
-  <div class="procedural-watermark-badge main-globe-watermark" data-i18n="watermark_badge">âœ¦ FÄ°LÄ°GRAN / WATERMARK: AI-DESTEKLÄ° PROSEDÃœREL 3B GÃ–RSELLEÅTÄ°RME â€¢ NASA AÃ‡IK VERÄ°SÄ° (RESMÄ° NASA LOGOSU KULLANILMAMIÅTIR)</div>
+  <div class="procedural-watermark-badge main-globe-watermark" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
   <div class="scanlines-overlay"></div>
 
   <!-- UI HUD Layer -->
@@ -31,70 +31,70 @@
     <!-- Top Header Bar -->
     <header class="header-bar interactive">
       <div class="brand-section">
-        <div class="team-logo-badge" title="YÄ°ÄÄ°DO ORBÄ°T â€” NASA Space Apps Challenge TakÄ±m Logosu">
-          <img src="assets/yigido-orbit-logo.jpg" alt="YÄ°ÄÄ°DO ORBÄ°T TakÄ±m Logosu" class="team-logo-img">
+        <div class="team-logo-badge" title="YİĞİDO ORBİT — NASA Space Apps Challenge Takım Logosu">
+          <img src="assets/yigido-orbit-logo.jpg" alt="YİĞİDO ORBİT Takım Logosu" class="team-logo-img">
         </div>
         <div class="title-group">
           <h1>
             <span>ABANDONED BUT NOT FORGOTTEN</span>
-            <span class="sub-badge">YÄ°ÄÄ°DO ORBÄ°T</span>
+            <span class="sub-badge">YİĞİDO ORBİT</span>
           </h1>
-          <p id="app-tagline" data-i18n="app_subtitle">Ay, Mars, VenÃ¼s ve DÄ±ÅŸ Gezegenlerdeki Tarihi Uzay KalÄ±ntÄ±larÄ± ve Hikaye HaritasÄ±</p>
+          <p id="app-tagline" data-i18n="app_subtitle">Ay, Mars, Venüs ve Dış Gezegenlerdeki Tarihi Uzay Kalıntıları ve Hikaye Haritası</p>
         </div>
       </div>
 
       <!-- Celestial Body Switcher (Moon, Mars, Venus, Outer System) -->
       <div class="planet-toggle-container">
-        <button class="planet-btn active" data-body="moon" title="Ay YÃ¼zeyini Ä°ncele">
+        <button class="planet-btn active" data-body="moon" title="Ay Yüzeyini İncele">
           <span class="btn-dot"></span>
           <span data-i18n="planet_moon">AY (MOON)</span>
         </button>
-        <button class="planet-btn" data-body="mars" title="Mars YÃ¼zeyini Ä°ncele">
+        <button class="planet-btn" data-body="mars" title="Mars Yüzeyini İncele">
           <span class="btn-dot"></span>
           <span data-i18n="planet_mars">MARS</span>
         </button>
-        <button class="planet-btn" data-body="venus" title="VenÃ¼s YÃ¼zeyindeki Sovyet Venera ve NASA Pioneer SondalarÄ±nÄ± Ä°ncele">
+        <button class="planet-btn" data-body="venus" title="Venüs Yüzeyindeki Sovyet Venera ve NASA Pioneer Sondalarını İncele">
           <span class="btn-dot"></span>
-          <span data-i18n="planet_venus">VENÃœS</span>
+          <span data-i18n="planet_venus">VENÜS</span>
         </button>
-        <button class="planet-btn" data-body="outer" title="Titan (Huygens), 67P Kuyruklu YÄ±ldÄ±zÄ± (Philae), Eros ve JÃ¼piter GÃ¶revlerini Ä°ncele">
+        <button class="planet-btn" data-body="outer" title="Titan (Huygens), 67P Kuyruklu Yıldızı (Philae), Eros ve Jüpiter Görevlerini İncele">
           <span class="btn-dot"></span>
-          <span data-i18n="planet_outer">TÄ°TAN & DIÅ SÄ°STEM</span>
+          <span data-i18n="planet_outer">TİTAN & DIŞ SİSTEM</span>
         </button>
       </div>
 
       <!-- Header Action Buttons (Desktop) -->
       <div class="header-actions">
-        <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="SeÃ§ili GÃ¶revin Ä°niÅŸ veya Ã‡arpÄ±ÅŸma Sahnesini CanlandÄ±r">
-          <span>ğŸ¬</span>
-          <span data-i18n="btn_sim">SÄ°MÃœLASYON</span>
+        <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Seçili Görevin İniş veya Çarpışma Sahnesini Canlandır">
+          <span>🎬</span>
+          <span data-i18n="btn_sim">SİMÜLASYON</span>
         </button>
-        <button class="hud-btn btn-webxr-walk" id="btn-top-walk" title="1:1 Ã–lÃ§ekte YÃ¼zeyde YÃ¼rÃ¼ & WebXR VR/AR Modu">
-          <span>ğŸ¥½</span>
-          <span data-i18n="btn_walk_top">1:1 YÃœZEY / VR</span>
+        <button class="hud-btn btn-webxr-walk" id="btn-top-walk" title="1:1 Ölçekte Yüzeyde Yürü & WebXR VR/AR Modu">
+          <span>🥽</span>
+          <span data-i18n="btn_walk_top">1:1 YÜZEY / VR</span>
         </button>
-        <button class="hud-btn btn-jury-pitch" id="btn-jury-toggle" title="NASA 5 JÃ¼ri Kriteri (Impact, Creativity, Validity, Relevance, Presentation) KanÄ±t Paneli ve HikÃ¢ye Sunum AkÄ±ÅŸÄ±">
-          <span>ğŸ†</span>
-          <span data-i18n="btn_jury">JÃœRÄ° & HÄ°KÃ‚YE</span>
+        <button class="hud-btn btn-jury-pitch" id="btn-jury-toggle" title="NASA 5 Jüri Kriteri (Impact, Creativity, Validity, Relevance, Presentation) Kanıt Paneli ve Hikâye Sunum Akışı">
+          <span>🏆</span>
+          <span data-i18n="btn_jury">JÜRİ & HİKÂYE</span>
         </button>
-        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri KaynaklarÄ± ve Tarih Serisi PDF ArÅŸivi">
-          <span>ğŸ“š</span>
-          <span data-i18n="btn_sources">RESMÄ° KAYNAKLAR</span>
+        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivi">
+          <span>📚</span>
+          <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
         </button>
-        <button class="hud-btn" id="btn-tour-toggle" title="5 BÃ¶lÃ¼mlÃ¼k Rehberli Hikaye Turunu BaÅŸlat">
-          <span>ğŸš€</span>
-          <span data-i18n="btn_tour">HÄ°KAYE TURU</span>
+        <button class="hud-btn" id="btn-tour-toggle" title="5 Bölümlük Rehberli Hikaye Turunu Başlat">
+          <span>🚀</span>
+          <span data-i18n="btn_tour">HİKAYE TURU</span>
         </button>
-        <button class="hud-btn" id="btn-reset-view" title="Kamera BakÄ±ÅŸ AÃ§Ä±sÄ±nÄ± SÄ±fÄ±rla">
-          <span>ğŸ¯</span>
+        <button class="hud-btn" id="btn-reset-view" title="Kamera Bakış Açısını Sıfırla">
+          <span>🎯</span>
           <span class="btn-text-collapsible" data-i18n="btn_reset">SIFIRLA</span>
         </button>
-        <button class="hud-btn" id="btn-sound-toggle" title="Sesi AÃ§ / Kapat">
-          <span>ğŸ”Š</span>
+        <button class="hud-btn" id="btn-sound-toggle" title="Sesi Aç / Kapat">
+          <span>🔊</span>
           <span class="btn-text-collapsible" data-i18n="btn_sound">SES</span>
         </button>
         <button class="hud-btn" id="btn-lang-toggle" title="Switch Language">
-          <span>ğŸŒ</span>
+          <span>🌐</span>
           <span>EN</span>
         </button>
       </div>
@@ -103,23 +103,23 @@
     <!-- Guided Story Tour Top Banner & 5-Chapter Narrative Storyteller Card -->
     <div class="tour-banner interactive" id="tour-banner">
       <div class="tour-top-row">
-        <span class="tour-badge" data-i18n="tour_active_title">ğŸ“– 5 BÃ–LÃœMLÃœK HÄ°KÃ‚YE AKIÅI</span>
-        <span class="tour-progress" id="tour-progress-text">1 / 10 â€” Apollo 11</span>
-        <button class="tour-btn" id="tour-prev-btn">â—€ Ã–nceki</button>
-        <button class="tour-btn" id="tour-next-btn">Sonraki â–¶</button>
-        <button class="tour-btn" id="tour-all-btn" title="5 BÃ¶lÃ¼mlÃ¼k TÃ¼m GÃ¼neÅŸ Sistemi BÃ¼yÃ¼k HikÃ¢ye Turu (25 GÃ¶rev)">ğŸŒŒ 5 BÃ¶lÃ¼mlÃ¼k Tam HikÃ¢ye (25)</button>
-        <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir âœ•</button>
+        <span class="tour-badge" data-i18n="tour_active_title">📖 5 BÖLÜMLÜK HİKÂYE AKIŞI</span>
+        <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
+        <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
+        <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
+        <button class="tour-btn" id="tour-all-btn" title="5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)">🌌 5 Bölümlük Tam Hikâye (25)</button>
+        <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
       </div>
       <div class="tour-chapter-strip" id="tour-chapter-strip">
-        <button class="chapter-pill active" data-chapter="0">I. Ä°lk DokunuÅŸ</button>
-        <button class="chapter-pill" data-chapter="1">II. Bilim Ä°Ã§in Feda</button>
-        <button class="chapter-pill" data-chapter="2">III. KÄ±zÄ±l Gezegen</button>
-        <button class="chapter-pill" data-chapter="3">IV. VenÃ¼s & DÄ±ÅŸ Sistem</button>
+        <button class="chapter-pill active" data-chapter="0">I. İlk Dokunuş</button>
+        <button class="chapter-pill" data-chapter="1">II. Bilim İçin Feda</button>
+        <button class="chapter-pill" data-chapter="2">III. Kızıl Gezegen</button>
+        <button class="chapter-pill" data-chapter="3">IV. Venüs & Dış Sistem</button>
         <button class="chapter-pill" data-chapter="4">V. Uzay Arkeolojisi & Gelecek</button>
       </div>
       <div class="tour-narrative-box" id="tour-narrative-box">
-        <span class="narrative-chapter-title" id="narrative-chapter-title">BÃ–LÃœM I: Ä°NSANLIÄIN BAÅKA BÄ°R DÃœNYAYA Ä°LK DOKUNUÅU (1967â€“1970)</span>
-        <p class="narrative-chapter-desc" id="narrative-chapter-desc">SoÄŸuk SavaÅŸ'Ä±n uzay yarÄ±ÅŸÄ±ndan doÄŸan bu ilk makineler, insanlÄ±ÄŸÄ±n DÃ¼nya dÄ±ÅŸÄ±ndaki ilk sessiz elÃ§ileri oldu.</p>
+        <span class="narrative-chapter-title" id="narrative-chapter-title">BÖLÜM I: İNSANLIĞIN BAŞKA BİR DÜNYAYA İLK DOKUNUŞU (1967–1970)</span>
+        <p class="narrative-chapter-desc" id="narrative-chapter-desc">Soğuk Savaş'ın uzay yarışından doğan bu ilk makineler, insanlığın Dünya dışındaki ilk sessiz elçileri oldu.</p>
       </div>
     </div>
 
@@ -129,35 +129,35 @@
       <!-- Planetary Telemetry Card -->
       <div class="glass-card" id="card-telemetry">
         <div class="card-label">
-          <span data-i18n="telemetry_header">GÃ–K CÄ°SMÄ° TELEMETRÄ°SÄ°</span>
+          <span data-i18n="telemetry_header">GÖK CİSMİ TELEMETRİSİ</span>
           <span class="live-badge">CANLI RADAR</span>
         </div>
         
         <div style="margin-bottom: 8px;">
           <h2 id="body-name-text" style="font-size:15px; color:#fff; font-weight:700;">Ay</h2>
-          <p id="body-tagline-text" style="font-size:11px; color:var(--text-muted); line-height:1.4;">Ä°nsanlÄ±ÄŸÄ±n BaÅŸka Bir DÃ¼nyadaki Ä°lk Ayak Ä°zleri</p>
+          <p id="body-tagline-text" style="font-size:11px; color:var(--text-muted); line-height:1.4;">İnsanlığın Başka Bir Dünyadaki İlk Ayak İzleri</p>
         </div>
 
         <div class="stats-grid">
           <div class="stat-item">
-            <div class="stat-title" data-i18n="radius_label">YARIÃ‡AP</div>
+            <div class="stat-title" data-i18n="radius_label">YARIÇAP</div>
             <div class="stat-val" id="stat-radius">1,737 km</div>
           </div>
           <div class="stat-item">
-            <div class="stat-title" data-i18n="gravity_label">YERÃ‡EKÄ°MÄ°</div>
-            <div class="stat-val" id="stat-gravity">1.62 m/sÂ²</div>
+            <div class="stat-title" data-i18n="gravity_label">YERÇEKİMİ</div>
+            <div class="stat-val" id="stat-gravity">1.62 m/s²</div>
           </div>
           <div class="stat-item">
-            <div class="stat-title" data-i18n="temp_label">YÃœZEY SICAKLIÄI</div>
-            <div class="stat-val" id="stat-temp">-130Â°C / +120Â°C</div>
+            <div class="stat-title" data-i18n="temp_label">YÜZEY SICAKLIĞI</div>
+            <div class="stat-val" id="stat-temp">-130°C / +120°C</div>
           </div>
           <div class="stat-item">
             <div class="stat-title" data-i18n="atmo_label">ATMOSFER</div>
             <div class="stat-val" id="stat-atmosphere">Sert Vakum</div>
           </div>
           <div class="stat-item full-width">
-            <div class="stat-title" data-i18n="mass_label">TOPLAM TERK EDÄ°LEN KÃœTLE</div>
-            <div class="stat-val" id="stat-total-mass">~190.000 kg insan yapÄ±mÄ± malzeme</div>
+            <div class="stat-title" data-i18n="mass_label">TOPLAM TERK EDİLEN KÜTLE</div>
+            <div class="stat-val" id="stat-total-mass">~190.000 kg insan yapımı malzeme</div>
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@
       <!-- NEW: Live Mars Weather & Active Rover Telemetry Card (NASA MEDA / REMS API) -->
       <div class="glass-card live-mars-card" id="card-live-mars">
         <div class="card-label">
-          <span data-i18n="live_mars_header">ğŸ“¡ CANLI MARS HAVA & TELEMETRÄ°</span>
+          <span data-i18n="live_mars_header">📡 CANLI MARS HAVA & TELEMETRİ</span>
           <span class="live-badge" id="live-api-badge">NASA MEDA/REMS</span>
         </div>
 
@@ -176,44 +176,44 @@
 
         <div class="live-rover-meta">
           <span class="rover-sol-pill" id="live-rover-sol">SOL 1468</span>
-          <span class="rover-loc-text" id="live-rover-loc">Jezero Krateri â€¢ 18.44Â°K, 77.45Â°D</span>
+          <span class="rover-loc-text" id="live-rover-loc">Jezero Krateri • 18.44°K, 77.45°D</span>
         </div>
 
         <div class="stats-grid live-weather-grid">
           <div class="stat-item">
-            <div class="stat-title" data-i18n="weather_temp">HAVA SICAKLIÄI</div>
-            <div class="stat-val" id="live-temp">-18Â°C / -76Â°C</div>
+            <div class="stat-title" data-i18n="weather_temp">HAVA SICAKLIĞI</div>
+            <div class="stat-val" id="live-temp">-18°C / -76°C</div>
           </div>
           <div class="stat-item">
-            <div class="stat-title" data-i18n="weather_wind">RÃœZGAR HIZI</div>
+            <div class="stat-title" data-i18n="weather_wind">RÜZGAR HIZI</div>
             <div class="stat-val" id="live-wind">6.8 m/s (GD)</div>
           </div>
           <div class="stat-item">
-            <div class="stat-title" data-i18n="weather_pressure">BASINÃ‡</div>
+            <div class="stat-title" data-i18n="weather_pressure">BASINÇ</div>
             <div class="stat-val" id="live-pressure">742.5 Pa</div>
           </div>
           <div class="stat-item">
-            <div class="stat-title" data-i18n="weather_odometer">KAT EDÄ°LEN YOL</div>
+            <div class="stat-title" data-i18n="weather_odometer">KAT EDİLEN YOL</div>
             <div class="stat-val" id="live-odometer">32.45 km</div>
           </div>
         </div>
 
         <button class="goto-rover-btn" id="btn-goto-rover">
-          <span>ğŸ“</span>
-          <span id="goto-rover-label" data-i18n="btn_goto_rover">Haritada Rover Konumuna UÃ§</span>
+          <span>📍</span>
+          <span id="goto-rover-label" data-i18n="btn_goto_rover">Haritada Rover Konumuna Uç</span>
         </button>
       </div>
 
       <!-- Quick Relics List & Search Card -->
       <div class="glass-card" id="card-relics-list" style="flex:1;">
         <div class="card-label">
-          <span data-i18n="relics_list_header">TARÄ°HÄ° EKÄ°PMANLAR LÄ°STESÄ°</span>
-          <button class="mobile-close-list-btn" id="btn-mobile-close-list">âœ•</button>
+          <span data-i18n="relics_list_header">TARİHİ EKİPMANLAR LİSTESİ</span>
+          <button class="mobile-close-list-btn" id="btn-mobile-close-list">✕</button>
         </div>
 
         <div class="search-wrapper">
-          <span class="search-icon">ğŸ”</span>
-          <input type="text" class="search-input" id="search-input" placeholder="KalÄ±ntÄ± veya gÃ¶rev ara..." data-i18n-placeholder="search_placeholder">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="search-input" placeholder="Kalıntı veya görev ara..." data-i18n-placeholder="search_placeholder">
         </div>
 
         <div class="artifacts-list" id="artifacts-list-container">
@@ -225,8 +225,8 @@
     <!-- Bottom Filter Dock (Desktop) -->
     <footer class="bottom-dock interactive">
       <div class="filter-bar">
-        <span class="filter-tag" data-i18n="filter_decade">DÃ–NEM:</span>
-        <button class="pill-btn decade-pill active" data-decade="all" data-i18n="decade_all">TÃœMÃœ</button>
+        <span class="filter-tag" data-i18n="filter_decade">DÖNEM:</span>
+        <button class="pill-btn decade-pill active" data-decade="all" data-i18n="decade_all">TÜMÜ</button>
         <button class="pill-btn decade-pill" data-decade="1960">1960'LAR</button>
         <button class="pill-btn decade-pill" data-decade="1970">1970'LER</button>
         <button class="pill-btn decade-pill" data-decade="1980">1980'LER</button>
@@ -239,29 +239,29 @@
 
     <!-- Controls Hint (Bottom Right corner) -->
     <div class="controls-hint">
-      <kbd>Fare / Dokun</kbd> <span data-i18n="hint_controls">360Â° Gezin â€¢ YakÄ±nlaÅŸ â€¢ Noktalara TÄ±kla</span>
+      <kbd>Fare / Dokun</kbd> <span data-i18n="hint_controls">360° Gezin • Yakınlaş • Noktalara Tıkla</span>
     </div>
 
     <!-- Mobile Bottom Navigation Dock (Visible only on mobile) -->
     <nav class="mobile-nav-bar interactive">
       <button class="mobile-nav-btn active" id="m-btn-map">
-        <span class="m-icon">ğŸª</span>
+        <span class="m-icon">🪐</span>
         <span class="m-label">Harita</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-relics">
-        <span class="m-icon">ğŸ“‹</span>
-        <span class="m-label">KalÄ±ntÄ±lar</span>
+        <span class="m-icon">📋</span>
+        <span class="m-label">Kalıntılar</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-telemetry">
-        <span class="m-icon">ğŸ“¡</span>
+        <span class="m-icon">📡</span>
         <span class="m-label">Telemetri</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-tour">
-        <span class="m-icon">ğŸš€</span>
+        <span class="m-icon">🚀</span>
         <span class="m-label">Tur</span>
       </button>
       <button class="mobile-nav-btn" id="m-btn-sources">
-        <span class="m-icon">ğŸ“š</span>
+        <span class="m-icon">📚</span>
         <span class="m-label">Kaynaklar</span>
       </button>
     </nav>
@@ -273,14 +273,14 @@
       <div class="drawer-header">
         <div class="header-meta">
           <div class="mission-tag">
-            <span>ğŸ›°ï¸</span>
+            <span>🛰️</span>
             <span id="drawer-mission">APOLLO 11</span>
-            <span>â€¢</span>
+            <span>•</span>
             <span id="drawer-date" style="color:var(--text-muted);">20 Temmuz 1969</span>
           </div>
-          <h2 class="artifact-title" id="drawer-title">Apollo 11 'Kartal' Ä°niÅŸ Kademesi</h2>
+          <h2 class="artifact-title" id="drawer-title">Apollo 11 'Kartal' İniş Kademesi</h2>
         </div>
-        <button class="close-btn" id="btn-close-drawer" title="Kapat">âœ•</button>
+        <button class="close-btn" id="btn-close-drawer" title="Kapat">✕</button>
       </div>
 
       <!-- Drawer Body -->
@@ -289,18 +289,18 @@
         <!-- PROMINENT ACTIONS: 3D Simulation & 1:1 WebXR Surface Walk -->
         <div class="drawer-sim-actions-row">
           <button class="big-sim-action-btn" id="btn-drawer-sim">
-            <span class="sim-play-icon">ğŸ¬</span>
+            <span class="sim-play-icon">🎬</span>
             <div class="sim-btn-text-group">
-              <span class="sim-btn-main" data-i18n="sim_action_btn">Ä°NÄ°Å / Ã‡ARPIÅMA SAHNESÄ°NÄ° Ä°ZLE (3D)</span>
-              <span class="sim-btn-sub" data-i18n="sim_action_sub">GerÃ§ek fizik, itici alevleri ve sismik darbe canlandÄ±rmasÄ±</span>
+              <span class="sim-btn-main" data-i18n="sim_action_btn">İNİŞ / ÇARPIŞMA SAHNESİNİ İZLE (3D)</span>
+              <span class="sim-btn-sub" data-i18n="sim_action_sub">Gerçek fizik, itici alevleri ve sismik darbe canlandırması</span>
             </div>
           </button>
 
-          <button class="big-walk-action-btn" id="btn-drawer-walk" title="Meta Quest / Vision Pro WebXR veya MasaÃ¼stÃ¼ 1:1 Astronot GÃ¶z HizasÄ±nda YÃ¼rÃ¼">
-            <span class="sim-play-icon">ğŸ¥½</span>
+          <button class="big-walk-action-btn" id="btn-drawer-walk" title="Meta Quest / Vision Pro WebXR veya Masaüstü 1:1 Astronot Göz Hizasında Yürü">
+            <span class="sim-play-icon">🥽</span>
             <div class="sim-btn-text-group">
-              <span class="sim-btn-main" data-i18n="walk_action_btn">1:1 Ã–LÃ‡EKTE YANINDA YÃœRÃœ (WebXR)</span>
-              <span class="sim-btn-sub" data-i18n="walk_action_sub">AracÄ±n yanÄ±nda 1.75m astronot gÃ¶z hizasÄ±nda yÃ¼rÃ¼ (VR / WASD)</span>
+              <span class="sim-btn-main" data-i18n="walk_action_btn">1:1 ÖLÇEKTE YANINDA YÜRÜ (WebXR)</span>
+              <span class="sim-btn-sub" data-i18n="walk_action_sub">Aracın yanında 1.75m astronot göz hizasında yürü (VR / WASD)</span>
             </div>
           </button>
         </div>
@@ -309,49 +309,49 @@
         <div class="mini-model-box">
           <canvas id="mini-model-canvas"></canvas>
           <span class="model-compass-badge">HOLOGRAPHIC PBR CAD</span>
-          <button class="model-xray-btn" id="btn-mini-wireframe" title="CAD Tel Kafes (Wireframe) GÃ¶rÃ¼nÃ¼mÃ¼nÃ¼ AÃ§/Kapat">CAD X-RAY</button>
-          <span class="model-hud-badge">360Â° INTERACTIVE</span>
+          <button class="model-xray-btn" id="btn-mini-wireframe" title="CAD Tel Kafes (Wireframe) Görünümünü Aç/Kapat">CAD X-RAY</button>
+          <span class="model-hud-badge">360° INTERACTIVE</span>
         </div>
 
         <!-- Famous Historic Quote Card -->
         <div class="quote-card">
-          <p id="drawer-quote">"Ä°nsan iÃ§in kÃ¼Ã§Ã¼k, insanlÄ±k iÃ§in dev bir adÄ±m."</p>
-          <span class="quote-author" id="drawer-quote-author">â€” Neil Armstrong</span>
+          <p id="drawer-quote">"İnsan için küçük, insanlık için dev bir adım."</p>
+          <span class="quote-author" id="drawer-quote-author">— Neil Armstrong</span>
         </div>
 
         <!-- Deep Narrative Story -->
         <div>
-          <h3 class="story-headline" id="drawer-headline">Ä°nsanlÄ±ÄŸÄ±n BaÅŸka Bir DÃ¼nyaya Ä°ndiÄŸi Nokta</h3>
+          <h3 class="story-headline" id="drawer-headline">İnsanlığın Başka Bir Dünyaya İndiği Nokta</h3>
           <p class="story-text" id="drawer-story" style="margin-top: 8px;">
-            Apollo 11 iniÅŸ kademesi ve arkasÄ±ndaki detaylÄ± hikaye...
+            Apollo 11 iniş kademesi ve arkasındaki detaylı hikaye...
           </p>
         </div>
 
         <!-- Alert: Why Abandoned -->
         <div class="info-block why-left">
           <span class="block-title">
-            <span>âš ï¸</span>
-            <span data-i18n="why_left_label">NEDEN GERÄ°DE BIRAKILDI?</span>
+            <span>⚠️</span>
+            <span data-i18n="why_left_label">NEDEN GERİDE BIRAKILDI?</span>
           </span>
           <p class="block-desc" id="drawer-why-left">
-            YÃ¶rÃ¼ngeye dÃ¶nÃ¼ÅŸ mekaniÄŸi ve aÄŸÄ±rlÄ±k tasarrufu kÄ±sÄ±tlamalarÄ± nedeniyle...
+            Yörüngeye dönüş mekaniği ve ağırlık tasarrufu kısıtlamaları nedeniyle...
           </p>
         </div>
 
         <!-- Alert: Current Condition After Decades -->
         <div class="info-block condition">
           <span class="block-title">
-            <span>ğŸ”¬</span>
-            <span data-i18n="condition_label">BUGÃœNKÃœ DURUMU (YILLAR SONRA)</span>
+            <span>🔬</span>
+            <span data-i18n="condition_label">BUGÜNKÜ DURUMU (YILLAR SONRA)</span>
           </span>
           <p class="block-desc" id="drawer-condition">
-            Ay vakumunda aÅŸÄ±nmadan duruyor, ancak gÃ¼neÅŸ UV Ä±ÅŸÄ±nÄ±mÄ± folyolarÄ± aÄŸartmÄ±ÅŸ vaziyette...
+            Ay vakumunda aşınmadan duruyor, ancak güneş UV ışınımı folyoları ağartmış vaziyette...
           </p>
         </div>
 
         <!-- Discarded Items Checklist -->
         <div class="items-list-container">
-          <div class="section-heading" data-i18n="discarded_label">TERK EDÄ°LEN TEÃ‡HÄ°ZAT LÄ°STESÄ°</div>
+          <div class="section-heading" data-i18n="discarded_label">TERK EDİLEN TEÇHİZAT LİSTESİ</div>
           <ul class="checklist" id="drawer-checklist">
             <!-- Dynamic items -->
           </ul>
@@ -360,19 +360,19 @@
         <!-- Legendary Relic / Easter Egg Highlight Box -->
         <div class="secret-relic-box" id="secret-relic-card" style="display: none;">
           <div class="relic-header">
-            <span class="relic-badge" id="relic-badge">ğŸŒï¸ GÄ°ZLÄ° TARÄ°HÄ° ESER</span>
+            <span class="relic-badge" id="relic-badge">🏌️ GİZLİ TARİHİ ESER</span>
           </div>
-          <h4 class="relic-title" id="relic-title">Alan Shepard'Ä±n Ay Golf ToplarÄ±</h4>
+          <h4 class="relic-title" id="relic-title">Alan Shepard'ın Ay Golf Topları</h4>
           <p class="relic-desc" id="relic-desc"></p>
         </div>
 
         <!-- Authentic NASA Satellite & Surface Photography Gallery -->
         <div class="items-list-container" id="drawer-photos-section" style="display: none;">
           <div class="section-heading-row">
-            <div class="section-heading" data-i18n="nasa_photos_label">ğŸ“· GERÃ‡EK NASA UYDU & YÃœZEY FOTOÄRAFLARI</div>
+            <div class="section-heading" data-i18n="nasa_photos_label">📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI</div>
             <span class="pill-badge">NASA ARCHIVE</span>
           </div>
-          <p class="photos-subtext" data-i18n="nasa_photos_subtext">NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arÅŸivlerinden doÄŸrulanmÄ±ÅŸ kareler (BÃ¼yÃ¼tmek iÃ§in tÄ±klayÄ±n):</p>
+          <p class="photos-subtext" data-i18n="nasa_photos_subtext">NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):</p>
           <div class="nasa-photos-grid" id="drawer-photos-grid">
             <!-- Populated dynamically -->
           </div>
@@ -380,23 +380,23 @@
 
         <!-- Technical Specs Table -->
         <div class="items-list-container">
-          <div class="section-heading" data-i18n="specs_label">TEKNÄ°K TELEMETRÄ° BÄ°LGÄ°SÄ°</div>
+          <div class="section-heading" data-i18n="specs_label">TEKNİK TELEMETRİ BİLGİSİ</div>
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-title">KORUNAN KÃœTLE</div>
+              <div class="stat-title">KORUNAN KÜTLE</div>
               <div class="stat-val" id="spec-mass">2,034 kg</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">GÃœÃ‡ KAYNAÄI</div>
-              <div class="stat-val" id="spec-power">GÃ¼mÃ¼ÅŸ-Ã‡inko Pilleri</div>
+              <div class="stat-title">GÜÇ KAYNAĞI</div>
+              <div class="stat-val" id="spec-power">Gümüş-Çinko Pilleri</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">AKTÄ°F GÃ–REV Ã–MRÃœ</div>
+              <div class="stat-title">AKTİF GÖREV ÖMRÜ</div>
               <div class="stat-val" id="spec-duration">21 saat 36 dk</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">KOORDÄ°NATLAR</div>
-              <div class="stat-val" id="spec-coords">0Â°40' K, 23Â°28' D</div>
+              <div class="stat-title">KOORDİNATLAR</div>
+              <div class="stat-val" id="spec-coords">0°40' K, 23°28' D</div>
             </div>
           </div>
         </div>
@@ -404,21 +404,21 @@
         <!-- NASA Verified Data & Scientific Validity Proof Card (Relevance & Validity Criteria) -->
         <div class="nasa-verification-box" id="drawer-verification-box">
           <div class="verification-header">
-            <span class="verification-badge" data-i18n="nasa_proof_badge">ğŸ“œ NASA VERÄ° DOÄRULAMA & BÄ°LÄ°MSEL GEÃ‡ERLÄ°LÄ°K KANITI</span>
-            <span class="verification-status">âœ“ VERIFIED</span>
+            <span class="verification-badge" data-i18n="nasa_proof_badge">📜 NASA VERİ DOĞRULAMA & BİLİMSEL GEÇERLİLİK KANITI</span>
+            <span class="verification-status">✓ VERIFIED</span>
           </div>
           <div class="verification-grid">
             <div class="ver-row">
-              <span class="ver-label" data-i18n="ver_monograph_label">AKADEMÄ°K MONOGRAFÄ°:</span>
+              <span class="ver-label" data-i18n="ver_monograph_label">AKADEMİK MONOGRAFİ:</span>
               <span class="ver-val" id="ver-monograph">NASA SP-2024-4559 (Governing the Moon)</span>
             </div>
             <div class="ver-row">
-              <span class="ver-label" data-i18n="ver_dataset_label">UYDU & SENSÃ–R VERÄ°SÄ°:</span>
+              <span class="ver-label" data-i18n="ver_dataset_label">UYDU & SENSÖR VERİSİ:</span>
               <span class="ver-val" id="ver-dataset">LROC NAC / PDS Jeodezik Envanter</span>
             </div>
             <div class="ver-row">
-              <span class="ver-label" data-i18n="ver_heritage_label">KORUMA STATÃœSÃœ:</span>
-              <span class="ver-val" id="ver-heritage">Artemis Accords BÃ¶lÃ¼m 9 â€” DÃ¼nya DÄ±ÅŸÄ± KÃ¼ltÃ¼r MirasÄ±</span>
+              <span class="ver-label" data-i18n="ver_heritage_label">KORUMA STATÜSÜ:</span>
+              <span class="ver-val" id="ver-heritage">Artemis Accords Bölüm 9 — Dünya Dışı Kültür Mirası</span>
             </div>
           </div>
         </div>
@@ -427,7 +427,7 @@
         <div class="audio-broadcast-box">
           <div class="audio-info">
             <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-              <span class="audio-label" data-i18n="transmission_label">TELSÄ°Z VE TELEMETRÄ° SESÄ°</span>
+              <span class="audio-label" data-i18n="transmission_label">TELSİZ VE TELEMETRİ SESİ</span>
               <div class="waveform-equalizer" id="audio-equalizer">
                 <span class="eq-bar"></span>
                 <span class="eq-bar"></span>
@@ -439,8 +439,8 @@
             <span class="audio-text" id="drawer-audio-text">"Houston, Tranquility Base here. The Eagle has landed."</span>
           </div>
           <button class="play-tone-btn" id="btn-play-transmission">
-            <span id="audio-btn-icon">ğŸ“»</span>
-            <span id="audio-btn-text" data-i18n="play_audio_btn">TELSÄ°ZÄ° DÄ°NLE</span>
+            <span id="audio-btn-icon">📻</span>
+            <span id="audio-btn-text" data-i18n="play_audio_btn">TELSİZİ DİNLE</span>
           </button>
         </div>
 
@@ -449,12 +449,12 @@
       <!-- Drawer Footer Navigation -->
       <div class="drawer-footer">
         <button class="nav-site-btn" id="btn-prev-artifact">
-          <span>â—€</span>
-          <span data-i18n="btn_prev_site">Ã–nceki KalÄ±ntÄ±</span>
+          <span>◀</span>
+          <span data-i18n="btn_prev_site">Önceki Kalıntı</span>
         </button>
         <button class="nav-site-btn" id="btn-next-artifact">
-          <span data-i18n="btn_next_site">Sonraki KalÄ±ntÄ±</span>
-          <span>â–¶</span>
+          <span data-i18n="btn_next_site">Sonraki Kalıntı</span>
+          <span>▶</span>
         </button>
       </div>
 
@@ -477,7 +477,7 @@
       <!-- Simulation Top Bar -->
       <div class="sim-top-bar">
         <div class="sim-header-info">
-          <span class="sim-badge" id="sim-badge">ğŸ›°ï¸ Ä°NÄ°Å SÄ°MÃœLASYONU</span>
+          <span class="sim-badge" id="sim-badge">🛰️ İNİŞ SİMÜLASYONU</span>
           <h2 class="sim-title" id="sim-title">Apollo 11 'Eagle' Landing Reenactment</h2>
         </div>
 
@@ -486,28 +486,28 @@
           <div class="sim-cam-group">
             <span class="sim-cam-label">KAMERA:</span>
             <select class="sim-select" id="sim-cam-select">
-              <option value="cinematic">Sinematik YÃ¶netmen</option>
-              <option value="follow">Takip KamerasÄ±</option>
-              <option value="ground">YÃ¼zey Sabit KamerasÄ±</option>
-              <option value="free">Serbest 360Â° Kamera (Mouse/Touch)</option>
-              <option value="walk">ğŸ¥½ 1:1 YÃ¼zey YÃ¼rÃ¼yÃ¼ÅŸÃ¼ (WASD / WebXR)</option>
+              <option value="cinematic">Sinematik Yönetmen</option>
+              <option value="follow">Takip Kamerası</option>
+              <option value="ground">Yüzey Sabit Kamerası</option>
+              <option value="free">Serbest 360° Kamera (Mouse/Touch)</option>
+              <option value="walk">🥽 1:1 Yüzey Yürüyüşü (WASD / WebXR)</option>
             </select>
           </div>
 
-          <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronot GÃ¶z HizasÄ±nda YÃ¼zey YÃ¼rÃ¼yÃ¼ÅŸÃ¼ Modu">
-            <span>ğŸš¶</span> <span>1:1 YÃ¼rÃ¼yÃ¼ÅŸ</span>
+          <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronot Göz Hizasında Yüzey Yürüyüşü Modu">
+            <span>🚶</span> <span>1:1 Yürüyüş</span>
           </button>
 
-          <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Meta Quest veya Apple Vision Pro ile WebXR VR/AR BaÅŸlat">
-            <span>ğŸ¥½</span> <span>WebXR VR/AR</span>
+          <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Meta Quest veya Apple Vision Pro ile WebXR VR/AR Başlat">
+            <span>🥽</span> <span>WebXR VR/AR</span>
           </button>
 
-          <button class="sim-action-btn" id="btn-replay-sim" title="SimÃ¼lasyonu BaÅŸtan BaÅŸlat">
-            <span>ğŸ”„</span> <span>Tekrar Oynat</span>
+          <button class="sim-action-btn" id="btn-replay-sim" title="Simülasyonu Baştan Başlat">
+            <span>🔄</span> <span>Tekrar Oynat</span>
           </button>
 
-          <button class="sim-close-btn" id="btn-close-sim" title="SimÃ¼lasyonu Kapat">
-            <span>âœ• Ã‡IKIÅ</span>
+          <button class="sim-close-btn" id="btn-close-sim" title="Simülasyonu Kapat">
+            <span>✕ ÇIKIŞ</span>
           </button>
         </div>
       </div>
@@ -515,49 +515,49 @@
       <!-- WebGL Simulation Viewport -->
       <div class="sim-canvas-wrapper">
         <canvas id="sim-canvas"></canvas>
-        <div class="procedural-watermark-badge" data-i18n="watermark_badge">âœ¦ FÄ°LÄ°GRAN / WATERMARK: AI-DESTEKLÄ° PROSEDÃœREL 3B GÃ–RSELLEÅTÄ°RME â€¢ NASA AÃ‡IK VERÄ°SÄ° (RESMÄ° NASA LOGOSU KULLANILMAMIÅTIR)</div>
+        <div class="procedural-watermark-badge" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
 
         <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
         <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
           <!-- Compact Game-Mode Pill (Shown when surrounding UI buttons are hidden in VR/Game mode) -->
-          <div class="vr-game-mini-hud" id="vr-game-mini-pill" title="Normal ArayÃ¼z ButonlarÄ±nÄ± Geri Getirmek Ä°Ã§in TÄ±klayÄ±n veya H / TAB / ESC / Meta Quest X TuÅŸuna BasÄ±n">
-            <span id="vr-game-mission-text">ğŸ® VR OYUN MODU AKTÄ°F â€¢ Numune: 0/8</span>
-            <span class="mini-key-badge">[H / TAB / Quest X]: Normal ArayÃ¼ze DÃ¶n</span>
+          <div class="vr-game-mini-hud" id="vr-game-mini-pill" title="Normal Arayüz Butonlarını Geri Getirmek İçin Tıklayın veya H / TAB / ESC Tuşuna Basın">
+            <span id="vr-game-mission-text">🎮 VR OYUN MODU AKTİF • Numune: 0/8</span>
+            <span class="mini-key-badge">[H / TAB]: Normal Arayüze Dön</span>
           </div>
 
-          <!-- Always-visible Meta Quest 3S immersive VR entry button (visible even in clean game UI) -->
-          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Meta Quest 3S gÃ¶zlÃ¼ÄŸÃ¼nde tam sÃ¼rÃ¼kleyici VR oturumunu baÅŸlat">ğŸ¥½ META QUEST 3S â€” VR'A GÄ°R</button>
+          <!-- Always-visible Meta Quest 3S immersive VR entry button -->
+          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Meta Quest 3S gözlüğünde tam sürükleyici VR oturumunu başlat">🥽 META QUEST 3S — VR'A GİR</button>
 
           <div class="walk-visor-banner interactive">
-            <div class="walk-xr-status" id="walk-xr-status">ğŸš€ HAVADAN Ä°NÄ°Å AKTÄ°F (KABÄ°N Ä°Ã‡Ä°NDESÄ°NÄ°Z) â€¢ Ä°niÅŸ SonrasÄ± KapÄ±ya YÃ¼rÃ¼, Volana TÄ±kla veya E: KapaÄŸÄ± AÃ§Ä±p DÄ±ÅŸarÄ± Ã‡Ä±k</div>
+            <div class="walk-xr-status" id="walk-xr-status">🚀 HAVADAN İNİŞ AKTİF (KABİN İÇİNDESİNİZ) • İniş Sonrası Kapıya Yürü, Volana Tıkla veya E: Kapağı Açıp Dışarı Çık</div>
             <div class="walk-metrics-row">
-              <span id="walk-hud-dist">KONUM: ROKET KABÄ°NÄ° Ä°Ã‡Ä° (HAVADAN Ä°NÄ°Å)</span>
-              <span>â€¢</span>
-              <span id="walk-hud-grav">YERÃ‡EKÄ°MÄ°: 1.62 m/sÂ² (0.16g) | GÃ–Z HÄ°ZASI: 4.50 m | ADIM: 0</span>
+              <span id="walk-hud-dist">KONUM: ROKET KABİNİ İÇİ (HAVADAN İNİŞ)</span>
+              <span>•</span>
+              <span id="walk-hud-grav">YERÇEKİMİ: 1.62 m/s² (0.16g) | GÖZ HİZASI: 4.50 m | ADIM: 0</span>
             </div>
             <div class="walk-quick-actions">
-              <button class="walk-sub-btn" id="btn-walk-view-toggle" title="1. ÅahÄ±s (Astronot Elleri & Bilek BilgisayarÄ±) ve 3. ÅahÄ±s (Tam Astronot Modeli) ArasÄ±nda GeÃ§iÅŸ Yap (V TuÅŸu)">ğŸ‘ï¸ GÃ¶rÃ¼nÃ¼m: 1. ÅahÄ±s (Astronot Elleri)</button>
-              <button class="walk-sub-btn active" id="btn-walk-cabin" title="Ä°niÅŸ SonrasÄ± BasÄ±nÃ§lÄ± EVA KapaÄŸÄ±nÄ± AÃ§Ä±p Merdivenle YÃ¼zeye Ã‡Ä±k veya Kabine Gir (E TuÅŸu)">ğŸšª EVA KapaÄŸÄ±nÄ± AÃ§ & DÄ±ÅŸarÄ± Ã‡Ä±k (E)</button>
-              <button class="walk-sub-btn active" id="btn-walk-torch" title="SaÄŸ Eldeki NASA EVA Fenerini AÃ§ / Kapat (F TuÅŸu)">ğŸ”¦ EVA Feneri (F)</button>
-              <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Etraftaki TÃ¼m ButonlarÄ± KaldÄ±rÄ±p Tam Ekran VR Oyun Moduna GeÃ§ (H veya TAB TuÅŸu)">ğŸ® ButonlarÄ± Gizle / Oyun Modu (H)</button>
+              <button class="walk-sub-btn" id="btn-walk-view-toggle" title="1. Şahıs (Astronot Elleri & Bilek Bilgisayarı) ve 3. Şahıs (Tam Astronot Modeli) Arasında Geçiş Yap (V Tuşu)">👁️ Görünüm: 1. Şahıs (Astronot Elleri)</button>
+              <button class="walk-sub-btn active" id="btn-walk-cabin" title="İniş Sonrası Basınçlı EVA Kapağını Açıp Merdivenle Yüzeye Çık veya Kabine Gir (E Tuşu)">🚪 EVA Kapağını Aç & Dışarı Çık (E)</button>
+              <button class="walk-sub-btn active" id="btn-walk-torch" title="Sağ Eldeki NASA EVA Fenerini Aç / Kapat (F Tuşu)">🔦 EVA Feneri (F)</button>
+              <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Etraftaki Tüm Butonları Kaldırıp Tam Ekran VR Oyun Moduna Geç (H veya TAB Tuşu)">🎮 Butonları Gizle / Oyun Modu (H)</button>
             </div>
           </div>
 
           <!-- Center Visor Crosshair & Interactive 3D Button / Switch Tooltip -->
           <div class="walk-reticle-center" id="walk-reticle-center">
             <div class="walk-reticle-dot" id="walk-reticle-dot"></div>
-            <div class="walk-interact-prompt hidden" id="walk-interact-prompt">ğŸ¯ [SOL TIK / VR TETÄ°K] DSKY TUÅU</div>
+            <div class="walk-interact-prompt hidden" id="walk-interact-prompt">🎯 [SOL TIK / VR TETİK] DSKY TUŞU</div>
           </div>
 
           <!-- Interactive Touch / Mouse D-Pad for Surface Walk -->
           <div class="walk-dpad-container">
-            <button class="dpad-btn dpad-up" id="walk-btn-up" title="Ä°leri YÃ¼rÃ¼ (W)">â–²</button>
+            <button class="dpad-btn dpad-up" id="walk-btn-up" title="İleri Yürü (W)">▲</button>
             <div class="dpad-mid-row">
-              <button class="dpad-btn dpad-left" id="walk-btn-left" title="Sola YÃ¼rÃ¼ (A)">â—„</button>
-              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="DÃ¼ÅŸÃ¼k YerÃ§ekimi SÄ±Ã§ramasÄ± (SPACE)">SIÃ‡RA</button>
-              <button class="dpad-btn dpad-right" id="walk-btn-right" title="SaÄŸa YÃ¼rÃ¼ (D)">â–º</button>
+              <button class="dpad-btn dpad-left" id="walk-btn-left" title="Sola Yürü (A)">◄</button>
+              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Düşük Yerçekimi Sıçraması (SPACE)">SIÇRA</button>
+              <button class="dpad-btn dpad-right" id="walk-btn-right" title="Sağa Yürü (D)">►</button>
             </div>
-            <button class="dpad-btn dpad-down" id="walk-btn-down" title="Geri YÃ¼rÃ¼ (S)">â–¼</button>
+            <button class="dpad-btn dpad-down" id="walk-btn-down" title="Geri Yürü (S)">▼</button>
           </div>
         </div>
 
@@ -565,7 +565,7 @@
         <div class="sim-hud-overlay">
           <div class="hud-gauge-row">
             <div class="hud-gauge">
-              <span class="gauge-label">Ä°RTÄ°FA / GÃ–Z HÄ°ZASI</span>
+              <span class="gauge-label">İRTİFA / GÖZ HİZASI</span>
               <span class="gauge-val" id="hud-alt">75.0 m</span>
             </div>
             <div class="hud-gauge">
@@ -573,14 +573,14 @@
               <span class="gauge-val" id="hud-speed">-3.2 m/s</span>
             </div>
             <div class="hud-gauge">
-              <span class="gauge-label">Ä°TME GÃœCÃœ / MOD</span>
+              <span class="gauge-label">İTME GÜCÜ / MOD</span>
               <span class="gauge-val" id="hud-thrust">78%</span>
             </div>
           </div>
 
           <div class="hud-phase-bar">
             <span class="phase-indicator-dot"></span>
-            <span class="phase-text" id="hud-phase">ALÃ‡ALMA VE FRENLEME AÅAMASI (TERMINAL DESCENT)</span>
+            <span class="phase-text" id="hud-phase">ALÇALMA VE FRENLEME AŞAMASI (TERMINAL DESCENT)</span>
           </div>
         </div>
       </div>
@@ -595,19 +595,19 @@
     <div class="modal-content glass-card interactive">
       <div class="modal-header">
         <div class="modal-title-group">
-          <span>ğŸ›ï¸</span>
-          <h2 data-i18n="sources_modal_title">RESMÄ° NASA VERÄ° KAYNAKLARI & TARÄ°H SERÄ°SÄ° ARÅÄ°VLERÄ°</h2>
+          <span>🏛️</span>
+          <h2 data-i18n="sources_modal_title">RESMİ NASA VERİ KAYNAKLARI & TARİH SERİSİ ARŞİVLERİ</h2>
         </div>
-        <button class="close-btn" id="btn-close-sources">âœ•</button>
+        <button class="close-btn" id="btn-close-sources">✕</button>
       </div>
       <p class="sources-intro" data-i18n="sources_intro">
-        Bu projede yer alan tÃ¼m koordinatlar, iniÅŸ tarihleri, donanÄ±m envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referanslarÄ± ve telsiz konuÅŸmalarÄ± NASA'nÄ±n resmi bilimsel arÅŸivlerinden doÄŸrulanmÄ±ÅŸtÄ±r:
+        Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referansları ve telsiz konuşmaları NASA'nın resmi bilimsel arşivlerinden doğrulanmıştır:
       </p>
       <div class="sources-list" id="sources-list-container">
         <!-- Populated dynamically by app.js from OFFICIAL_SOURCES -->
       </div>
       <div class="modal-footer-note">
-        <span>âœ¦ NASA AÃ§Ä±k Veri PolitikasÄ± (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamÄ±nda eÄŸitim ve bilimsel araÅŸtÄ±rma amacÄ±yla derlenmiÅŸtir.</span>
+        <span>✦ NASA Açık Veri Politikası (Open Data Policy), data.nasa.gov ve images.nasa.gov kapsamında eğitim ve bilimsel araştırma amacıyla derlenmiştir.</span>
       </div>
     </div>
   </div>
@@ -619,13 +619,13 @@
     <div class="photo-modal-card glass-card interactive">
       <div class="photo-modal-header">
         <div class="photo-title-group">
-          <span class="photo-cat-badge" id="lightbox-cat">NASA ARÅÄ°VÄ°</span>
-          <h3 class="photo-title" id="lightbox-title">FotoÄŸraf BaÅŸlÄ±ÄŸÄ±</h3>
+          <span class="photo-cat-badge" id="lightbox-cat">NASA ARŞİVİ</span>
+          <h3 class="photo-title" id="lightbox-title">Fotoğraf Başlığı</h3>
         </div>
-        <button class="close-btn" id="btn-close-photo" title="Kapat">âœ•</button>
+        <button class="close-btn" id="btn-close-photo" title="Kapat">✕</button>
       </div>
       <div class="photo-img-wrapper">
-        <img id="lightbox-img" src="" alt="NASA YÃ¼ksek Ã‡Ã¶zÃ¼nÃ¼rlÃ¼klÃ¼ ArÅŸiv FotoÄŸrafÄ±">
+        <img id="lightbox-img" src="" alt="NASA Yüksek Çözünürlüklü Arşiv Fotoğrafı">
       </div>
       <div class="photo-modal-footer">
         <div class="photo-meta-row">
@@ -634,7 +634,7 @@
             <span class="meta-val" id="lightbox-id">NASA PIA12909</span>
           </div>
           <div class="photo-meta-item">
-            <span class="meta-label">ENSTRÃœMAN:</span>
+            <span class="meta-label">ENSTRÜMAN:</span>
             <span class="meta-val" id="lightbox-instrument">LROC NAC Camera</span>
           </div>
         </div>
@@ -650,22 +650,22 @@
     <div class="modal-content jury-modal-card glass-card interactive">
       <div class="modal-header">
         <div class="modal-title-group">
-          <span>ğŸ†</span>
-          <h2 data-i18n="jury_modal_title">NASA 5 DEÄERLENDÄ°RME KRÄ°TERÄ° & HÄ°KÃ‚YE ANLATIMI REHBERÄ°</h2>
+          <span>🏆</span>
+          <h2 data-i18n="jury_modal_title">NASA 5 DEĞERLENDİRME KRİTERİ & HİKÂYE ANLATIMI REHBERİ</h2>
         </div>
-        <button class="close-btn" id="btn-close-jury">âœ•</button>
+        <button class="close-btn" id="btn-close-jury">✕</button>
       </div>
 
       <div class="jury-tabs-bar">
-        <button class="jury-tab-btn active" data-jtab="criteria" data-i18n="jtab_criteria">ğŸ¯ 5 Kriter KanÄ±t Matrisi (1â€“5 Puan)</button>
-        <button class="jury-tab-btn" data-jtab="pitch" data-i18n="jtab_pitch">ğŸ¤ SÄ±ralÄ± HikÃ¢ye AnlatÄ±mÄ± & Sunum Senaryosu</button>
-        <button class="jury-tab-btn" data-jtab="compliance" data-i18n="jtab_compliance">ğŸ“‹ Space Apps 2026 BaÅŸvuru Metinleri & AI BeyanÄ±</button>
+        <button class="jury-tab-btn active" data-jtab="criteria" data-i18n="jtab_criteria">🎯 5 Kriter Kanıt Matrisi (1–5 Puan)</button>
+        <button class="jury-tab-btn" data-jtab="pitch" data-i18n="jtab_pitch">🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu</button>
+        <button class="jury-tab-btn" data-jtab="compliance" data-i18n="jtab_compliance">📋 Space Apps 2026 Başvuru Metinleri & AI Beyanı</button>
       </div>
 
       <!-- TAB 1: NASA 5 Criteria Matrix -->
       <div class="jury-tab-panel active" id="jpanel-criteria">
         <p class="sources-intro" data-i18n="jury_criteria_intro">
-          Projemiz NASA yarÄ±ÅŸma jÃ¼risinin 5 temel deÄŸerlendirme kriterinin tamamÄ±nda (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak ÅŸekilde doÄŸrulanmÄ±ÅŸ NASA verileri, fizik motoru ve sÄ±ralÄ± hikÃ¢ye kurgusuyla tasarlanmÄ±ÅŸtÄ±r:
+          Projemiz NASA yarışma jürisinin 5 temel değerlendirme kriterinin tamamında (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak şekilde doğrulanmış NASA verileri, fizik motoru ve sıralı hikâye kurgusuyla tasarlanmıştır:
         </p>
         <div class="jury-criteria-grid" id="jury-criteria-container">
           <!-- Populated dynamically by app.js -->
@@ -675,7 +675,7 @@
       <!-- TAB 2: Sequential Storytelling Pitch Script -->
       <div class="jury-tab-panel" id="jpanel-pitch">
         <p class="sources-intro" data-i18n="jury_pitch_intro">
-          Presentation (Sunum) kriterinde tam puan almak iÃ§in sunumunuzu rastgele noktalar yerine aÅŸaÄŸÄ±daki 5 perdelik aÃ§Ä±k, sÄ±ralÄ± ve duygusal hikÃ¢ye akÄ±ÅŸÄ±yla yapabilirsiniz. Her adÄ±mdaki butona tÄ±klayarak o sahneyi anÄ±nda ekranda canlÄ± gÃ¶sterebilirsiniz:
+          Presentation (Sunum) kriterinde tam puan almak için sunumunuzu rastgele noktalar yerine aşağıdaki 5 perdelik açık, sıralı ve duygusal hikâye akışıyla yapabilirsiniz. Her adımdaki butona tıklayarak o sahneyi anında ekranda canlı gösterebilirsiniz:
         </p>
         <div class="jury-pitch-steps" id="jury-pitch-container">
           <!-- Populated dynamically by app.js -->
@@ -685,7 +685,7 @@
       <!-- TAB 3: NASA Space Apps 2026 Official Submission & AI Compliance Dossier -->
       <div class="jury-tab-panel" id="jpanel-compliance">
         <p class="sources-intro" data-i18n="jury_compliance_intro">
-          Global Ã¶dÃ¼llere uygunluk (Global Awards Eligibility) iÃ§in yarÄ±ÅŸma baÅŸvuru formunda istenen 3 zorunlu bÃ¶lÃ¼mÃ¼n (1. NASA & Space Agency Partner Data, 2. References, 3. Use of Super Intelligence) hazÄ±r yanÄ±tlarÄ± aÅŸaÄŸÄ±dadÄ±r. SaÄŸ Ã¼stteki butonlarla doÄŸrudan kopyalayÄ±p baÅŸvuru formuna yapÄ±ÅŸtÄ±rabilirsiniz:
+          Global ödüllere uygunluk (Global Awards Eligibility) için yarışma başvuru formunda istenen 3 zorunlu bölümün (1. NASA & Space Agency Partner Data, 2. References, 3. Use of Super Intelligence) hazır yanıtları aşağıdadır. Sağ üstteki butonlarla doğrudan kopyalayıp başvuru formuna yapıştırabilirsiniz:
         </p>
         <div class="jury-pitch-steps" id="jury-compliance-container">
           <!-- Populated dynamically by app.js from SPACE_APPS_SUBMISSION_DOSSIER -->
@@ -693,17 +693,17 @@
       </div>
 
       <div class="modal-footer-note">
-        <span>âœ¦ Ä°pucu: Sunum sÄ±rasÄ±nda "ğŸ¬ 5 BÃ¶lÃ¼mlÃ¼k HikÃ¢ye Turunu BaÅŸlat" butonuna basarak tÃ¼m anlatÄ±mÄ± tek tuÅŸla kronolojik olarak ilerletebilirsiniz.</span>
+        <span>✦ İpucu: Sunum sırasında "🎬 5 Bölümlük Hikâye Turunu Başlat" butonuna basarak tüm anlatımı tek tuşla kronolojik olarak ilerletebilirsiniz.</span>
       </div>
     </div>
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=5.3"></script>
-  <script src="js/textures.js?v=5.3"></script>
-  <script src="js/audio.js?v=5.3"></script>
-  <script src="js/scene.js?v=5.3"></script>
-  <script src="js/simulation.js?v=5.3"></script>
-  <script src="js/app.js?v=5.3"></script>
+  <script src="js/data.js?v=5.4"></script>
+  <script src="js/textures.js?v=5.4"></script>
+  <script src="js/audio.js?v=5.4"></script>
+  <script src="js/scene.js?v=5.4"></script>
+  <script src="js/simulation.js?v=5.4"></script>
+  <script src="js/app.js?v=5.4"></script>
 </body>
 </html>

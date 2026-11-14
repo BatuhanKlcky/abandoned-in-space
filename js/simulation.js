@@ -1909,22 +1909,264 @@ class MissionSimulationTheater {
     this.scene.add(lrv);
   }
 
-  getExactSurfaceHeight(x, z) {
-    if (this.terrain) {
-      if (!this.surfaceRaycaster) {
-        this.surfaceRaycaster = new THREE.Raycaster();
-        this.downVector = new THREE.Vector3(0, -1, 0);
-        this.rayOrigin = new THREE.Vector3();
+  // ===========================================================================
+  // AUTHENTIC HISTORICAL SURFACE EQUIPMENT BUILDERS (LOCATION-SPECIFIC)
+  // ===========================================================================
+  buildModularEquipmentTransporter(x, z) {
+    const met = new THREE.Group();
+    const y = this.getExactSurfaceHeight(x, z);
+    met.position.set(x, y + 0.28, z);
+    met.rotation.y = 0.45;
+
+    const alumMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+    const rubberMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.85 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
+
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.95), alumMat);
+    deck.castShadow = true;
+    met.add(deck);
+
+    for (let side = -1; side <= 1; side += 2) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.12, 16), rubberMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(side * 0.48, 0, 0);
+      wheel.castShadow = true;
+      met.add(wheel);
+    }
+
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.22, 0.65), goldMat);
+    tray.position.set(0, 0.15, -0.05);
+    tray.castShadow = true;
+    met.add(tray);
+
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.15), alumMat);
+    handle.rotation.x = Math.PI / 3.2;
+    handle.position.set(0, 0.38, 0.65);
+    met.add(handle);
+
+    met.userData.interactive = {
+      label_tr: '🛞 [SOL TIK / E / VR TETİK] APOLLO 14 MET ÇEKÇEĞİNİ İNCELE (Ay El Arabası)',
+      label_en: '🛞 [CLICK / E / VR TRIGGER] INSPECT APOLLO 14 MET CART (Modular Transporter)',
+      onClick: () => {
+        this.playSwitchClickSound(880);
+        if (window.SpaceAudio && this.currentArtifact) {
+          window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
+        }
+        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        this.updateVRGameMiniPill(isTr ? 'Apollo 14 MET "Ay El Arabası" İncelendi' : 'Inspected Apollo 14 MET Cart');
       }
-      this.terrain.updateMatrixWorld();
-      this.rayOrigin.set(x, 60, z);
-      this.surfaceRaycaster.set(this.rayOrigin, this.downVector);
-      const hits = this.surfaceRaycaster.intersectObject(this.terrain, false);
-      if (hits && hits.length > 0) {
-        return hits[0].point.y;
+    };
+    this.surfaceInteractables.push(deck, tray);
+    this.scene.add(met);
+  }
+
+  buildSurveyorProbeProp(x, z) {
+    const surveyor = new THREE.Group();
+    const y = this.getExactSurfaceHeight(x, z);
+    surveyor.position.set(x, y + 0.45, z);
+    surveyor.rotation.y = -0.55;
+
+    const alumMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
+    const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.9, roughness: 0.15 });
+
+    const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.85, 0.95, 3), alumMat);
+    frame.castShadow = true;
+    surveyor.add(frame);
+
+    for (let i = 0; i < 3; i++) {
+      const legAng = (i * Math.PI * 2) / 3;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.4), alumMat);
+      leg.position.set(Math.cos(legAng) * 0.75, -0.22, Math.sin(legAng) * 0.75);
+      leg.rotation.z = Math.cos(legAng) * 0.55;
+      leg.rotation.x = -Math.sin(legAng) * 0.55;
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.05, 12), whiteMat);
+      foot.position.set(Math.cos(legAng) * 1.25, -0.45, Math.sin(legAng) * 1.25);
+      surveyor.add(leg, foot);
+    }
+
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.8), alumMat);
+    mast.position.set(0, 0.95, 0);
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.05, 0.04), solarMat);
+    panel.position.set(0, 1.85, 0);
+    panel.rotation.y = 0.35;
+    surveyor.add(mast, panel);
+
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.1), alumMat);
+    arm.position.set(0.65, -0.25, 0.55);
+    arm.rotation.x = 0.45;
+    surveyor.add(arm);
+
+    surveyor.userData.interactive = {
+      label_tr: '📡 [SOL TIK / E / VR TETİK] SURVEYOR 3 ROBOTİK SONDASINI İNCELE (Apollo 12 Arkeolojisi)',
+      label_en: '📡 [CLICK / E / VR TRIGGER] INSPECT SURVEYOR 3 ROBOTIC PROBE',
+      onClick: () => {
+        this.playSwitchClickSound(920);
+        if (window.SpaceAudio && this.currentArtifact) {
+          window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
+        }
+        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        this.updateVRGameMiniPill(isTr ? 'Surveyor 3 Robotik Sondası İncelendi' : 'Inspected Surveyor 3 Robotic Probe');
+      }
+    };
+    this.surfaceInteractables.push(frame, panel);
+    this.scene.add(surveyor);
+  }
+
+  buildSojournerRoverProp(x, z) {
+    const rover = new THREE.Group();
+    const y = this.getExactSurfaceHeight(x, z);
+    rover.position.set(x, y + 0.18, z);
+    rover.rotation.y = 0.65;
+
+    const chassisMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.82, roughness: 0.3 });
+    const solarMat = new THREE.MeshStandardMaterial({ color: 0x172554, metalness: 0.92, roughness: 0.12 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.35 });
+
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.18, 0.65), chassisMat);
+    chassis.castShadow = true;
+    rover.add(chassis);
+
+    const solar = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.02, 0.62), solarMat);
+    solar.position.y = 0.10;
+    rover.add(solar);
+
+    for (let side = -1; side <= 1; side += 2) {
+      for (let w = -1; w <= 1; w++) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.05, 12), wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(side * 0.28, -0.09, w * 0.22);
+        wheel.castShadow = true;
+        rover.add(wheel);
       }
     }
-    return this.getTerrainHeight(x, z);
+
+    const apxs = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.18, 10), chassisMat);
+    apxs.rotation.x = Math.PI / 2;
+    apxs.position.set(0, -0.04, 0.38);
+    rover.add(apxs);
+
+    rover.userData.interactive = {
+      label_tr: '🤖 [SOL TIK / E / VR TETİK] SOJOURNER ROVERINI İNCELE (10.6 kg İlk Mars Gezgini)',
+      label_en: '🤖 [CLICK / E / VR TRIGGER] INSPECT SOJOURNER MICRO-ROVER (10.6 kg First Mars Rover)',
+      onClick: () => {
+        this.playSwitchClickSound(980);
+        if (window.SpaceAudio && this.currentArtifact) {
+          window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
+        }
+        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        this.updateVRGameMiniPill(isTr ? 'Sojourner Mikro-Roverı İncelendi' : 'Inspected Sojourner Micro-Rover');
+      }
+    };
+    this.surfaceInteractables.push(chassis, solar);
+    this.scene.add(rover);
+  }
+
+  buildMarsExplorationRoverProp(x, z) {
+    const mer = new THREE.Group();
+    const y = this.getExactSurfaceHeight(x, z);
+    mer.position.set(x, y + 0.38, z);
+    mer.rotation.y = -0.45;
+
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
+    const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85, roughness: 0.28 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.38, 1.5), goldMat);
+    body.castShadow = true;
+    mer.add(body);
+
+    const solarDeck = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.04, 1.6), solarMat);
+    solarDeck.position.y = 0.21;
+    solarDeck.castShadow = true;
+    mer.add(solarDeck);
+
+    for (let side = -1; side <= 1; side += 2) {
+      for (let w = -1; w <= 1; w++) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.11, 14), metalMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(side * 0.82, -0.25, w * 0.58);
+        wheel.castShadow = true;
+        mer.add(wheel);
+      }
+    }
+
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.25), metalMat);
+    mast.position.set(0.35, 0.82, 0.45);
+    const cameraHead = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.18), darkMat);
+    cameraHead.position.set(0.35, 1.45, 0.45);
+    mer.add(mast, cameraHead);
+
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.02, 0.08, 16), metalMat);
+    dish.position.set(-0.35, 0.35, -0.45);
+    dish.rotation.x = -0.45;
+    mer.add(dish);
+
+    mer.userData.interactive = {
+      label_tr: '🛰️ [SOL TIK / E / VR TETİK] MARS KEŞİF GEZGİNİNİ İNCELE (MER Spirit/Opportunity)',
+      label_en: '🛰️ [CLICK / E / VR TRIGGER] INSPECT MARS EXPLORATION ROVER (MER)',
+      onClick: () => {
+        this.playSwitchClickSound(940);
+        if (window.SpaceAudio && this.currentArtifact) {
+          window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
+        }
+        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        this.updateVRGameMiniPill(isTr ? 'Mars Keşif Gezgini (MER) İncelendi' : 'Inspected Mars Exploration Rover');
+      }
+    };
+    this.surfaceInteractables.push(body, solarDeck);
+    this.scene.add(mer);
+  }
+
+  buildInSightStationProps(x, z) {
+    const station = new THREE.Group();
+    const y = this.getExactSurfaceHeight(x, z);
+    station.position.set(x, y + 0.18, z);
+
+    const copperMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.22 });
+    const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.82, roughness: 0.28 });
+    const orangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.7 });
+
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), copperMat);
+    dome.position.set(0, 0, 0);
+    dome.castShadow = true;
+    station.add(dome);
+
+    const cable = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.015, 3.2), orangeMat);
+    cable.position.set(-0.55, -0.16, -1.5);
+    cable.rotation.y = 0.35;
+    station.add(cable);
+
+    const mole = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.38, 0.24), silverMat);
+    mole.position.set(1.4, 0.05, 0.8);
+    station.add(mole);
+
+    station.userData.interactive = {
+      label_tr: '🔊 [SOL TIK / E / VR TETİK] SEIS SİSMOMETRE KUBBESİNİ DİNLE (Mars Depremleri)',
+      label_en: '🔊 [CLICK / E / VR TRIGGER] LISTEN TO SEIS SEISMOMETER DOME',
+      onClick: () => {
+        this.playSwitchClickSound(640);
+        if (window.SpaceAudio) {
+          window.SpaceAudio.playTelemetryPing(520, 0.3);
+        }
+        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        this.updateVRGameMiniPill(isTr ? 'SEIS Sismometresi Aktif (Mars Sismik Kayıtları)' : 'SEIS Seismometer Active (Marsquake data)');
+      }
+    };
+    this.surfaceInteractables.push(dome, mole);
+    this.scene.add(station);
+  }
+
+  // Exact Analytical Planetary Surface Height Function (O(1) Ultra-Fast, Zero Raycaster Lag Spikes!)
+  getExactSurfaceHeight(x, z) {
+    const d = Math.hypot(x, z);
+    let y = this.getTerrainHeight(x, z);
+    if (d > 130) {
+      const edge = (d - 130) / 70;
+      y += Math.sin(x * 0.08) * Math.cos(z * 0.08) * (edge * 22);
+    }
+    return y;
   }
 
   getBootprintTexture() {
@@ -2074,7 +2316,7 @@ class MissionSimulationTheater {
       this.scene.remove(this.scene.children[0]);
     }
     this.scene.add(this.cameraRig);
-    this.particles = [];
+    this.initParticlePool();
     this.footprints = [];
 
     const body = artifact.body || 'moon';
@@ -2433,103 +2675,141 @@ class MissionSimulationTheater {
       }
       fabricGeo.computeVertexNormals();
 
-      if (!this.teamLogoTexture) {
-        this.teamLogoTexture = new THREE.TextureLoader().load('assets/yigido-orbit-logo.jpg');
-      }
+      const turkishFlagTex = window.ProceduralTextures
+        ? window.ProceduralTextures.generateTurkishFlagTexture()
+        : null;
       const flagMesh = new THREE.Mesh(
         fabricGeo,
         new THREE.MeshStandardMaterial({
-          map: this.teamLogoTexture,
+          map: turkishFlagTex,
+          color: turkishFlagTex ? 0xffffff : 0xe30a17,
           roughness: 0.65,
-          metalness: 0.12,
+          metalness: 0.08,
           side: THREE.DoubleSide
         })
       );
       flagMesh.position.set(0.67, 2.12, 0);
       flagMesh.castShadow = true;
       flagMesh.userData.interactive = {
-        label_tr: '🚩 [SOL TIK / E / VR TETİK] YİĞİDO ORBİT GÖREV BAYRAĞINI SELAMLA & TELSİZİ DİNLE',
-        label_en: '🚩 [CLICK / E / VR TRIGGER] SALUTE YİĞİDO ORBİT MISSION FLAG & PLAY RADIO',
+        label_tr: '🇹🇷 [SOL TIK / E / VR TETİK] ŞANLI TÜRK BAYRAĞINI SELAMLA & TELSİZİ DİNLE',
+        label_en: '🇹🇷 [CLICK / E / VR TRIGGER] SALUTE TURKISH FLAG & PLAY RADIO',
         onClick: () => {
           this.playSwitchClickSound(720);
           if (window.SpaceAudio && this.currentArtifact) {
             window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || this.currentArtifact.quote_en || '');
           }
           const isTr = window.app ? window.app.currentLang === 'tr' : true;
-          this.updateVRGameMiniPill(isTr ? 'Görev Bayrağı & Telsiz Kaydı Aktif!' : 'Mission Flag & Radio Transmission Active!');
+          this.updateVRGameMiniPill(isTr ? '🇹🇷 Şanlı Türk Bayrağı Selamlandı!' : '🇹🇷 Turkish Flag Saluted!');
         }
       };
       this.surfaceInteractables.push(flagMesh);
       flagGroup.add(flagMesh);
       this.scene.add(flagGroup);
 
-      // Interactive ALSEP Scientific Instrument Station + Laser Retroreflector (LRRR)
-      const alsepY = this.getTerrainHeight(-10.5, 8.5);
-      const alsepBox = new THREE.Mesh(
-        new THREE.BoxGeometry(1.1, 0.8, 1.1),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.2 })
-      );
-      alsepBox.position.set(-10.5, alsepY + 0.4, 8.5);
-      alsepBox.castShadow = true;
-      this.scene.add(alsepBox);
+      // ALSEP Scientific Instrument Station & 532nm Earth Laser: ONLY ON MOON CREWED MISSIONS!
+      const isLunarManned = isMoon && (artifact.category === 'lander' || artifact.category === 'rover');
+      if (isLunarManned) {
+        const alsepY = this.getExactSurfaceHeight(-10.5, 8.5);
+        const alsepBox = new THREE.Mesh(
+          new THREE.BoxGeometry(1.1, 0.8, 1.1),
+          new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.2 })
+        );
+        alsepBox.position.set(-10.5, alsepY + 0.4, 8.5);
+        alsepBox.castShadow = true;
+        this.scene.add(alsepBox);
 
-      // 372m Earth-Ranging Green Laser Beam (532nm) aimed directly from ALSEP to Earth in the sky!
-      const pAlsep = new THREE.Vector3(-10.5, alsepY + 0.4, 8.5);
-      const pEarth = new THREE.Vector3(-180, 95, -310);
-      const beamDist = pAlsep.distanceTo(pEarth);
-      const beamDir = new THREE.Vector3().subVectors(pEarth, pAlsep).normalize();
-      const beamMid = new THREE.Vector3().addVectors(pAlsep, pEarth).multiplyScalar(0.5);
+        // 372m Earth-Ranging Green Laser Beam (532nm) aimed directly from ALSEP to Earth in the sky!
+        const pAlsep = new THREE.Vector3(-10.5, alsepY + 0.4, 8.5);
+        const pEarth = new THREE.Vector3(-180, 95, -310);
+        const beamDist = pAlsep.distanceTo(pEarth);
+        const beamDir = new THREE.Vector3().subVectors(pEarth, pAlsep).normalize();
+        const beamMid = new THREE.Vector3().addVectors(pAlsep, pEarth).multiplyScalar(0.5);
 
-      const laserBeamGeo = new THREE.CylinderGeometry(0.09, 0.42, beamDist, 16);
-      const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.88 });
-      const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
-      alsepLaserBeam.position.copy(beamMid);
-      alsepLaserBeam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamDir);
-      alsepLaserBeam.visible = false;
-      this.scene.add(alsepLaserBeam);
+        const laserBeamGeo = new THREE.CylinderGeometry(0.09, 0.42, beamDist, 16);
+        const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.88 });
+        const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
+        alsepLaserBeam.position.copy(beamMid);
+        alsepLaserBeam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamDir);
+        alsepLaserBeam.visible = false;
+        this.scene.add(alsepLaserBeam);
 
-      // Green target retroreflector pulse ring at Earth
-      const earthTargetRing = new THREE.Mesh(
-        new THREE.RingGeometry(2.5, 4.6, 28),
-        new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
-      );
-      earthTargetRing.position.set(-180, 95, -310);
-      earthTargetRing.lookAt(pAlsep);
-      earthTargetRing.visible = false;
-      this.scene.add(earthTargetRing);
+        // Green target retroreflector pulse ring at Earth
+        const earthTargetRing = new THREE.Mesh(
+          new THREE.RingGeometry(2.5, 4.6, 28),
+          new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+        );
+        earthTargetRing.position.set(-180, 95, -310);
+        earthTargetRing.lookAt(pAlsep);
+        earthTargetRing.visible = false;
+        this.scene.add(earthTargetRing);
 
-      alsepBox.userData.interactive = {
-        label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR 532nm)',
-        label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP LUNAR LASER RETROREFLECTOR (532nm LRRR)',
-        onClick: () => {
-          alsepLaserBeam.visible = !alsepLaserBeam.visible;
-          earthTargetRing.visible = alsepLaserBeam.visible;
-          this.playSwitchClickSound(alsepLaserBeam.visible ? 1120 : 540);
-          if (alsepLaserBeam.visible && window.SpaceAudio) {
-            window.SpaceAudio.playTelemetryPing(1480, 0.15);
+        alsepBox.userData.interactive = {
+          label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR 532nm)',
+          label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP LUNAR LASER RETROREFLECTOR (532nm LRRR)',
+          onClick: () => {
+            alsepLaserBeam.visible = !alsepLaserBeam.visible;
+            earthTargetRing.visible = alsepLaserBeam.visible;
+            this.playSwitchClickSound(alsepLaserBeam.visible ? 1120 : 540);
+            if (alsepLaserBeam.visible && window.SpaceAudio) {
+              window.SpaceAudio.playTelemetryPing(1480, 0.15);
+            }
+            const isTr = window.app ? window.app.currentLang === 'tr' : true;
+            this.updateVRGameMiniPill(
+              alsepLaserBeam.visible
+                ? (isTr
+                    ? '📡 ALSEP LRRR LAZERİ: 384,402 km (Işık Gidiş-Dönüş: 2.56s • Yılda +3.8cm)'
+                    : '📡 ALSEP LRRR LASER: 384,402 km (Light RTT: 2.56s • Drift: +3.8cm/yr)')
+                : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
+            );
           }
-          const isTr = window.app ? window.app.currentLang === 'tr' : true;
-          this.updateVRGameMiniPill(
-            alsepLaserBeam.visible
-              ? (isTr
-                  ? '📡 ALSEP LRRR LAZERİ: 384,402 km (Işık Gidiş-Dönüş: 2.56s • Yılda +3.8cm)'
-                  : '📡 ALSEP LRRR LASER: 384,402 km (Light RTT: 2.56s • Drift: +3.8cm/yr)')
-              : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
-          );
-        }
-      };
-      this.surfaceInteractables.push(alsepBox);
+        };
+        this.surfaceInteractables.push(alsepBox);
 
-      const rtgCask = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.28, 0.28, 0.75, 12),
-        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
-      );
-      rtgCask.position.set(-12.2, alsepY + 0.38, 8.5);
-      rtgCask.castShadow = true;
-      this.scene.add(rtgCask);
+        const rtgCask = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.28, 0.28, 0.75, 12),
+          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
+        );
+        rtgCask.position.set(-12.2, alsepY + 0.38, 8.5);
+        rtgCask.castShadow = true;
+        this.scene.add(rtgCask);
+      }
 
-      // Interactive Driveable Lunar Roving Vehicle (LRV "Moon Buggy") parked on the surface
-      this.buildLunarRoverProp(13.5, -7.5);
+      // =======================================================================
+      // REALISTIC VEHICLE & SURFACE EQUIPMENT PER HISTORICAL LOCATION
+      // =======================================================================
+      // 1. Apollo LRV Moon Buggy: ONLY SPAWNS ON APOLLO 15, 16, 17!
+      const hasLRV = ['apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
+      if (hasLRV) {
+        this.buildLunarRoverProp(13.5, -7.5);
+      } else {
+        this.lrvPropGroup = null;
+        this.lrvWheels = [];
+      }
+
+      // 2. Apollo 14 MET Modular Equipment Transporter ("The Lunar Wheelbarrow"):
+      if (artifact.id === 'apollo-14-fra-mauro') {
+        this.buildModularEquipmentTransporter(10.5, -6.5);
+      }
+
+      // 3. Apollo 12 & Surveyor 3 Robotic Lunar Probe:
+      if (artifact.id === 'apollo-12-surveyor') {
+        this.buildSurveyorProbeProp(18.5, -12.5);
+      }
+
+      // 4. Mars Pathfinder & Sojourner Micro-Rover (10.6 kg):
+      if (artifact.id === 'pathfinder-sojourner') {
+        this.buildSojournerRoverProp(7.5, -4.5);
+      }
+
+      // 5. Mars Exploration Rovers Spirit & Opportunity (MER):
+      if (artifact.id === 'spirit-rover' || artifact.id === 'opportunity-rover') {
+        this.buildMarsExplorationRoverProp(12.5, -6.5);
+      }
+
+      // 6. InSight Mars Lander (SEIS dome & HP3 heat probe):
+      if (artifact.id === 'insight-lander') {
+        this.buildInSightStationProps(6.5, -3.5);
+      }
     }
 
     // Build First-Person & Third-Person Astronaut Rigs
@@ -3215,9 +3495,12 @@ class MissionSimulationTheater {
   // 1:1 CLIMBABLE EVA LADDER & NASA SPACECRAFT / ROCKET / SATELLITE INTERIOR CABIN
   // ===========================================================================
   generateDSKYTexture(artifact) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    if (!this.dskyCanvas) {
+      this.dskyCanvas = document.createElement('canvas');
+      this.dskyCanvas.width = 512;
+      this.dskyCanvas.height = 512;
+    }
+    const canvas = this.dskyCanvas;
     const ctx = canvas.getContext('2d');
 
     const cs = this.cabinState || {
@@ -3309,13 +3592,21 @@ class MissionSimulationTheater {
     ctx.lineWidth = 3;
     ctx.strokeRect(18, 296, 476, 200);
 
-    return new THREE.CanvasTexture(canvas);
+    if (!this.dskyTexture) {
+      this.dskyTexture = new THREE.CanvasTexture(canvas);
+    } else {
+      this.dskyTexture.needsUpdate = true;
+    }
+    return this.dskyTexture;
   }
 
   generateTelemetryScreenTexture(artifact) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
+    if (!this.telemetryCanvas) {
+      this.telemetryCanvas = document.createElement('canvas');
+      this.telemetryCanvas.width = 1024;
+      this.telemetryCanvas.height = 512;
+    }
+    const canvas = this.telemetryCanvas;
     const ctx = canvas.getContext('2d');
 
     const cs = this.cabinState || {
@@ -3407,13 +3698,21 @@ class MissionSimulationTheater {
     ctx.font = 'bold 13px monospace';
     ctx.fillText('⚙️ WATERMARK: AI-ASSISTED PROCEDURAL WEBGL / CANVAS2D RENDER • NO OFFICIAL NASA LOGO USED', 34, 492);
 
-    return new THREE.CanvasTexture(canvas);
+    if (!this.telemetryTexture) {
+      this.telemetryTexture = new THREE.CanvasTexture(canvas);
+    } else {
+      this.telemetryTexture.needsUpdate = true;
+    }
+    return this.telemetryTexture;
   }
 
   generateAirlockPanelTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    if (!this.airlockCanvas) {
+      this.airlockCanvas = document.createElement('canvas');
+      this.airlockCanvas.width = 512;
+      this.airlockCanvas.height = 512;
+    }
+    const canvas = this.airlockCanvas;
     const ctx = canvas.getContext('2d');
 
     const cs = this.cabinState || {
@@ -3506,28 +3805,40 @@ class MissionSimulationTheater {
       474
     );
 
-    return new THREE.CanvasTexture(canvas);
+    if (!this.airlockTexture) {
+      this.airlockTexture = new THREE.CanvasTexture(canvas);
+    } else {
+      this.airlockTexture.needsUpdate = true;
+    }
+    return this.airlockTexture;
   }
 
   refreshCabinDisplays() {
+    const dskyTex = this.generateDSKYTexture(this.currentArtifact);
     if (this.dskyScreenMesh && this.dskyScreenMesh.material) {
-      if (this.dskyScreenMesh.material.map) this.dskyScreenMesh.material.map.dispose();
-      this.dskyScreenMesh.material.map = this.generateDSKYTexture(this.currentArtifact);
+      if (this.dskyScreenMesh.material.map !== dskyTex) {
+        this.dskyScreenMesh.material.map = dskyTex;
+      }
       this.dskyScreenMesh.material.needsUpdate = true;
     }
+    const telemTex = this.generateTelemetryScreenTexture(this.currentArtifact);
     if (this.mainTelemetryMesh && this.mainTelemetryMesh.material) {
-      if (this.mainTelemetryMesh.material.map) this.mainTelemetryMesh.material.map.dispose();
-      this.mainTelemetryMesh.material.map = this.generateTelemetryScreenTexture(this.currentArtifact);
+      if (this.mainTelemetryMesh.material.map !== telemTex) {
+        this.mainTelemetryMesh.material.map = telemTex;
+      }
       this.mainTelemetryMesh.material.needsUpdate = true;
     }
     const airlockTex = this.generateAirlockPanelTexture();
     if (this.airlockPanelMesh && this.airlockPanelMesh.material) {
-      if (this.airlockPanelMesh.material.map) this.airlockPanelMesh.material.map.dispose();
-      this.airlockPanelMesh.material.map = airlockTex;
+      if (this.airlockPanelMesh.material.map !== airlockTex) {
+        this.airlockPanelMesh.material.map = airlockTex;
+      }
       this.airlockPanelMesh.material.needsUpdate = true;
     }
     if (this.cabinAirlockPanelMesh && this.cabinAirlockPanelMesh.material) {
-      this.cabinAirlockPanelMesh.material.map = airlockTex;
+      if (this.cabinAirlockPanelMesh.material.map !== airlockTex) {
+        this.cabinAirlockPanelMesh.material.map = airlockTex;
+      }
       this.cabinAirlockPanelMesh.material.needsUpdate = true;
     }
   }
@@ -4875,32 +5186,32 @@ class MissionSimulationTheater {
     // Live Cockpit Avionics & Window Dust Plumes while descending in Walk Mode (t < 5.8)
     if (this.cameraMode === 'walk') {
       if (t < 5.8) {
-        if (!this.lastCockpitTick || t - this.lastCockpitTick > 0.24) {
+        if (!this.lastCockpitTick || t - this.lastCockpitTick > 0.45) {
           this.lastCockpitTick = t;
           if (this.cabinState) {
             this.cabinState.prog = t < 3.0 ? '64' : '66';
             this.cabinState.throttlePct = Math.max(18, Math.round(85 - (t / 5.8) * 65));
             this.cabinState.r1 = '+' + String(Math.round(descentOffset * 10)).padStart(5, '0');
             this.cabinState.r2 = '-' + String(Math.round((descentOffset / 5.8) * 16 + 2)).padStart(5, '0');
-            this.refreshCabinDisplays();
+            this.generateDSKYTexture(this.currentArtifact);
           }
         }
-        // Spawn glowing rocket thruster plume & regolith dust flying past the front cockpit windows (-Z)!
-        if (Math.random() < 0.75) {
+        // Throttled thruster plume & regolith dust flying past front cockpit windows (-Z)
+        if (Math.random() < 0.20) {
           const winDustPos = new THREE.Vector3(
             (Math.random() - 0.5) * 4.5,
             descentOffset + 2.2,
             -2.8 - Math.random() * 2.5
           );
           const winDustVel = new THREE.Vector3(
-            (Math.random() - 0.5) * 10,
-            12 + Math.random() * 14,
-            -6 - Math.random() * 10
+            (Math.random() - 0.5) * 8,
+            10 + Math.random() * 8,
+            -6 - Math.random() * 8
           );
           const col = descentOffset < 22
             ? (artifact.body === 'venus' ? 0xd97706 : artifact.body === 'mars' ? 0xc45c2c : 0xcbd5e1)
             : 0x93c5fd;
-          this.createParticle(winDustPos, winDustVel, col, 0.55, 0.22);
+          this.createParticle(winDustPos, winDustVel, col, 0.45, 0.22);
         }
       } else if (!this.touchdownConfirmed) {
         this.touchdownConfirmed = true;
@@ -5053,28 +5364,26 @@ class MissionSimulationTheater {
           this.exhaustPlume.scale.set(1.0 + Math.random() * 0.2, 1.0 + Math.random() * 0.3, 1.0 + Math.random() * 0.2);
           this.exhaustPlume.material.opacity = 0.5 + Math.random() * 0.3;
 
-          const exhaustPos = this.spacecraft.position.clone().add(new THREE.Vector3(0, -2.6, 0));
-          for (let i = 0; i < 3; i++) {
+          if (Math.random() < 0.35) {
+            const exhaustPos = this.spacecraft.position.clone().add(new THREE.Vector3(0, -2.6, 0));
             this.createParticle(
               exhaustPos,
               new THREE.Vector3((Math.random() - 0.5) * 2.5, -28 - Math.random() * 14, (Math.random() - 0.5) * 2.5),
               0xd0e8ff,
-              0.45
+              0.4
             );
           }
         }
 
-        if (currentY < 28) {
-          const intensity = (28 - currentY) / 28;
-          for (let i = 0; i < Math.floor(intensity * 6); i++) {
-            const dustOrigin = new THREE.Vector3((Math.random() - 0.5) * 8, 0.2, (Math.random() - 0.5) * 8);
-            const dustVel = new THREE.Vector3(
-              (Math.random() - 0.5) * 30 * intensity,
-              Math.random() * 8 * intensity,
-              (Math.random() - 0.5) * 30 * intensity
-            );
-            this.createParticle(dustOrigin, dustVel, artifact.body === 'venus' ? 0xd97706 : 0x9ca3af, 2.0);
-          }
+        if (currentY < 24 && Math.random() < 0.35) {
+          const intensity = (24 - currentY) / 24;
+          const dustOrigin = new THREE.Vector3((Math.random() - 0.5) * 8, 0.2, (Math.random() - 0.5) * 8);
+          const dustVel = new THREE.Vector3(
+            (Math.random() - 0.5) * 20 * intensity,
+            Math.random() * 6 * intensity,
+            (Math.random() - 0.5) * 20 * intensity
+          );
+          this.createParticle(dustOrigin, dustVel, artifact.body === 'venus' ? 0xd97706 : 0x9ca3af, 1.4);
         }
       } else {
         this.spacecraft.position.y = 3.2;
@@ -5086,37 +5395,76 @@ class MissionSimulationTheater {
       }
     }
 
+    // Zero-GC Pooled Particle Updates
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.scene.remove(p.mesh);
+        p.mesh.visible = false;
         this.particles.splice(i, 1);
+        if (this.particlePool) this.particlePool.push(p);
       } else {
         p.mesh.position.addScaledVector(p.velocity, dt);
         p.velocity.y -= 9.8 * 0.22 * dt;
-        p.mesh.material.opacity = p.life / p.maxLife;
+        p.mesh.material.opacity = Math.max(0, (p.life / p.maxLife) * 0.88);
       }
     }
   }
 
-  createParticle(position, velocity, color, maxLife, radius = 0.38) {
-    const geo = new THREE.SphereGeometry(radius * (0.8 + Math.random() * 0.5), 6, 6);
-    const mat = new THREE.MeshBasicMaterial({
-      color: color,
-      transparent: true,
-      opacity: 0.9
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.copy(position);
-    this.scene.add(mesh);
+  // Pre-allocated Particle Pool (Zero Garbage Collection, Zero Frame Drops on Mobile/WebXR!)
+  initParticlePool() {
+    if (this.particles && this.particles.length > 0) {
+      this.particles.forEach(p => {
+        if (p.mesh) {
+          this.scene.remove(p.mesh);
+          if (p.mesh.geometry) p.mesh.geometry.dispose();
+          if (p.mesh.material) p.mesh.material.dispose();
+        }
+      });
+    }
+    this.particles = [];
+    this.particlePool = [];
+    if (!this.sharedParticleGeo) {
+      this.sharedParticleGeo = new THREE.SphereGeometry(0.25, 4, 4);
+    }
+    for (let i = 0; i < 55; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.85
+      });
+      const mesh = new THREE.Mesh(this.sharedParticleGeo, mat);
+      mesh.visible = false;
+      this.scene.add(mesh);
+      this.particlePool.push({
+        mesh,
+        velocity: new THREE.Vector3(),
+        life: 0,
+        maxLife: 1
+      });
+    }
+  }
 
-    this.particles.push({
-      mesh,
-      velocity: velocity.clone(),
-      life: maxLife,
-      maxLife
-    });
+  createParticle(position, velocity, color, maxLife, radius = 0.38) {
+    if (!this.particlePool || this.particlePool.length === 0) {
+      if (this.particles && this.particles.length > 0) {
+        const oldest = this.particles.shift();
+        this.particlePool.push(oldest);
+      } else {
+        return;
+      }
+    }
+    const p = this.particlePool.pop();
+    p.mesh.position.copy(position);
+    p.velocity.copy(velocity);
+    p.life = maxLife;
+    p.maxLife = maxLife;
+    const s = Math.max(0.2, (radius / 0.38) * (0.8 + Math.random() * 0.4));
+    p.mesh.scale.set(s, s, s);
+    p.mesh.material.color.set(color);
+    p.mesh.material.opacity = 0.88;
+    p.mesh.visible = true;
+    this.particles.push(p);
   }
 
   updateCamera(t, dt = 0.016) {

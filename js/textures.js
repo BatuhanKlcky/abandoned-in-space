@@ -1104,6 +1104,73 @@ class CelestialTextureGenerator {
     ctx.fill();
     ctx.restore();
   }
+
+  /**
+   * Procedural High-Resolution Turkish Flag Texture (Türk Bayrağı - Al Bayrak)
+   * Formulated according to official Turkish Flag Law (Türk Bayrağı Kanunu) geometric proportions
+   */
+  generateTurkishFlagTexture() {
+    if (this.cache['turkish_flag']) return this.cache['turkish_flag'];
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 682; // 3:2 ratio
+    const ctx = canvas.getContext('2d');
+    const G = 682;
+    const L = 1024;
+
+    // Turkish Red Field (#E30A17)
+    ctx.fillStyle = '#E30A17';
+    ctx.fillRect(0, 0, L, G);
+
+    // Crescent (Hilal)
+    // Outer white circle
+    const c1x = 0.5 * G;
+    const c1y = 0.5 * G;
+    const r1 = 0.25 * G;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(c1x, c1y, r1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner red circle
+    const c2x = c1x + 0.0625 * G;
+    const r2 = 0.20 * G;
+    ctx.fillStyle = '#E30A17';
+    ctx.beginPath();
+    ctx.arc(c2x, c1y, r2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5-Pointed Star (Yıldız)
+    const starCenterX = c2x + (1 / 3) * G;
+    const starCenterY = 0.5 * G;
+    const outerR = 0.125 * G;
+    const innerR = outerR * Math.sin(Math.PI / 10) / Math.sin(7 * Math.PI / 10);
+
+    // Left vertex points directly at crescent opening (angle = Math.PI)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.PI + (i * Math.PI / 5);
+      const r = (i % 2 === 0) ? outerR : innerR;
+      const x = starCenterX + r * Math.cos(angle);
+      const y = starCenterY + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    if (typeof THREE !== 'undefined' && THREE.CanvasTexture) {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.needsUpdate = true;
+      this.cache['turkish_flag'] = tex;
+      return tex;
+    }
+    return canvas;
+  }
 }
 
 window.CelestialTextures = new CelestialTextureGenerator();

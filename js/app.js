@@ -886,7 +886,7 @@ class AbandonedInSpaceApp {
 
     const langBtn = document.getElementById('btn-lang-toggle');
     if (langBtn) {
-      langBtn.innerHTML = `<span>🌐</span> <span>${isTr ? 'EN' : 'TR'}</span>`;
+      langBtn.innerHTML = `<span>🌐</span> <span style="font-weight:${isTr ? '400' : '700'}; color:${isTr ? '#94a3b8' : '#00f0ff'};">EN</span><span style="opacity:0.4; margin:0 3px;">|</span><span style="font-weight:${isTr ? '700' : '400'}; color:${isTr ? '#00f0ff' : '#94a3b8'};">TR</span>`;
       langBtn.setAttribute('title', isTr ? 'Switch to English' : 'Türkçe Dilini Seç');
     }
 
@@ -903,6 +903,50 @@ class AbandonedInSpaceApp {
         el.setAttribute('placeholder', TRANSLATIONS[this.currentLang][key]);
       }
     });
+
+    // Update Interactive Element Tooltips for Browser Hover
+    const tooltips = {
+      'btn-sound-toggle': isTr ? 'Sesi Aç / Kapat' : 'Toggle Audio / Ambient Sound',
+      'btn-sources-toggle': isTr ? 'Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivleri' : 'Official NASA Data Sources & History Series PDF Archives',
+      'btn-tour-toggle': isTr ? '5 Bölümlük Rehberli Hikaye Turunu Başlat' : 'Start 5-Act Guided Narrative Tour',
+      'btn-reset-view': isTr ? 'Kamera Bakış Açısını Sıfırla' : 'Reset Camera View',
+      'btn-top-sim': isTr ? 'Seçili Görevin İniş veya Çarpışma Sahnesini Başlat (3D)' : 'Launch 3D Descent / Kinetic Impact Reenactment',
+      'btn-top-walk': isTr ? '1:1 Ölçekte Yüzeyde Yürü & WebXR VR/AR Başlat' : '1:1 Scale Astronaut Surface Walk & WebXR VR/AR',
+      'tour-all-btn': isTr ? '5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)' : 'Full 5-Act Grand Solar System Story Tour (25 Missions)',
+      'btn-drawer-sim': isTr ? '3D İniş ve Fizik Simülasyonunu Aç' : 'Launch 3D Descent & Physics Simulation',
+      'btn-drawer-walk': isTr ? 'Meta Quest / Vision Pro WebXR veya Masaüstü 1:1 Yüzey Yürüyüşü' : 'Meta Quest / Vision Pro WebXR or Desktop 1:1 Surface Walk',
+      'btn-mini-wireframe': isTr ? 'CAD Tel Kafes (Wireframe) Görünümünü Aç / Kapat' : 'Toggle CAD Wireframe (X-Ray) Mode',
+      'btn-sim-walk': isTr ? '1:1 Astronot Göz Hizasında Yüzey Yürüyüşü Modu' : '1:1 Astronaut Eye-Level Surface Walk Mode',
+      'btn-sim-webxr': isTr ? 'Meta Quest veya Apple Vision Pro ile WebXR VR/AR Başlat' : 'Launch WebXR VR/AR with Meta Quest or Apple Vision Pro',
+      'btn-replay-sim': isTr ? 'Simülasyonu Baştan Başlat' : 'Replay Simulation from Beginning',
+      'btn-close-sim': isTr ? 'Simülasyonu Kapat (ESC)' : 'Exit Simulation (ESC)',
+      'vr-game-mini-pill': isTr ? 'Normal Arayüz Butonlarını Geri Getirmek İçin Tıklayın veya [H] Tuşuna Basın' : 'Toggle Fullscreen HUD Mode [H / TAB] or Exit [ESC]',
+      'btn-walk-view-toggle': isTr ? '1. Şahıs / 3. Şahıs Kamera Açısı (V)' : 'Toggle 1st / 3rd Person View (V)',
+      'btn-walk-cabin': isTr ? 'İniş Sonrası Basınçlı EVA Kapağını Aç / Kapat (E)' : 'Open / Close Airlock Hatch (E)',
+      'btn-walk-torch': isTr ? 'NASA EVA Fenerini Aç / Kapat (F)' : 'Toggle NASA EVA Flashlight (F)',
+      'btn-walk-clean-ui': isTr ? 'Sinematik Tam Ekran Modu (H / TAB)' : 'Cinematic Fullscreen Mode (H / TAB)',
+      'walk-btn-up': isTr ? 'İleri Yürü (W)' : 'Walk Forward (W)',
+      'walk-btn-left': isTr ? 'Sola Yürü (A)' : 'Strafe Left (A)',
+      'walk-btn-jump': isTr ? 'Düşük Yerçekimi Sıçraması (SPACE)' : 'Low-Gravity Jump (SPACE)',
+      'walk-btn-right': isTr ? 'Sağa Yürü (D)' : 'Strafe Right (D)',
+      'walk-btn-down': isTr ? 'Geri Yürü (S)' : 'Walk Backward (S)',
+      'btn-enter-quest-vr': isTr ? 'Meta Quest 3S gözlüğü içinde gerçek VR moduna gir' : 'Enter Immersive VR Mode in Meta Quest 3S'
+    };
+    Object.keys(tooltips).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('title', tooltips[id]);
+    });
+
+    document.querySelectorAll('.planet-btn').forEach(btn => {
+      const body = btn.getAttribute('data-body');
+      if (body === 'moon') btn.setAttribute('title', isTr ? 'Ay Yüzeyini İncele' : 'Explore Lunar Surface');
+      else if (body === 'mars') btn.setAttribute('title', isTr ? 'Mars Yüzeyini İncele' : 'Explore Martian Surface');
+      else if (body === 'venus') btn.setAttribute('title', isTr ? 'Venüs Yüzeyindeki Sovyet Venera ve NASA Pioneer Sondalarını İncele' : 'Explore Soviet Venera & NASA Pioneer Probes on Venus');
+      else if (body === 'outer') btn.setAttribute('title', isTr ? 'Titan (Huygens), 67P Kuyruklu Yıldızı (Philae) ve Dış Güneş Sistemi Kalıntılarını İncele' : 'Explore Titan (Huygens), Comet 67P (Philae) & Outer System Relics');
+    });
+
+    const miniKeys = document.getElementById('vr-game-mini-keys');
+    if (miniKeys) miniKeys.innerText = isTr ? '[H / TAB]: Arayüz • [ESC]: Çıkış' : '[H / TAB]: UI • [ESC]: Exit';
 
     this.updateBodyTelemetry();
     this.updateLiveMarsCard();
@@ -947,6 +991,11 @@ class AbandonedInSpaceApp {
     const gotoRoverLabel = document.getElementById('goto-rover-label');
     if (gotoRoverLabel) {
       gotoRoverLabel.innerText = isTr ? 'Haritada Rover Konumuna Uç' : 'Fly to Active Rover on Map';
+    }
+
+    // Update Simulation Theater if running or open
+    if (window.SpaceSimulation) {
+      window.SpaceSimulation.updateSimulationLanguage();
     }
 
     if (this.isTourActive) {
@@ -1076,6 +1125,7 @@ const TRANSLATIONS = {
     btn_sim_replay: "Tekrar Oynat",
     btn_sim_exit: "✕ ÇIKIŞ",
     vr_game_mission_text: "🎮 VR OYUN MODU AKTİF • Numune: 0/8",
+    vr_game_mini_keys: "[H / TAB]: Arayüz • [ESC]: Çıkış",
     btn_enter_quest_vr: "🥽 META QUEST 3S — VR'A GİR",
     walk_btn_jump: "SIÇRA",
     gauge_alt_label: "İRTİFA / GÖZ HİZASI",
@@ -1177,6 +1227,7 @@ const TRANSLATIONS = {
     btn_sim_replay: "Replay",
     btn_sim_exit: "✕ EXIT",
     vr_game_mission_text: "🎮 VR GAME MODE ACTIVE • Samples: 0/8",
+    vr_game_mini_keys: "[H / TAB]: UI • [ESC]: Exit",
     btn_enter_quest_vr: "🥽 META QUEST 3S — ENTER VR",
     walk_btn_jump: "JUMP",
     gauge_alt_label: "ALTITUDE / EYE LEVEL",

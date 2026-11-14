@@ -44,19 +44,19 @@
 
       <!-- Celestial Body Switcher (Moon, Mars, Venus, Outer System) -->
       <div class="planet-toggle-container">
-        <button class="planet-btn active" data-body="moon" title="Ay Yüzeyini İncele">
+        <button class="planet-btn active" data-body="moon" title="Explore Lunar Surface">
           <span class="btn-dot"></span>
           <span data-i18n="planet_moon">MOON</span>
         </button>
-        <button class="planet-btn" data-body="mars" title="Mars Yüzeyini İncele">
+        <button class="planet-btn" data-body="mars" title="Explore Martian Surface">
           <span class="btn-dot"></span>
           <span data-i18n="planet_mars">MARS</span>
         </button>
-        <button class="planet-btn" data-body="venus" title="Venüs Yüzeyindeki Sovyet Venera ve NASA Pioneer Sondalarını İncele">
+        <button class="planet-btn" data-body="venus" title="Explore Soviet Venera & NASA Pioneer Probes on Venus">
           <span class="btn-dot"></span>
           <span data-i18n="planet_venus">VENUS</span>
         </button>
-        <button class="planet-btn" data-body="outer" title="Titan (Huygens), 67P Kuyruklu Yıldızı (Philae), Eros ve Jüpiter Görevlerini İncele">
+        <button class="planet-btn" data-body="outer" title="Explore Titan (Huygens), Comet 67P (Philae) & Outer System Relics">
           <span class="btn-dot"></span>
           <span data-i18n="planet_outer">TITAN & OUTER SYSTEM</span>
         </button>
@@ -64,33 +64,33 @@
 
       <!-- Header Action Buttons (Desktop) -->
       <div class="header-actions">
-        <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Seçili Görevin İniş veya Çarpışma Sahnesini Canlandır">
+        <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Launch 3D Descent / Kinetic Impact Reenactment">
           <span>🎬</span>
           <span data-i18n="btn_sim">SIMULATION</span>
         </button>
-        <button class="hud-btn btn-webxr-walk" id="btn-top-walk" title="1:1 Ölçekte Yüzeyde Yürü & WebXR VR/AR Modu">
+        <button class="hud-btn btn-webxr-walk" id="btn-top-walk" title="1:1 Scale Astronaut Surface Walk & WebXR VR/AR">
           <span>🥽</span>
           <span data-i18n="btn_walk_top">1:1 WALK / VR</span>
         </button>
-        <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivi">
+        <button class="hud-btn" id="btn-sources-toggle" title="Official NASA Data Sources & History Series PDF Archives">
           <span>📚</span>
           <span data-i18n="btn_sources">OFFICIAL SOURCES</span>
         </button>
-        <button class="hud-btn" id="btn-tour-toggle" title="5 Bölümlük Rehberli Hikaye Turunu Başlat">
+        <button class="hud-btn" id="btn-tour-toggle" title="Start 5-Act Guided Narrative Tour">
           <span>🚀</span>
           <span data-i18n="btn_tour">STORY TOUR</span>
         </button>
-        <button class="hud-btn" id="btn-reset-view" title="Kamera Bakış Açısını Sıfırla">
+        <button class="hud-btn" id="btn-reset-view" title="Reset Camera View">
           <span>🎯</span>
           <span class="btn-text-collapsible" data-i18n="btn_reset">RESET VIEW</span>
         </button>
-        <button class="hud-btn" id="btn-sound-toggle" title="Sesi Aç / Kapat">
+        <button class="hud-btn" id="btn-sound-toggle" title="Toggle Audio / Ambient Sound">
           <span>🔊</span>
           <span class="btn-text-collapsible" data-i18n="btn_sound">AUDIO: ON</span>
         </button>
-        <button class="hud-btn" id="btn-lang-toggle" title="Türkçe Dilini Seç">
+        <button class="hud-btn" id="btn-lang-toggle" title="Switch language (English / Türkçe)">
           <span>🌐</span>
-          <span>TR</span>
+          <span style="font-weight:700; color:#00f0ff;">EN</span><span style="opacity:0.4; margin:0 3px;">|</span><span style="font-weight:400; color:#94a3b8;">TR</span>
         </button>
       </div>
     </header>
@@ -102,7 +102,7 @@
         <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
         <button class="tour-btn" id="tour-prev-btn" data-i18n="tour_prev_btn">◀ Previous</button>
         <button class="tour-btn" id="tour-next-btn" data-i18n="tour_next_btn">Next ▶</button>
-        <button class="tour-btn" id="tour-all-btn" title="5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)" data-i18n="tour_all_btn">🌌 Full 5-Act Story (25)</button>
+        <button class="tour-btn" id="tour-all-btn" title="Full 5-Act Grand Solar System Story Tour (25 Missions)" data-i18n="tour_all_btn">🌌 Full 5-Act Story (25)</button>
         <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;" data-i18n="tour_exit_btn">Exit Tour ✕</button>
       </div>
       <div class="tour-chapter-strip" id="tour-chapter-strip">
@@ -291,7 +291,7 @@
             </div>
           </button>
 
-          <button class="big-walk-action-btn" id="btn-drawer-walk" title="Meta Quest / Vision Pro WebXR veya Masaüstü 1:1 Astronot Göz Hizasında Yürü">
+          <button class="big-walk-action-btn" id="btn-drawer-walk" title="Meta Quest / Vision Pro WebXR or Desktop 1:1 Surface Walk">
             <span class="sim-play-icon">🥽</span>
             <div class="sim-btn-text-group">
               <span class="sim-btn-main" data-i18n="walk_action_btn">WALK BESIDE AT 1:1 SCALE (WebXR)</span>
@@ -304,7 +304,7 @@
         <div class="mini-model-box">
           <canvas id="mini-model-canvas"></canvas>
           <span class="model-compass-badge">HOLOGRAPHIC PBR CAD</span>
-          <button class="model-xray-btn" id="btn-mini-wireframe" title="CAD Tel Kafes (Wireframe) Görünümünü Aç/Kapat">CAD X-RAY</button>
+          <button class="model-xray-btn" id="btn-mini-wireframe" title="Toggle CAD Wireframe (X-Ray) Mode">CAD X-RAY</button>
           <span class="model-hud-badge">360° INTERACTIVE</span>
         </div>
 
@@ -489,19 +489,19 @@
             </select>
           </div>
 
-          <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronot Göz Hizasında Yüzey Yürüyüşü Modu">
+          <button class="sim-action-btn walk-toggle-btn" id="btn-sim-walk" title="1:1 Astronaut Eye-Level Surface Walk Mode">
             <span>🚶</span> <span data-i18n="btn_sim_walk">1:1 Walk</span>
           </button>
 
-          <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Meta Quest veya Apple Vision Pro ile WebXR VR/AR Başlat">
+          <button class="sim-action-btn webxr-btn" id="btn-sim-webxr" title="Launch WebXR VR/AR with Meta Quest or Apple Vision Pro">
             <span>🥽</span> <span>WebXR VR/AR</span>
           </button>
 
-          <button class="sim-action-btn" id="btn-replay-sim" title="Simülasyonu Baştan Başlat">
+          <button class="sim-action-btn" id="btn-replay-sim" title="Replay Simulation from Beginning">
             <span>🔄</span> <span data-i18n="btn_sim_replay">Replay</span>
           </button>
 
-          <button class="sim-close-btn" id="btn-close-sim" title="Simülasyonu Kapat">
+          <button class="sim-close-btn" id="btn-close-sim" title="Exit Simulation (ESC)">
             <span data-i18n="btn_sim_exit">✕ EXIT</span>
           </button>
         </div>
@@ -514,13 +514,13 @@
         <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
         <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
           <!-- Compact Game-Mode Pill (Shown when surrounding UI buttons are hidden in VR/Game mode) -->
-          <div class="vr-game-mini-hud" id="vr-game-mini-pill" title="Normal Arayüz Butonlarını Geri Getirmek İçin Tıklayın veya H / TAB Tuşuna Basın • ESC: Çıkış">
-            <span id="vr-game-mission-text">🎮 VR OYUN MODU AKTİF • Numune: 0/8</span>
-            <span class="mini-key-badge">[H / TAB]: Arayüz • [ESC]: Çıkış</span>
+          <div class="vr-game-mini-hud" id="vr-game-mini-pill" title="Toggle Clean HUD Mode [H / TAB] or Exit [ESC]">
+            <span id="vr-game-mission-text" data-i18n="vr_game_mission_text">🎮 VR GAME MODE ACTIVE • Samples: 0/8</span>
+            <span class="mini-key-badge" id="vr-game-mini-keys" data-i18n="vr_game_mini_keys">[H / TAB]: UI • [ESC]: Exit</span>
           </div>
 
           <!-- Always-visible Meta Quest 3S immersive VR entry button -->
-          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Meta Quest 3S gözlüğünde tam sürükleyici VR oturumunu başlat" data-i18n="btn_enter_quest_vr">🥽 META QUEST 3S — ENTER VR</button>
+          <button class="quest-vr-enter-btn" id="btn-enter-quest-vr" type="button" title="Enter Immersive VR Mode in Meta Quest 3S" data-i18n="btn_enter_quest_vr">🥽 META QUEST 3S — ENTER VR</button>
 
           <div class="walk-visor-banner interactive">
             <div class="walk-xr-status" id="walk-xr-status">🚀 AIRBORNE DESCENT ACTIVE (IN CABIN) • After touchdown walk to door, click latch or press E to exit</div>
@@ -530,10 +530,10 @@
               <span id="walk-hud-grav">GRAVITY: 1.62 m/s² (0.16g) | EYE LEVEL: 4.50 m | STEPS: 0</span>
             </div>
             <div class="walk-quick-actions">
-              <button class="walk-sub-btn" id="btn-walk-view-toggle" title="1. Şahıs (Astronot Elleri & Bilek Bilgisayarı) ve 3. Şahıs (Tam Astronot Modeli) Arasında Geçiş Yap (V Tuşu)">👁️ View: 1st Person (Astronaut Hands)</button>
-              <button class="walk-sub-btn active" id="btn-walk-cabin" title="İniş Sonrası Basınçlı EVA Kapağını Açıp Merdivenle Yüzeye Çık veya Kabine Gir (E Tuşu)">🚪 Open EVA Hatch & Exit (E)</button>
-              <button class="walk-sub-btn active" id="btn-walk-torch" title="Sağ Eldeki NASA EVA Fenerini Aç / Kapat (F Tuşu)">🔦 EVA Torch (F)</button>
-              <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Etraftaki Tüm Butonları Kaldırıp Tam Ekran VR Oyun Moduna Geç (H veya TAB Tuşu)">🎮 Hide UI / Game Mode (H)</button>
+              <button class="walk-sub-btn" id="btn-walk-view-toggle" title="Toggle 1st / 3rd Person View (V)">👁️ View: 1st Person (Astronaut Hands)</button>
+              <button class="walk-sub-btn active" id="btn-walk-cabin" title="Open / Close Airlock Hatch (E)">🚪 Open EVA Hatch & Exit (E)</button>
+              <button class="walk-sub-btn active" id="btn-walk-torch" title="Toggle NASA EVA Flashlight (F)">🔦 EVA Torch (F)</button>
+              <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Cinematic Fullscreen Mode (H / TAB)">🎮 Hide UI / Game Mode (H)</button>
             </div>
           </div>
 
@@ -545,13 +545,13 @@
 
           <!-- Interactive Touch / Mouse D-Pad for Surface Walk -->
           <div class="walk-dpad-container">
-            <button class="dpad-btn dpad-up" id="walk-btn-up" title="İleri Yürü (W)">▲</button>
+            <button class="dpad-btn dpad-up" id="walk-btn-up" title="Walk Forward (W)">▲</button>
             <div class="dpad-mid-row">
-              <button class="dpad-btn dpad-left" id="walk-btn-left" title="Sola Yürü (A)">◄</button>
-              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Düşük Yerçekimi Sıçraması (SPACE)" data-i18n="walk_btn_jump">JUMP</button>
-              <button class="dpad-btn dpad-right" id="walk-btn-right" title="Sağa Yürü (D)">►</button>
+              <button class="dpad-btn dpad-left" id="walk-btn-left" title="Strafe Left (A)">◄</button>
+              <button class="dpad-btn dpad-jump" id="walk-btn-jump" title="Low-Gravity Jump (SPACE)" data-i18n="walk_btn_jump">JUMP</button>
+              <button class="dpad-btn dpad-right" id="walk-btn-right" title="Strafe Right (D)">►</button>
             </div>
-            <button class="dpad-btn dpad-down" id="walk-btn-down" title="Geri Yürü (S)">▼</button>
+            <button class="dpad-btn dpad-down" id="walk-btn-down" title="Walk Backward (S)">▼</button>
           </div>
         </div>
 
@@ -636,11 +636,11 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=6.2"></script>
-  <script src="js/textures.js?v=6.2"></script>
-  <script src="js/audio.js?v=6.2"></script>
-  <script src="js/scene.js?v=6.2"></script>
-  <script src="js/simulation.js?v=6.2"></script>
-  <script src="js/app.js?v=6.2"></script>
+  <script src="js/data.js?v=6.3"></script>
+  <script src="js/textures.js?v=6.3"></script>
+  <script src="js/audio.js?v=6.3"></script>
+  <script src="js/scene.js?v=6.3"></script>
+  <script src="js/simulation.js?v=6.3"></script>
+  <script src="js/app.js?v=6.3"></script>
 </body>
 </html>

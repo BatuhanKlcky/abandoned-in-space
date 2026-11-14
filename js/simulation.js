@@ -4161,7 +4161,8 @@ class MissionSimulationTheater {
           this.playSwitchClickSound(520);
           this.cabinState.innerHatchOpen = false;
           this.refreshCabinDisplays();
-          this.updateVRGameMiniPill('1. İç Basınç Kapısı Kapatıldı');
+          const isTr = window.app ? window.app.currentLang === 'tr' : false;
+          this.updateVRGameMiniPill(isTr ? '1. İç Basınç Kapısı Kapatıldı' : 'Inner Bulkhead #1 Sealed');
         }
       }
     };
@@ -4335,7 +4336,8 @@ class MissionSimulationTheater {
           this.cabinState.outerHatchOpen = false;
           this.cabinState.hatchOpen = false;
           this.refreshCabinDisplays();
-          this.updateVRGameMiniPill('2. Dış EVA Vakum Kapısı Kapatıldı');
+          const isTr = window.app ? window.app.currentLang === 'tr' : false;
+          this.updateVRGameMiniPill(isTr ? '2. Dış EVA Vakum Kapısı Kapatıldı' : 'Outer EVA Hatch #2 Sealed');
         }
       }
     };
@@ -6116,9 +6118,9 @@ class MissionSimulationTheater {
     if (this.cameraMode === 'walk') {
       const descentOffset = this.getDescentOffset(t);
       if (t < 5.8) {
-        if (altEl) altEl.innerText = `${descentOffset.toFixed(1)} m (Kokpit İnişi)`;
+        if (altEl) altEl.innerText = isTr ? `${descentOffset.toFixed(1)} m (Kokpit İnişi)` : `${descentOffset.toFixed(1)} m (Cockpit Descent)`;
         if (speedEl) speedEl.innerText = `-${Math.max(1.2, descentOffset * 0.22).toFixed(1)} m/s`;
-        if (thrustEl) thrustEl.innerText = `${this.cabinState ? this.cabinState.throttlePct : 75}% (İniş Roketi Aktif)`;
+        if (thrustEl) thrustEl.innerText = isTr ? `${this.cabinState ? this.cabinState.throttlePct : 75}% (İniş Roketi Aktif)` : `${this.cabinState ? this.cabinState.throttlePct : 75}% (Descent Thrusters Active)`;
         if (phaseEl) {
           phaseEl.innerText = isTr
             ? "🚀 KOKPİT İÇİNDEN YÜZEYE İNİŞ SÜRÜYOR — Pencerelerden ve DSKY ekranından alçalmayı takip edin!"
@@ -6126,9 +6128,9 @@ class MissionSimulationTheater {
         }
       } else {
         const dist = Math.hypot(this.walkState.x, this.walkState.z).toFixed(1);
-        if (altEl) altEl.innerText = this.walkState.isInsideCabin ? "+4.5 m (Kabin İçi)" : "1.75 m (Astronot Göz Hizası)";
-        if (speedEl) speedEl.innerText = this.walkState.isInsideCabin ? (this.cabinState.hatchOpen ? "KAPAK AÇIK (Çıkış Hazır)" : "KAPAK KAPALI (Açmak için E / Tıkla)") : `${dist} m (Araca Mesafe)`;
-        if (thrustEl) thrustEl.innerText = this.walkViewMode === 'fp' ? "1. ŞAHIS (ELLER & VİZÖR)" : "3. ŞAHIS (TAM ASTRONOT)";
+        if (altEl) altEl.innerText = this.walkState.isInsideCabin ? (isTr ? "+4.5 m (Kabin İçi)" : "+4.5 m (Inside Cabin)") : (isTr ? "1.75 m (Astronot Göz Hizası)" : "1.75 m (Astronaut Eye Level)");
+        if (speedEl) speedEl.innerText = this.walkState.isInsideCabin ? (this.cabinState.hatchOpen ? (isTr ? "KAPAK AÇIK (Çıkış Hazır)" : "HATCH OPEN (Ready to Exit)") : (isTr ? "KAPAK KAPALI (Açmak için E / Tıkla)" : "HATCH CLOSED (Press E / Click)")) : (isTr ? `${dist} m (Araca Mesafe)` : `${dist} m (Distance to Craft)`);
+        if (thrustEl) thrustEl.innerText = this.walkViewMode === 'fp' ? (isTr ? "1. ŞAHIS (ELLER & VİZÖR)" : "1ST PERSON (HANDS & VISOR)") : (isTr ? "3. ŞAHIS (TAM ASTRONOT)" : "3RD PERSON (FULL ASTRONAUT)");
         if (phaseEl) {
           phaseEl.innerText = this.walkState.isInsideCabin
             ? (isTr
@@ -6147,7 +6149,7 @@ class MissionSimulationTheater {
       const alt = Math.max(0, 9200 - t * 2875);
       if (altEl) altEl.innerText = `${Math.round(alt)} m`;
       if (speedEl) speedEl.innerText = `${Math.round(speed)} m/s (9,288 km/h)`;
-      if (thrustEl) thrustEl.innerText = "0% (Balistik Serbest Düşüş)";
+      if (thrustEl) thrustEl.innerText = isTr ? "0% (Balistik Serbest Düşüş)" : "0% (Ballistic Free-Fall)";
       if (phaseEl) {
         phaseEl.innerText = t < 3.2
           ? (isTr ? "KİNETİK YÖRÜNGEDEN ALÇALMA" : "ORBITAL KINETIC PLUNGE")
@@ -6157,7 +6159,7 @@ class MissionSimulationTheater {
       const alt = this.spacecraft ? this.spacecraft.position.y : 0;
       if (altEl) altEl.innerText = `${alt.toFixed(1)} m`;
       if (speedEl) speedEl.innerText = `${(t < 5 ? 3.5 : 0.8).toFixed(1)} m/s`;
-      if (thrustEl) thrustEl.innerText = "2,400 RPM (Çift Ters Rotor)";
+      if (thrustEl) thrustEl.innerText = isTr ? "2,400 RPM (Çift Ters Rotor)" : "2,400 RPM (Coaxial Counter-Rotating Rotors)";
       if (phaseEl) {
         phaseEl.innerText = t < 1.5
           ? (isTr ? "ROTOR DÖNÜŞ BAŞLANGICI" : "ROTOR SPIN-UP")
@@ -6168,8 +6170,8 @@ class MissionSimulationTheater {
     } else if (artifact.body === 'venus') {
       const currentY = this.spacecraft ? Math.max(0, this.spacecraft.position.y - 3.2) : 0;
       if (altEl) altEl.innerText = `${(currentY * 1.5).toFixed(1)} m`;
-      if (speedEl) speedEl.innerText = currentY > 0.1 ? `-7.8 m/s (Aerodinamik Disk Freni)` : "0.0 m/s";
-      if (thrustEl) thrustEl.innerText = "92 ATM CO₂ Atmosferik Frenleme (465°C)";
+      if (speedEl) speedEl.innerText = currentY > 0.1 ? (isTr ? "-7.8 m/s (Aerodinamik Disk Freni)" : "-7.8 m/s (Aerodynamic Drag Shield)") : "0.0 m/s";
+      if (thrustEl) thrustEl.innerText = isTr ? "92 ATM CO₂ Atmosferik Frenleme (465°C)" : "92 ATM CO₂ Atmospheric Braking (465°C)";
       if (phaseEl) {
         phaseEl.innerText = currentY > 0.5
           ? (isTr ? "YOĞUN VENÜS ATMOSFERİNDE ALÇALMA" : "VENUS SUPERCRITICAL ATMOSPHERE DESCENT")
@@ -6179,13 +6181,59 @@ class MissionSimulationTheater {
       const currentY = this.spacecraft ? Math.max(0, this.spacecraft.position.y - 3.2) : 0;
       if (altEl) altEl.innerText = `${(currentY * 1.5).toFixed(1)} m`;
       if (speedEl) speedEl.innerText = currentY > 0.1 ? `-${Math.max(1.2, currentY * 0.15).toFixed(1)} m/s` : "0.0 m/s";
-      if (thrustEl) thrustEl.innerText = currentY > 0.1 ? "78% (DPS İniş Roketi)" : "0% (MOTOR SUSTURULDU)";
+      if (thrustEl) thrustEl.innerText = currentY > 0.1 ? (isTr ? "78% (DPS İniş Roketi)" : "78% (DPS Descent Engine)") : (isTr ? "0% (MOTOR SUSTURULDU)" : "0% (ENGINE CUTOFF)");
       if (phaseEl) {
         phaseEl.innerText = currentY > 0.5
           ? (isTr ? "FRENLEME & YUMUŞAK ALÇALMA" : "BRAKING & TERMINAL DESCENT")
           : (isTr ? "✅ TEMAS IŞIĞI YANDI: THE EAGLE HAS LANDED!" : "✅ TOUCHDOWN CONFIRMED: EAGLE HAS LANDED!");
       }
     }
+  }
+
+  updateSimulationLanguage() {
+    const artifact = this.currentArtifact;
+    if (!artifact) return;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+
+    const titleEl = document.getElementById('sim-title');
+    const badgeEl = document.getElementById('sim-badge');
+    if (titleEl) titleEl.innerText = isTr ? artifact.name_tr : artifact.name_en;
+    if (badgeEl) {
+      if (artifact.category === 'impact') {
+        badgeEl.innerText = isTr ? "💥 KİNETİK ÇARPIŞMA CANLANDIRMASI" : "💥 KINETIC IMPACT REENACTMENT";
+      } else if (artifact.category === 'helicopter') {
+        badgeEl.innerText = isTr ? "🚁 AERODİNAMİK UÇUŞ CANLANDIRMASI" : "🚁 AERODYNAMIC FLIGHT REENACTMENT";
+      } else if (artifact.id === 'curiosity-skycrane') {
+        badgeEl.innerText = isTr ? "🚀 GÖKYÜZÜ VİNCİ İNİŞ & KAZA CANLANDIRMASI" : "🚀 SKY CRANE DESCENT & FLYAWAY";
+      } else if (artifact.body === 'venus') {
+        badgeEl.innerText = isTr ? "🔥 VENÜS 92 ATM BASINÇLI İNİŞ CANLANDIRMASI" : "🔥 VENUS 92 ATM PRESSURE DESCENT";
+      } else if (artifact.body === 'outer') {
+        badgeEl.innerText = isTr ? "🪐 DIŞ GÜNEŞ SİSTEMİ İNİŞ CANLANDIRMASI" : "🪐 OUTER SYSTEM TOUCHDOWN REENACTMENT";
+      } else {
+        badgeEl.innerText = isTr ? "🛰️ YÜZEYE İNİŞ & 1:1 WEBXR SAHNESİ" : "🛰️ TOUCHDOWN & 1:1 WEBXR SCENE";
+      }
+    }
+
+    const btnWalkCabin = document.getElementById('btn-walk-cabin');
+    if (btnWalkCabin && this.walkState) {
+      btnWalkCabin.innerText = this.walkState.isInsideCabin
+        ? (isTr ? '🚪 1. İç Kapıyı Aç / Kapat (E)' : '🚪 Toggle Airlock Doors (E)')
+        : (isTr ? '🚪 Kabine Gir (E)' : '🚪 Enter Cabin (E)');
+    }
+    const btnWalkView = document.getElementById('btn-walk-view');
+    if (btnWalkView) {
+      btnWalkView.innerText = this.walkViewMode === 'fp'
+        ? (isTr ? '👁️ Görünüm: 1. Şahıs (Astronot Elleri)' : '👁️ View: 1st Person (EVA Hands)')
+        : (isTr ? '🧑🏼‍🚀 Görünüm: 3. Şahıs (Tam Astronot)' : '🧑🏼‍🚀 View: 3rd Person (Full Astronaut)');
+    }
+    const btnWalkTorch = document.getElementById('btn-walk-torch');
+    if (btnWalkTorch) {
+      btnWalkTorch.innerText = this.walkTorchOn
+        ? (isTr ? '💡 EVA Feneri: AÇIK' : '💡 EVA Torch: ON')
+        : (isTr ? '💡 EVA Feneri: KAPALI' : '💡 EVA Torch: OFF');
+    }
+    this.updateVRGameMiniPill();
+    this.updateQuestVRButton();
   }
 }
 

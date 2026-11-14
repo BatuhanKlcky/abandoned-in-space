@@ -61,7 +61,7 @@ const STORY_CHAPTERS = [
 class AbandonedInSpaceApp {
   constructor() {
     this.currentBody = 'moon';
-    this.currentLang = 'tr';
+    this.currentLang = 'en';
     this.activeDecade = 'all';
     this.activeCategory = 'all';
     this.searchQuery = '';
@@ -84,10 +84,8 @@ class AbandonedInSpaceApp {
     window.onArtifactSelect = (artifact) => this.selectArtifact(artifact);
 
     this.bindControls();
-
-    this.updateBodyTelemetry();
+    this.applyLanguage('en');
     this.initLiveMarsTelemetry();
-    this.renderArtifactsList();
 
     const startAudioOnce = () => {
       window.SpaceAudio.startAmbient();
@@ -882,13 +880,14 @@ class AbandonedInSpaceApp {
   }
 
   // --- Language Switcher (TR / EN) ---
-  toggleLanguage() {
-    this.currentLang = this.currentLang === 'tr' ? 'en' : 'tr';
+  applyLanguage(lang) {
+    this.currentLang = lang;
     const isTr = this.currentLang === 'tr';
 
     const langBtn = document.getElementById('btn-lang-toggle');
     if (langBtn) {
       langBtn.innerHTML = `<span>🌐</span> <span>${isTr ? 'EN' : 'TR'}</span>`;
+      langBtn.setAttribute('title', isTr ? 'Switch to English' : 'Türkçe Dilini Seç');
     }
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -944,11 +943,21 @@ class AbandonedInSpaceApp {
       }
     }
 
+    // Update Rover Button Label
+    const gotoRoverLabel = document.getElementById('goto-rover-label');
+    if (gotoRoverLabel) {
+      gotoRoverLabel.innerText = isTr ? 'Haritada Rover Konumuna Uç' : 'Fly to Active Rover on Map';
+    }
+
     if (this.isTourActive) {
       this.updateTourStep();
-    } else if (this.sceneManager.selectedArtifact) {
+    } else if (this.sceneManager && this.sceneManager.selectedArtifact) {
       this.openDrawer(this.sceneManager.selectedArtifact);
     }
+  }
+
+  toggleLanguage() {
+    this.applyLanguage(this.currentLang === 'tr' ? 'en' : 'tr');
   }
 
   // --- Official Sources Modal Renderer ---

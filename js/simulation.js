@@ -102,7 +102,7 @@ class MissionSimulationTheater {
   updateVRGameMiniPill(customMsg = null) {
     const textEl = document.getElementById('vr-game-mission-text');
     if (!textEl) return;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const ws = this.walkState;
     if (customMsg) {
       ws.lastActionMsg = customMsg;
@@ -369,7 +369,7 @@ class MissionSimulationTheater {
 
   toggleWalkPerspective() {
     this.walkViewMode = this.walkViewMode === 'fp' ? 'tp' : 'fp';
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const btn = document.getElementById('btn-walk-view-toggle');
     if (btn) {
       btn.innerText = this.walkViewMode === 'fp'
@@ -432,7 +432,7 @@ class MissionSimulationTheater {
   }
 
   triggerInnerAirlockDoor() {
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const statusEl = document.getElementById('walk-xr-status');
     const btn = document.getElementById('btn-walk-cabin');
 
@@ -476,7 +476,7 @@ class MissionSimulationTheater {
   }
 
   triggerOuterAirlockDoor() {
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const statusEl = document.getElementById('walk-xr-status');
     const btn = document.getElementById('btn-walk-cabin');
 
@@ -597,7 +597,7 @@ class MissionSimulationTheater {
       return;
     }
     const ws = this.walkState;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const btn = document.getElementById('btn-walk-cabin');
 
     // Pressing E or clicking the door button ONLY opens/closes the Airlock Doors — it NEVER teleports the astronaut!
@@ -676,7 +676,7 @@ class MissionSimulationTheater {
 
   toggleRoverDrive() {
     if (!this.lrvPropGroup || this.walkState.isInsideCabin || this.walkState.isOnLadder) return;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const ws = this.walkState;
     ws.isDrivingRover = !ws.isDrivingRover;
     this.playSwitchClickSound(ws.isDrivingRover ? 780 : 520);
@@ -707,7 +707,7 @@ class MissionSimulationTheater {
     const walkHud = document.getElementById('walk-hud-overlay');
     const walkBtn = document.getElementById('btn-sim-walk');
     const cabinBtn = document.getElementById('btn-walk-cabin');
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     if (mode === 'walk') {
       // Automatically enter Clean Full-Screen VR Game Mode (surrounding buttons hidden; press H/TAB/ESC/Quest-X to restore)
@@ -800,7 +800,7 @@ class MissionSimulationTheater {
   // so the Quest Browser never drops the user-activation gesture.
   // ===========================================================================
   async enterWebXR() {
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const statusEl = document.getElementById('walk-xr-status');
     if (this.xrSession) return;
 
@@ -895,7 +895,7 @@ class MissionSimulationTheater {
   async updateQuestVRButton() {
     const btn = document.getElementById('btn-enter-quest-vr');
     if (!btn) return;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     if (this.xrSession) {
       btn.classList.add('hidden');
       return;
@@ -918,7 +918,7 @@ class MissionSimulationTheater {
       canvas.width = 1024;
       canvas.height = 700;
       const ctx = canvas.getContext('2d');
-      const isTr = window.app ? window.app.currentLang === 'tr' : true;
+      const isTr = window.app ? window.app.currentLang === 'tr' : false;
       ctx.fillStyle = 'rgba(4, 11, 24, 0.94)';
       ctx.fillRect(0, 0, 1024, 700);
       ctx.strokeStyle = '#00f0ff';
@@ -1027,7 +1027,7 @@ class MissionSimulationTheater {
 
   handleQuestFaceButton(button) {
     const ws = this.walkState;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     if (button === 'A') {
       this.pulseXRHaptics(0.55, 40, 'right');
       if (ws.isInsideCabin || ws.isOnLadder) {
@@ -1164,7 +1164,7 @@ class MissionSimulationTheater {
 
     const titleEl = document.getElementById('sim-title');
     const badgeEl = document.getElementById('sim-badge');
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     if (titleEl) titleEl.innerText = isTr ? artifact.name_tr : artifact.name_en;
     if (badgeEl) {
@@ -1952,7 +1952,7 @@ class MissionSimulationTheater {
         if (window.SpaceAudio && this.currentArtifact) {
           window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
         }
-        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        const isTr = window.app ? window.app.currentLang === 'tr' : false;
         this.updateVRGameMiniPill(isTr ? 'Apollo 14 MET "Ay El Arabası" İncelendi' : 'Inspected Apollo 14 MET Cart');
       }
     };
@@ -2005,7 +2005,7 @@ class MissionSimulationTheater {
         if (window.SpaceAudio && this.currentArtifact) {
           window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
         }
-        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        const isTr = window.app ? window.app.currentLang === 'tr' : false;
         this.updateVRGameMiniPill(isTr ? 'Surveyor 3 Robotik Sondası İncelendi' : 'Inspected Surveyor 3 Robotic Probe');
       }
     };
@@ -2054,7 +2054,7 @@ class MissionSimulationTheater {
         if (window.SpaceAudio && this.currentArtifact) {
           window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
         }
-        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        const isTr = window.app ? window.app.currentLang === 'tr' : false;
         this.updateVRGameMiniPill(isTr ? 'Sojourner Mikro-Roverı İncelendi' : 'Inspected Sojourner Micro-Rover');
       }
     };
@@ -2111,7 +2111,7 @@ class MissionSimulationTheater {
         if (window.SpaceAudio && this.currentArtifact) {
           window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || '');
         }
-        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        const isTr = window.app ? window.app.currentLang === 'tr' : false;
         this.updateVRGameMiniPill(isTr ? 'Mars Keşif Gezgini (MER) İncelendi' : 'Inspected Mars Exploration Rover');
       }
     };
@@ -2150,7 +2150,7 @@ class MissionSimulationTheater {
         if (window.SpaceAudio) {
           window.SpaceAudio.playTelemetryPing(520, 0.3);
         }
-        const isTr = window.app ? window.app.currentLang === 'tr' : true;
+        const isTr = window.app ? window.app.currentLang === 'tr' : false;
         this.updateVRGameMiniPill(isTr ? 'SEIS Sismometresi Aktif (Mars Sismik Kayıtları)' : 'SEIS Seismometer Active (Marsquake data)');
       }
     };
@@ -2629,7 +2629,7 @@ class MissionSimulationTheater {
           ringMarker.material.color.setHex(0x64748b);
           ringMarker.material.opacity = 0.2;
           sRock.scale.set(0.32, 0.22, 0.32);
-          const isTr = window.app ? window.app.currentLang === 'tr' : true;
+          const isTr = window.app ? window.app.currentLang === 'tr' : false;
           sampleAction.label_tr = `✅ NUMUNE TOPLANDI (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_tr}`;
           sampleAction.label_en = `✅ SAMPLE COLLECTED (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_en}`;
           if (this.walkState.collectedSamples >= this.walkState.totalSamples) {
@@ -2698,7 +2698,7 @@ class MissionSimulationTheater {
           if (window.SpaceAudio && this.currentArtifact) {
             window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || this.currentArtifact.quote_en || '');
           }
-          const isTr = window.app ? window.app.currentLang === 'tr' : true;
+          const isTr = window.app ? window.app.currentLang === 'tr' : false;
           this.updateVRGameMiniPill(isTr ? '🇹🇷 Şanlı Türk Bayrağı Selamlandı!' : '🇹🇷 Turkish Flag Saluted!');
         }
       };
@@ -2753,7 +2753,7 @@ class MissionSimulationTheater {
             if (alsepLaserBeam.visible && window.SpaceAudio) {
               window.SpaceAudio.playTelemetryPing(1480, 0.15);
             }
-            const isTr = window.app ? window.app.currentLang === 'tr' : true;
+            const isTr = window.app ? window.app.currentLang === 'tr' : false;
             this.updateVRGameMiniPill(
               alsepLaserBeam.visible
                 ? (isTr
@@ -3238,7 +3238,7 @@ class MissionSimulationTheater {
     }
     const ctx = this.vrWristCanvas.getContext('2d');
     const ws = this.walkState;
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     ctx.fillStyle = '#040b18';
     ctx.fillRect(0, 0, 512, 256);
@@ -3717,7 +3717,7 @@ class MissionSimulationTheater {
       outerHatchOpen: false,
       airlockPressurePsi: 4.8
     };
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     ctx.fillStyle = '#071120';
     ctx.fillRect(0, 0, 512, 512);
@@ -5090,7 +5090,7 @@ class MissionSimulationTheater {
     const hitObj = this.getHoveredInteractive(this.mouseNDC);
     const dotEl = document.getElementById('walk-reticle-dot');
     const promptEl = document.getElementById('walk-interact-prompt');
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     let promptStr = '';
     if (hitObj && hitObj.userData && hitObj.userData.interactive) {
@@ -5668,7 +5668,7 @@ class MissionSimulationTheater {
     const descentOffset = this.getDescentOffset(this.simTime);
     const isDescending = this.simTime < 5.8;
     const groundY0 = this.getExactSurfaceHeight(0, 6.85);
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const cabinBtn = document.getElementById('btn-walk-cabin');
 
     // Smoothly animate BOTH Doors of the Dual-Door Pressurized Airlock System:
@@ -6108,7 +6108,7 @@ class MissionSimulationTheater {
     const speedEl = document.getElementById('hud-speed');
     const phaseEl = document.getElementById('hud-phase');
     const thrustEl = document.getElementById('hud-thrust');
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
     const artifact = this.currentArtifact;
     if (!artifact) return;

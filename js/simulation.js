@@ -218,6 +218,19 @@ class MissionSimulationTheater {
       xrBtn.addEventListener('click', () => this.enterWebXR());
     }
 
+    // Big always-visible "Enter Meta Quest 3S VR" button (stays visible even in clean game UI mode)
+    const questBtn = document.getElementById('btn-enter-quest-vr');
+    if (questBtn) {
+      questBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.enterWebXR();
+      });
+      questBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+      questBtn.addEventListener('pointerup', (e) => e.stopPropagation());
+    }
+    this.updateQuestVRButton();
+
     this.initWalkControls();
   }
 
@@ -638,11 +651,16 @@ class MissionSimulationTheater {
 
   updateAstronautVisibility() {
     const isWalk = this.cameraMode === 'walk';
+    const inXR = !!this.xrSession;
     if (this.fpRig) {
-      this.fpRig.visible = isWalk && (this.walkViewMode === 'fp' || !!this.xrSession);
+      this.fpRig.visible = isWalk && (this.walkViewMode === 'fp' || inXR);
     }
+    // In the Quest headset the real tracked controllers carry the EVA gloves,
+    // so hide the desktop head-locked arms (prevents duplicate floating hands).
+    if (this.fpLeftArm) this.fpLeftArm.visible = !inXR;
+    if (this.fpRightArm) this.fpRightArm.visible = !inXR;
     if (this.tpAstronaut) {
-      this.tpAstronaut.visible = isWalk && this.walkViewMode === 'tp' && !this.xrSession;
+      this.tpAstronaut.visible = isWalk && this.walkViewMode === 'tp' && !inXR;
     }
   }
 
@@ -745,6 +763,7 @@ class MissionSimulationTheater {
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
       if (walkHud) walkHud.classList.remove('hidden');
+      this.updateQuestVRButton();
       if (walkBtn) walkBtn.classList.add('active');
       if (this.controls) this.controls.enabled = false;
       this.updateVRGameMiniPill(isTr ? 'Roket İnişte — İniş Sonrası Kapıyı Açın!' : 'Rocket Descending — Open Hatch After Touchdown!');
@@ -768,46 +787,234 @@ class MissionSimulationTheater {
     this.updateAstronautVisibility();
   }
 
+  // ===========================================================================
+  // META QUEST 3S / WEBXR IMMERSIVE SESSION ENTRY
+  // requestSession() is called IMMEDIATELY inside the click handler (no awaits before it),
+  // so the Quest Browser never drops the user-activation gesture.
+  // ===========================================================================
   async enterWebXR() {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
-    this.setCameraMode('walk');
-    this.setCleanVRGameMode(true);
-
     const statusEl = document.getElementById('walk-xr-status');
-    if (navigator.xr) {
-      try {
-        const vrSupported = await navigator.xr.isSessionSupported('immersive-vr');
-        const arSupported = !vrSupported && (await navigator.xr.isSessionSupported('immersive-ar'));
-        if (vrSupported || arSupported) {
-          const mode = vrSupported ? 'immersive-vr' : 'immersive-ar';
-          const session = await navigator.xr.requestSession(mode, {
-            optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-          });
-          this.xrSession = session;
-          this.renderer.xr.setReferenceSpaceType('local-floor');
-          await this.renderer.xr.setSession(session);
-          this.updateAstronautVisibility();
+    if (this.xrSession) return;
 
-          if (statusEl) {
-            statusEl.innerText = isTr
-              ? "🥽 META QUEST VR OYUN MODU AKTİF: Sol Kol/Kolları Sallama: Yürü • Sağ Kol: Dön • Tetik/Dokunma: Etkileşim • A: Sıçra • B: Kapak/Kabin • X: Arayüz"
-              : "🥽 META QUEST VR GAME ACTIVE: Left Stick/Arm Swing: Walk • Right Stick: Turn • Trigger/Touch: Interact • A: Jump • B: Hatch/Cabin • X: UI";
-          }
-          session.addEventListener('end', () => {
-            this.xrSession = null;
-            this.updateAstronautVisibility();
-          });
-          return;
-        }
-      } catch (err) {
-        console.warn('WebXR session fallback:', err);
+    if (!navigator.xr) {
+      if (this.cameraMode !== 'walk') this.setCameraMode('walk');
+      if (statusEl) {
+        statusEl.innerText = isTr
+          ? '⚠️ Bu tarayıcı WebXR desteklemiyor. Meta Quest 3S içindeki Meta Quest Browser ile HTTPS üzerinden açın. (Masaüstü: WASD + Mouse)'
+          : '⚠️ WebXR not available. Open this page in Meta Quest Browser over HTTPS. (Desktop: WASD + Mouse)';
+      }
+      this.updateVRGameMiniPill(isTr ? 'WebXR yok — Quest Browser + HTTPS gerekli' : 'No WebXR — needs Quest Browser + HTTPS');
+      return;
+    }
+
+    const sessionInit = { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] };
+    let session = null;
+    let sessionMode = 'immersive-vr';
+    try {
+      session = await navigator.xr.requestSession('immersive-vr', sessionInit);
+    } catch (errVR) {
+      console.warn('immersive-vr failed, trying immersive-ar:', errVR);
+      try {
+        session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+        sessionMode = 'immersive-ar';
+      } catch (errAR) {
+        console.warn('WebXR session could not start:', errAR);
       }
     }
 
+    if (!session) {
+      if (this.cameraMode !== 'walk') this.setCameraMode('walk');
+      if (statusEl) {
+        statusEl.innerText = isTr
+          ? '⚠️ VR oturumu başlatılamadı. Sayfanın HTTPS olduğundan ve Quest Browser izinlerinin açık olduğundan emin olun.'
+          : '⚠️ VR session could not start. Make sure the page is HTTPS and Quest Browser permissions are allowed.';
+      }
+      return;
+    }
+
+    // Enter walk mode (astronaut starts inside the descending cabin) + clean game UI
+    if (this.cameraMode !== 'walk') this.setCameraMode('walk');
+    this.setCleanVRGameMode(true);
+
+    this.xrSession = session;
+    this.xrHeadPrev = null;
+    this.xrSnap = { armed: true };
+    this.xrButtonPrev = { left: [], right: [] };
+    this.xrControllerPosInit = [false, false];
+    this.vrTouchLast = [null, null];
+    this.xrLocalRefFallback = false;
+
+    // Quest 3S performance: native framebuffer scale + fixed foveated rendering
+    try { if (this.renderer.xr.setFramebufferScaleFactor) this.renderer.xr.setFramebufferScaleFactor(1.0); } catch (_) {}
+
+    try {
+      this.renderer.xr.setReferenceSpaceType('local-floor');
+      await this.renderer.xr.setSession(session);
+    } catch (refErr) {
+      console.warn('local-floor unavailable, falling back to local:', refErr);
+      this.xrLocalRefFallback = true;
+      this.renderer.xr.setReferenceSpaceType('local');
+      await this.renderer.xr.setSession(session);
+    }
+    try { if (this.renderer.xr.setFoveation) this.renderer.xr.setFoveation(1.0); } catch (_) {}
+
+    this.updateAstronautVisibility();
+    this.updateQuestVRButton();
+    this.showVRHelpPanel(true);
+    this.pulseXRHaptics(0.6, 80);
+
     if (statusEl) {
       statusEl.innerText = isTr
-        ? "🥽 1:1 VR OYUN MODU AKTİF (WASD/Kollar: Yürü • Sol Tık/E: Etkileşim • SPACE: Sıçra • H/TAB: Arayüzü Göster)"
-        : "🥽 1:1 VR GAME MODE ACTIVE (WASD/Controllers: Walk • Click/E: Interact • SPACE: Jump • H/TAB: Toggle UI)";
+        ? `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} AKTİF • Sol Çubuk: Yürü • Sağ Çubuk: 30° Dön • Tetik: Etkileşim/Işınlan • Grip+Kol Salla: Yürü • A: Zıpla • B: Kapı/LRV • X: Fener • Y: Yardım`
+        : `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} ACTIVE • L-Stick: Walk • R-Stick: Snap Turn • Trigger: Interact/Teleport • Grip+Swing: Walk • A: Jump • B: Door/LRV • X: Torch • Y: Help`;
+    }
+    this.updateVRGameMiniPill(isTr ? 'Meta Quest 3S VR Oturumu Başladı' : 'Meta Quest 3S VR Session Started');
+
+    session.addEventListener('end', () => {
+      this.xrSession = null;
+      this.xrHeadPrev = null;
+      if (this.cameraRig) {
+        this.cameraRig.position.set(0, 0, 0);
+        this.cameraRig.rotation.set(0, 0, 0);
+      }
+      if (this.vrHelpPanel) this.vrHelpPanel.visible = false;
+      this.updateAstronautVisibility();
+      this.updateQuestVRButton();
+      setTimeout(() => this.onResize(), 60);
+    });
+  }
+
+  async updateQuestVRButton() {
+    const btn = document.getElementById('btn-enter-quest-vr');
+    if (!btn) return;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    if (this.xrSession) {
+      btn.classList.add('hidden');
+      return;
+    }
+    btn.classList.remove('hidden');
+    let supported = false;
+    try {
+      supported = !!(navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr')));
+    } catch (_) {}
+    btn.classList.toggle('xr-unsupported', !supported);
+    btn.innerHTML = supported
+      ? (isTr ? '🥽 META QUEST 3S — VR\'A GİR' : '🥽 META QUEST 3S — ENTER VR')
+      : (isTr ? '🥽 VR\'A GİR (Quest Browser + HTTPS gerekli)' : '🥽 ENTER VR (needs Quest Browser + HTTPS)');
+  }
+
+  // In-world floating controls help board for Meta Quest 3S (toggle with Y)
+  showVRHelpPanel(visible) {
+    if (!this.vrHelpPanel) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 640;
+      const ctx = canvas.getContext('2d');
+      const isTr = window.app ? window.app.currentLang === 'tr' : true;
+      ctx.fillStyle = 'rgba(4, 11, 24, 0.94)';
+      ctx.fillRect(0, 0, 1024, 640);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(6, 6, 1012, 628);
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 40px monospace';
+      ctx.fillText(isTr ? '🎮 META QUEST 3S KONTROLLERİ' : '🎮 META QUEST 3S CONTROLS', 40, 70);
+      const rows = isTr ? [
+        ['SOL ÇUBUK', 'Bakış yönüne yürü (analog hız)'],
+        ['SOL ÇUBUK BAS', 'Koş (basılı tut)'],
+        ['SAĞ ÇUBUK ◀ ▶', '30° adım dönüş (mide bulantısız)'],
+        ['SAĞ ÇUBUK BAS', 'EVA feneri aç / kapat'],
+        ['TETİK (her iki el)', 'Lazerle buton/kapı/numune • Zemine ışınlan'],
+        ['GRIP + KOL SALLA', 'Kollarınla yürü (gerçek yürüyüş hissi)'],
+        ['GERÇEK YÜRÜME', 'Odada yürü — çarpışmalı oda ölçeği'],
+        ['ELLE DOKUN', 'Butona eldiveninle fiziksel dokun'],
+        ['A', 'Zıpla (kabin içinde: kapıyı aç/kapat)'],
+        ['B', 'Hava kilidi kapısı • LRV aracına bin/in'],
+        ['X', 'EVA feneri']  ,
+        ['Y', 'Bu yardım panelini göster / gizle']
+      ] : [
+        ['LEFT STICK', 'Walk toward gaze (analog speed)'],
+        ['LEFT STICK CLICK', 'Sprint (hold)'],
+        ['RIGHT STICK ◀ ▶', '30° snap turn (comfort)'],
+        ['RIGHT STICK CLICK', 'Toggle EVA torch'],
+        ['TRIGGER (either)', 'Laser buttons/doors/samples • Teleport'],
+        ['GRIP + SWING ARMS', 'Arm-swing locomotion'],
+        ['REAL WALKING', 'Room-scale walking with collision'],
+        ['HAND TOUCH', 'Physically press buttons with glove'],
+        ['A', 'Jump (in cabin: open/close door)'],
+        ['B', 'Airlock door • Mount/dismount LRV'],
+        ['X', 'EVA torch'],
+        ['Y', 'Show / hide this help board']
+      ];
+      rows.forEach((r, i) => {
+        const y = 130 + i * 41;
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 26px monospace';
+        ctx.fillText(r[0], 40, y);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '26px monospace';
+        ctx.fillText(r[1], 400, y);
+      });
+      const tex = new THREE.CanvasTexture(canvas);
+      this.vrHelpPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.1, 0.6875),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false })
+      );
+      this.vrHelpPanel.renderOrder = 999;
+      this.vrHelpPanel.visible = false;
+    }
+    if (this.cameraRig && this.vrHelpPanel.parent !== this.cameraRig) {
+      this.cameraRig.add(this.vrHelpPanel);
+    }
+    this.vrHelpPanel.visible = !!visible;
+    // Place it in front of the user's gaze on the next XR frame (head pose is fresh then)
+    this.vrHelpNeedsPlace = !!visible;
+  }
+
+  placeVRHelpPanel() {
+    if (!this.vrHelpPanel || !this.camera) return;
+    const hp = this.camera.position;
+    const e = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+    const yaw = e.y;
+    this.vrHelpPanel.position.set(hp.x - Math.sin(yaw) * 1.25, Math.max(0.9, hp.y - 0.12), hp.z - Math.cos(yaw) * 1.25);
+    this.vrHelpPanel.rotation.set(0, yaw, 0);
+  }
+
+  getXRController(hand) {
+    if (!this.xrControllers) return null;
+    const found = this.xrControllers.find((c) => c && c.userData && c.userData.handedness === hand);
+    if (found) return found;
+    return hand === 'left' ? this.xrControllers[0] : this.xrControllers[1];
+  }
+
+  handleQuestFaceButton(button) {
+    const ws = this.walkState;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    if (button === 'A') {
+      this.pulseXRHaptics(0.55, 40, 'right');
+      if (ws.isInsideCabin || ws.isOnLadder) {
+        this.toggleCabinInterior();
+      } else {
+        this.triggerAstronautJump();
+      }
+    } else if (button === 'B') {
+      this.pulseXRHaptics(0.65, 45, 'right');
+      if (ws.isDrivingRover) {
+        this.toggleRoverDrive();
+      } else if (!ws.isInsideCabin && !ws.isOnLadder && this.lrvPropGroup &&
+                 Math.hypot(ws.x - this.lrvPropGroup.position.x, ws.z - this.lrvPropGroup.position.z) < 4.2) {
+        this.toggleRoverDrive();
+      } else {
+        this.toggleCabinInterior();
+      }
+    } else if (button === 'X') {
+      this.pulseXRHaptics(0.45, 30, 'left');
+      this.toggleFlashlight();
+      this.updateVRGameMiniPill(this.flashlightOn ? (isTr ? 'EVA Feneri Açık' : 'EVA Torch On') : (isTr ? 'EVA Feneri Kapalı' : 'EVA Torch Off'));
+    } else if (button === 'Y') {
+      this.pulseXRHaptics(0.45, 30, 'left');
+      this.showVRHelpPanel(!(this.vrHelpPanel && this.vrHelpPanel.visible));
     }
   }
 
@@ -2617,9 +2824,10 @@ class MissionSimulationTheater {
   // ===========================================================================
   // WEBXR META QUEST TOUCH CONTROLLERS, 3D EVA GLOVES, HAPTICS & WRIST HOLO-HUD
   // ===========================================================================
-  pulseXRHaptics(intensity = 0.65, durationMs = 45) {
+  pulseXRHaptics(intensity = 0.65, durationMs = 45, hand = null) {
     if (!this.xrSession || !this.xrSession.inputSources) return;
     for (const source of this.xrSession.inputSources) {
+      if (hand && source.handedness !== hand) continue;
       if (source.gamepad && source.gamepad.hapticActuators && source.gamepad.hapticActuators.length > 0) {
         try {
           source.gamepad.hapticActuators[0].pulse(intensity, durationMs);
@@ -2670,15 +2878,15 @@ class MissionSimulationTheater {
     ctx.font = 'bold 16px monospace';
     ctx.fillText(
       isTr
-        ? 'Sol Kol / Kolları Sallama: Yürü | Sağ Kol: Dön'
-        : 'Left Stick / Arm Swing: Walk | Right Stick: Turn',
+        ? 'Sol Çubuk: Yürü | Sağ Çubuk: 30° Dön | Grip+Salla: Yürü'
+        : 'L-Stick: Walk | R-Stick: Snap Turn | Grip+Swing: Walk',
       18,
       106
     );
     ctx.fillText(
       isTr
-        ? 'Tetik/Dokun: Etkileşim/Yürü | A: Sıçra | B: Kapak/LRV | X: UI'
-        : 'Trigger/Touch: Interact/Walk | A: Jump | B: Hatch/LRV | X: UI',
+        ? 'Tetik: Etkileşim | A: Zıpla | B: Kapı/LRV | X: Fener | Y: Yardım'
+        : 'Trigger: Interact | A: Jump | B: Door/LRV | X: Torch | Y: Help',
       18,
       134
     );
@@ -2743,7 +2951,7 @@ class MissionSimulationTheater {
         handGroup.add(finger);
       }
 
-      // Attach 3D Holographic EVA Wrist Computer Screen to Controller 0 (Left Hand)
+      // Attach 3D Holographic EVA Wrist Computer Screen (moved onto the LEFT hand once handedness is known)
       if (i === 0) {
         this.updateVRWristCanvas('');
         const wristHudMat = new THREE.MeshBasicMaterial({
@@ -2757,25 +2965,33 @@ class MissionSimulationTheater {
       }
 
       controller.add(handGroup);
+      controller.userData.handGroup = handGroup;
 
-      // Trigger ('selectstart'): Interact with 3D object OR walk/teleport to surface point!
+      // Meta Quest 3S: identify which physical hand this target-ray space belongs to
+      controller.addEventListener('connected', (event) => {
+        const src = event.data;
+        controller.userData.handedness = src ? src.handedness : null;
+        controller.userData.inputSource = src || null;
+        controller.visible = true;
+        if (src && src.handedness === 'left' && this.vrWristMesh && this.vrWristMesh.parent !== handGroup) {
+          handGroup.add(this.vrWristMesh);
+        }
+      });
+      controller.addEventListener('disconnected', () => {
+        controller.userData.handedness = null;
+        controller.userData.inputSource = null;
+        controller.visible = false;
+      });
+
+      // Trigger ('selectstart') or hand-tracking pinch: interact with 3D object OR teleport to surface point
       controller.addEventListener('selectstart', () => {
         if (this.cameraMode === 'walk') {
           this.handleXRControllerTrigger(controller);
         }
       });
 
-      // Grip ('squeezestart'): Open Hatch / Enter-Exit Cabin / Mount-Dismount Rover!
-      controller.addEventListener('squeezestart', () => {
-        if (this.cameraMode === 'walk') {
-          this.pulseXRHaptics(0.6, 40);
-          if (this.walkState.isDrivingRover) {
-            this.toggleRoverDrive();
-          } else {
-            this.toggleCabinInterior();
-          }
-        }
-      });
+      // NOTE: Grip ('squeeze') is reserved for arm-swing locomotion (hold grip + swing arms),
+      // so it no longer toggles doors (that caused doors to flap while walking).
 
       this.cameraRig.add(controller);
       this.xrControllers.push(controller);
@@ -2786,20 +3002,13 @@ class MissionSimulationTheater {
     // 1. Check if pointing at an interactive 3D button/switch/hatch/sample/rover/ALSEP
     const hitObj = this.getHoveredInteractive(null, controller, 16.0);
     if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
-      this.pulseXRHaptics(0.75, 50);
+      this.pulseXRHaptics(0.75, 50, controller.userData.handedness || null);
       hitObj.userData.interactive.onClick();
       return;
     }
 
-    // 2. If inside cabin and airlock outer hatch isn't open yet, pressing trigger runs the 2-Door Airlock sequence!
-    if (this.walkState.isInsideCabin && !this.cabinState.outerHatchOpen && this.simTime >= 5.5) {
-      this.pulseXRHaptics(0.75, 50);
-      this.triggerOpenHatch(true);
-      return;
-    }
-
-    // 3. If outside on the planetary surface, raycast against terrain for Point-and-Walk / Teleport!
-    if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && this.terrain) {
+    // 2. If outside on the planetary surface, raycast against terrain for Point-and-Teleport!
+    if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && !this.walkState.isDrivingRover && this.terrain) {
       const tempMatrix = new THREE.Matrix4();
       tempMatrix.identity().extractRotation(controller.matrixWorld);
       this.interactRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
@@ -2808,8 +3017,9 @@ class MissionSimulationTheater {
       if (groundHits && groundHits.length > 0 && groundHits[0].distance <= 28.0) {
         const pt = groundHits[0].point;
         const distFromCenter = Math.hypot(pt.x, pt.z);
-        if (distFromCenter > 4.5 && distFromCenter < 115) {
-          this.pulseXRHaptics(0.5, 35);
+        const inLadderZone = Math.abs(pt.x) < 0.95 && pt.z > 2.6 && pt.z < 7.0;
+        if (distFromCenter > 3.3 && distFromCenter < 115 && !inLadderZone) {
+          this.pulseXRHaptics(0.5, 35, controller.userData.handedness || null);
           this.walkState.x = pt.x;
           this.walkState.z = pt.z;
           this.walkState.y = pt.y;
@@ -4391,32 +4601,48 @@ class MissionSimulationTheater {
 
     const handWorldPos = new THREE.Vector3();
     const objWorldPos = new THREE.Vector3();
+    if (!this.vrTouchLast) this.vrTouchLast = [null, null];
 
-    // 1. Check if either 3D VR Hand physically touches any 3D button/switch/hatch/sample (within 0.24m)
-    if (this.vrTouchCooldown <= 0 && this.interactables && this.interactables.length > 0) {
+    // 1. Edge-triggered physical glove touch: fires ONCE when a glove enters a control (< 0.13 m),
+    //    and must leave (> 0.24 m) before the same control can fire again. Prevents dense breaker
+    //    panels / doors from rapid-firing just because a hand is resting nearby.
+    if (this.interactables && this.interactables.length > 0) {
       for (let c = 0; c < this.xrControllers.length; c++) {
         const ctrl = this.xrControllers[c];
-        if (!ctrl) continue;
+        if (!ctrl || !ctrl.visible) continue;
         ctrl.getWorldPosition(handWorldPos);
 
+        let nearest = null;
+        let nearestDist = Infinity;
         for (let j = 0; j < this.interactables.length; j++) {
           const obj = this.interactables[j];
           if (!obj || !obj.visible || !obj.userData || !obj.userData.interactive) continue;
           obj.getWorldPosition(objWorldPos);
-          if (handWorldPos.distanceTo(objWorldPos) < 0.36) {
-            this.vrTouchCooldown = 0.55;
-            this.pulseXRHaptics(0.85, 55);
-            obj.userData.interactive.onClick();
-            return;
+          const d = handWorldPos.distanceTo(objWorldPos);
+          if (d < nearestDist) {
+            nearestDist = d;
+            nearest = obj;
           }
+        }
+
+        const last = this.vrTouchLast[c];
+        if (last && (nearest !== last || nearestDist > 0.24)) {
+          this.vrTouchLast[c] = null;
+        }
+        if (nearest && nearestDist < 0.13 && this.vrTouchLast[c] !== nearest && this.vrTouchCooldown <= 0) {
+          this.vrTouchLast[c] = nearest;
+          this.vrTouchCooldown = 0.35;
+          this.pulseXRHaptics(0.85, 55, ctrl.userData.handedness || null);
+          nearest.userData.interactive.onClick();
+          return;
         }
       }
     }
 
-    // 2. Update VR Ground Walk/Teleport Reticle Ring when outside on the planetary surface
+    // 2. Update VR Ground Teleport Reticle Ring (right hand laser) when outside on the planetary surface
     if (this.vrTeleportRing) {
-      if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && this.terrain && this.xrControllers[1]) {
-        const rightCtrl = this.xrControllers[1];
+      const rightCtrl = this.getXRController('right');
+      if (!this.walkState.isInsideCabin && !this.walkState.isOnLadder && !this.walkState.isDrivingRover && this.terrain && rightCtrl) {
         const tempMatrix = new THREE.Matrix4();
         tempMatrix.identity().extractRotation(rightCtrl.matrixWorld);
         this.interactRaycaster.ray.origin.setFromMatrixPosition(rightCtrl.matrixWorld);
@@ -4464,7 +4690,13 @@ class MissionSimulationTheater {
     }
 
     if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
-      this.updateVRWristCanvas(promptStr);
+      // Throttle wrist-computer canvas uploads (expensive on Quest 3S mobile GPU)
+      const nowMs = performance.now();
+      if (promptStr !== this._lastWristPrompt || nowMs - (this._lastWristUpdate || 0) > 450) {
+        this._lastWristPrompt = promptStr;
+        this._lastWristUpdate = nowMs;
+        this.updateVRWristCanvas(promptStr);
+      }
     }
   }
 
@@ -4828,114 +5060,109 @@ class MissionSimulationTheater {
     if (ws.keys.d) moveRight += 1;
     if (ws.keys.a) moveRight -= 1;
 
-    // Poll Meta Quest / WebXR VR Controller Gamepad Thumbsticks, Buttons & Arm-Swing Locomotion!
-    let gripHeld = false;
-    if (this.xrSession && this.xrSession.inputSources) {
-      let idx = 0;
+    // =========================================================================
+    // META QUEST 3S TOUCH PLUS CONTROLLER MAPPING (WebXR "xr-standard" gamepad)
+    //  buttons[0] Trigger | [1] Grip | [3] Thumbstick click | [4] A / X | [5] B / Y
+    //  axes[2], axes[3] = Thumbstick X / Y
+    // =========================================================================
+    const isXR = !!(this.renderer && this.renderer.xr && this.renderer.xr.isPresenting);
+    let gripHeldL = false;
+    let gripHeldR = false;
+    let sprintHeld = false;
+    if (isXR && this.xrSession && this.xrSession.inputSources) {
+      if (!this.xrSnap) this.xrSnap = { armed: true };
       for (const source of this.xrSession.inputSources) {
         const gp = source.gamepad;
-        const hand = source.handedness || (idx === 0 ? 'left' : 'right');
+        if (!gp) continue; // hand-tracking sources use pinch -> 'selectstart' only
+        const hand = source.handedness === 'left' ? 'left' : 'right';
         const prevBtns = this.xrButtonPrev[hand] || [];
+        const axes = gp.axes || [];
+        const axX = axes.length >= 4 ? (axes[2] || 0) : (axes[0] || 0);
+        const axY = axes.length >= 4 ? (axes[3] || 0) : (axes[1] || 0);
+        const btns = gp.buttons || [];
+        const isPressed = (i) => !!(btns[i] && (btns[i].pressed || btns[i].value > 0.6));
+        const justPressed = (i) => isPressed(i) && !prevBtns[i];
+        const deadzone = 0.15;
 
-        if (gp) {
-          // 1. Thumbstick Axes (supports both xr-standard axes[2..3] and fallback axes[0..1])
-          const axX = (gp.axes && gp.axes.length >= 4 && (Math.abs(gp.axes[2]) > 0.05 || Math.abs(gp.axes[3]) > 0.05))
-            ? gp.axes[2]
-            : (gp.axes && gp.axes.length >= 2 ? gp.axes[0] : 0);
-          const axY = (gp.axes && gp.axes.length >= 4 && (Math.abs(gp.axes[2]) > 0.05 || Math.abs(gp.axes[3]) > 0.05))
-            ? gp.axes[3]
-            : (gp.axes && gp.axes.length >= 2 ? gp.axes[1] : 0);
-
-          if (hand === 'left') {
-            if (Math.abs(axY) > 0.14) moveForward -= axY;
-            if (Math.abs(axX) > 0.14) moveRight += axX;
-          } else {
-            // Right Controller Stick: X rotates yaw smoothly; Y also walks forward/back!
-            if (Math.abs(axX) > 0.18) {
-              ws.yaw -= axX * 2.15 * dt;
-            }
-            if (Math.abs(axY) > 0.18) {
-              moveForward -= axY;
-            }
+        if (hand === 'left') {
+          // LEFT STICK: analog walk toward headset gaze direction
+          const mag = Math.hypot(axX, axY);
+          if (mag > deadzone) {
+            const scaled = (Math.min(1, mag) - deadzone) / (1 - deadzone);
+            moveForward += (-axY / mag) * scaled;
+            moveRight += (axX / mag) * scaled;
           }
-
-          // 2. Meta Quest Controller Buttons (Edge-Triggered)
-          // buttons[0]: Trigger | buttons[1]: Grip/Squeeze | buttons[3]: Stick Press | buttons[4]: X/A | buttons[5]: Y/B
-          const btns = gp.buttons || [];
-          const isPressed = (bIdx) => btns[bIdx] && (btns[bIdx].pressed || btns[bIdx].value > 0.65);
-          const justPressed = (bIdx) => isPressed(bIdx) && !prevBtns[bIdx];
-
-          if (isPressed(1)) {
-            gripHeld = true;
+          if (isPressed(1)) gripHeldL = true;
+          if (isPressed(3)) sprintHeld = true;          // Left stick click (hold): sprint
+          if (justPressed(4)) this.handleQuestFaceButton('X');
+          if (justPressed(5)) this.handleQuestFaceButton('Y');
+        } else {
+          // RIGHT STICK: 30° comfort snap turn (re-arms when stick returns to center)
+          if (this.xrSnap.armed && Math.abs(axX) > 0.68) {
+            ws.yaw -= Math.sign(axX) * (Math.PI / 6);
+            ws.smoothYaw = ws.yaw;
+            this.xrSnap.armed = false;
+            this.pulseXRHaptics(0.25, 18, 'right');
+          } else if (Math.abs(axX) < 0.3) {
+            this.xrSnap.armed = true;
           }
-
-          // Button 3 (Thumbstick Click): Toggle EVA Flashlight
-          if (justPressed(3)) {
-            this.pulseXRHaptics(0.5, 35);
+          if (isPressed(1)) gripHeldR = true;
+          if (justPressed(3)) {                         // Right stick click: torch
+            this.pulseXRHaptics(0.4, 30, 'right');
             this.toggleFlashlight();
           }
-
-          // Button 4 (A on Right / X on Left):
-          if (justPressed(4)) {
-            this.pulseXRHaptics(0.65, 45);
-            if (hand === 'right') {
-              // A Button: Low-Gravity Astronaut Jump (or interact if inside cabin)
-              if (ws.isInsideCabin) {
-                const ctrl = this.xrControllers && this.xrControllers[1] ? this.xrControllers[1] : null;
-                this.handleXRControllerTrigger(ctrl);
-              } else {
-                this.triggerAstronautJump();
-              }
-            } else {
-              // X Button: Toggle Clean VR Game UI / Normal UI!
-              this.toggleCleanVRGameMode();
-            }
-          }
-
-          // Button 5 (B on Right / Y on Left):
-          if (justPressed(5)) {
-            this.pulseXRHaptics(0.65, 45);
-            if (hand === 'right') {
-              // B Button: Open Hatch / Enter-Exit Cabin / Mount-Dismount Rover
-              if (ws.isDrivingRover) {
-                this.toggleRoverDrive();
-              } else {
-                this.toggleCabinInterior();
-              }
-            } else {
-              // Y Button: Toggle 1st-Person / 3rd-Person Perspective
-              this.toggleWalkPerspective();
-            }
-          }
-
-          this.xrButtonPrev[hand] = btns.map((_, bIdx) => isPressed(bIdx));
+          if (justPressed(4)) this.handleQuestFaceButton('A');
+          if (justPressed(5)) this.handleQuestFaceButton('B');
         }
-        idx++;
+        this.xrButtonPrev[hand] = btns.map((_, i) => isPressed(i));
       }
     }
 
-    // 3. Physical Arm-Swing Locomotion in VR ("kollarla hareket edilebilsin"):
-    // Swinging the left & right Meta Quest controllers up and down propels the astronaut forward!
-    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers) {
-      let totalArmSwingVel = 0;
-      for (let i = 0; i < 2; i++) {
+    // ARM-SWING LOCOMOTION: hold Grip on a hand and swing that arm to walk forward
+    if (isXR && this.xrControllers) {
+      let swingVel = 0;
+      for (let i = 0; i < this.xrControllers.length; i++) {
         const ctrl = this.xrControllers[i];
         if (!ctrl) continue;
+        const h = ctrl.userData ? ctrl.userData.handedness : null;
+        const held = h === 'left' ? gripHeldL : (h === 'right' ? gripHeldR : false);
         if (!this.xrControllerPosInit[i]) {
           this.xrControllerPrevPos[i].copy(ctrl.position);
           this.xrControllerPosInit[i] = true;
-        } else {
-          const dy = Math.abs(ctrl.position.y - this.xrControllerPrevPos[i].y);
-          const dz = Math.abs(ctrl.position.z - this.xrControllerPrevPos[i].z);
-          this.xrControllerPrevPos[i].copy(ctrl.position);
-          totalArmSwingVel += (dy + dz * 0.6) / Math.max(0.008, dt);
+          continue;
+        }
+        const vy = Math.abs(ctrl.position.y - this.xrControllerPrevPos[i].y) / Math.max(0.008, dt);
+        const vz = Math.abs(ctrl.position.z - this.xrControllerPrevPos[i].z) / Math.max(0.008, dt);
+        this.xrControllerPrevPos[i].copy(ctrl.position);
+        if (held) swingVel += vy + vz * 0.5;
+      }
+      if (swingVel > 0.35) {
+        moveForward += Math.min(1.0, (swingVel - 0.35) * 0.9);
+      }
+    }
+
+    // ROOM-SCALE REAL WALKING: physical headset movement in the play area moves the astronaut
+    // through the same collision system (cannot walk through walls, tables or closed doors).
+    let physDX = 0;
+    let physDZ = 0;
+    if (isXR) {
+      const hp = this.camera.position; // local head pose relative to cameraRig (updated by WebXR)
+      if (!this.xrHeadPrev) {
+        this.xrHeadPrev = new THREE.Vector3(hp.x, hp.y, hp.z);
+      } else {
+        const ldx = hp.x - this.xrHeadPrev.x;
+        const ldz = hp.z - this.xrHeadPrev.z;
+        this.xrHeadPrev.copy(hp);
+        if (Math.hypot(ldx, ldz) < 0.5 && !ws.isDrivingRover) {
+          const cy = Math.cos(ws.smoothYaw);
+          const sy = Math.sin(ws.smoothYaw);
+          physDX = ldx * cy + ldz * sy;
+          physDZ = -ldx * sy + ldz * cy;
         }
       }
-      // If user is swinging arms (> 0.55 m/s, or > 0.25 m/s while holding Grip), walk forward smoothly!
-      const swingThreshold = gripHeld ? 0.22 : 0.62;
-      if (totalArmSwingVel > swingThreshold) {
-        const swingBoost = Math.min(1.25, (totalArmSwingVel - swingThreshold) * 0.85);
-        moveForward += swingBoost;
+      if (this.vrHelpNeedsPlace && this.vrHelpPanel) {
+        this.placeVRHelpPanel();
+        this.vrHelpNeedsPlace = false;
       }
     }
 
@@ -4951,13 +5178,14 @@ class MissionSimulationTheater {
     // Guarantee pitch stays within safe human neck range (±58 deg)
     ws.smoothPitch = Math.max(-1.01, Math.min(1.01, ws.smoothPitch));
 
-    // In WebXR VR Headset, align movement forward/right vectors with actual VR Headset Gaze Direction!
+    // In WebXR VR Headset, align movement with the real headset gaze direction (WORLD space,
+    // so it stays correct after snap-turning the cameraRig).
     let effectiveMoveYaw = ws.smoothYaw;
-    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
-      const xrCam = this.renderer.xr.getCamera(this.camera);
-      if (xrCam) {
-        const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(xrCam.quaternion);
-        effectiveMoveYaw = Math.atan2(-lookDir.x, -lookDir.z);
+    if (isXR) {
+      if (!this._xrGazeDir) this._xrGazeDir = new THREE.Vector3();
+      this.camera.getWorldDirection(this._xrGazeDir);
+      if (Math.hypot(this._xrGazeDir.x, this._xrGazeDir.z) > 0.05) {
+        effectiveMoveYaw = Math.atan2(-this._xrGazeDir.x, -this._xrGazeDir.z);
       }
     }
 
@@ -4966,11 +5194,13 @@ class MissionSimulationTheater {
     const rightX = Math.cos(effectiveMoveYaw);
     const rightZ = -Math.sin(effectiveMoveYaw);
 
-    const isMoving = (Math.abs(moveForward) > 0.01 || Math.abs(moveRight) > 0.01);
+    const stickLen = Math.hypot(moveForward, moveRight);
+    const physLen = Math.hypot(physDX, physDZ);
+    const isMoving = stickLen > 0.01 || physLen > 0.0008;
 
     // Smooth acceleration / deceleration blend factor
     if (ws.moveBlend === undefined) ws.moveBlend = 0;
-    const targetBlend = isMoving ? 1.0 : 0.0;
+    const targetBlend = stickLen > 0.01 ? 1.0 : 0.0;
     ws.moveBlend += (targetBlend - ws.moveBlend) * Math.min(1, dt * 7.5);
 
     const cabinFloorY = 4.5;
@@ -5045,12 +5275,22 @@ class MissionSimulationTheater {
     }
 
     if (isMoving) {
-      const len = Math.hypot(moveForward, moveRight) || 1;
-      const nx = (forwardX * moveForward + rightX * moveRight) / len;
-      const nz = (forwardZ * moveForward + rightZ * moveRight) / len;
+      // Analog stick magnitude (Quest thumbstick) + optional sprint; physical room-scale delta added on top
+      const stickMag = Math.min(1, stickLen);
+      let nx;
+      let nz;
+      if (stickLen > 0.01) {
+        nx = (forwardX * moveForward + rightX * moveRight) / stickLen;
+        nz = (forwardZ * moveForward + rightZ * moveRight) / stickLen;
+      } else {
+        nx = physDX / (physLen || 1);
+        nz = physDZ / (physLen || 1);
+      }
+      const moveSpeed = speed * (sprintHeld && !ws.isInsideCabin && !ws.isOnLadder ? 1.7 : 1.0);
+      const stickStep = stickLen > 0.01 ? moveSpeed * stickMag * dt : 0;
 
-      const candidateX = ws.x + nx * speed * dt;
-      const candidateZ = ws.z + nz * speed * dt;
+      const candidateX = ws.x + nx * stickStep + physDX;
+      const candidateZ = ws.z + nz * stickStep + physDZ;
       const candidateDist = Math.hypot(candidateX, candidateZ);
 
       // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin or Dual-Door Airlock Chamber
@@ -5303,8 +5543,15 @@ class MissionSimulationTheater {
     this.camera.rotation.order = 'YXZ';
 
     if (this.renderer.xr && this.renderer.xr.isPresenting) {
-      // In real WebXR VR headset: move the cameraRig dolly on the surface or inside the cabin; headset controls head look!
-      this.cameraRig.position.set(ws.x, ws.y, ws.z);
+      // Meta Quest 3S: offset the cameraRig so the user's real HEAD sits exactly at the astronaut
+      // position (ws.x, ws.z). Room-scale steps were already fed through collision above, so the
+      // rig cancels the physical offset and the head can never end up inside walls/tables.
+      const hp = this.camera.position;
+      const cyR = Math.cos(ws.smoothYaw);
+      const syR = Math.sin(ws.smoothYaw);
+      const offX = hp.x * cyR + hp.z * syR;
+      const offZ = -hp.x * syR + hp.z * cyR;
+      this.cameraRig.position.set(ws.x - offX, ws.y + (this.xrLocalRefFallback ? 1.6 : 0), ws.z - offZ);
       this.cameraRig.rotation.set(0, ws.smoothYaw, 0, 'YXZ');
     } else if (this.walkViewMode === 'tp') {
       // 3rd-Person Over-the-Shoulder Camera using direct YXZ Euler (no lookAt flip!)

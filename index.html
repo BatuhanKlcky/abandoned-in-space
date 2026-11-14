@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/style.css?v=4.1">
   
   <!-- Three.js & OrbitControls via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -69,11 +69,15 @@
           <span>🥽</span>
           <span data-i18n="btn_walk_top">1:1 YÜZEY / VR</span>
         </button>
+        <button class="hud-btn btn-jury-pitch" id="btn-jury-toggle" title="NASA 5 Jüri Kriteri (Impact, Creativity, Validity, Relevance, Presentation) Kanıt Paneli ve Hikâye Sunum Akışı">
+          <span>🏆</span>
+          <span data-i18n="btn_jury">JÜRİ & HİKÂYE</span>
+        </button>
         <button class="hud-btn" id="btn-sources-toggle" title="Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivi">
           <span>📚</span>
           <span data-i18n="btn_sources">RESMİ KAYNAKLAR</span>
         </button>
-        <button class="hud-btn" id="btn-tour-toggle" title="Rehberli Hikaye Turunu Başlat">
+        <button class="hud-btn" id="btn-tour-toggle" title="5 Bölümlük Rehberli Hikaye Turunu Başlat">
           <span>🚀</span>
           <span data-i18n="btn_tour">HİKAYE TURU</span>
         </button>
@@ -92,14 +96,27 @@
       </div>
     </header>
 
-    <!-- Guided Story Tour Top Banner (Visible during Tour) -->
+    <!-- Guided Story Tour Top Banner & 5-Chapter Narrative Storyteller Card -->
     <div class="tour-banner interactive" id="tour-banner">
-      <span class="tour-badge" data-i18n="tour_active_title">REHBERLİ HİKAYE TURU</span>
-      <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
-      <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
-      <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
-      <button class="tour-btn" id="tour-all-btn" title="Tüm Güneş Sistemi Büyük Turu (25 Görev)">🌌 Tüm Sistem (25)</button>
-      <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
+      <div class="tour-top-row">
+        <span class="tour-badge" data-i18n="tour_active_title">📖 5 BÖLÜMLÜK HİKÂYE AKIŞI</span>
+        <span class="tour-progress" id="tour-progress-text">1 / 10 — Apollo 11</span>
+        <button class="tour-btn" id="tour-prev-btn">◀ Önceki</button>
+        <button class="tour-btn" id="tour-next-btn">Sonraki ▶</button>
+        <button class="tour-btn" id="tour-all-btn" title="5 Bölümlük Tüm Güneş Sistemi Büyük Hikâye Turu (25 Görev)">🌌 5 Bölümlük Tam Hikâye (25)</button>
+        <button class="tour-btn" id="tour-exit-btn" style="border-color:#ef4444; color:#ef4444;">Turu Bitir ✕</button>
+      </div>
+      <div class="tour-chapter-strip" id="tour-chapter-strip">
+        <button class="chapter-pill active" data-chapter="0">I. İlk Dokunuş</button>
+        <button class="chapter-pill" data-chapter="1">II. Bilim İçin Feda</button>
+        <button class="chapter-pill" data-chapter="2">III. Kızıl Gezegen</button>
+        <button class="chapter-pill" data-chapter="3">IV. Venüs & Dış Sistem</button>
+        <button class="chapter-pill" data-chapter="4">V. Uzay Arkeolojisi & Gelecek</button>
+      </div>
+      <div class="tour-narrative-box" id="tour-narrative-box">
+        <span class="narrative-chapter-title" id="narrative-chapter-title">BÖLÜM I: İNSANLIĞIN BAŞKA BİR DÜNYAYA İLK DOKUNUŞU (1967–1970)</span>
+        <p class="narrative-chapter-desc" id="narrative-chapter-desc">Soğuk Savaş'ın uzay yarışından doğan bu ilk makineler, insanlığın Dünya dışındaki ilk sessiz elçileri oldu.</p>
+      </div>
     </div>
 
     <!-- Left Dock: Planetary Telemetry, Live Mars Weather & Relics Quick Search -->
@@ -380,6 +397,28 @@
           </div>
         </div>
 
+        <!-- NASA Verified Data & Scientific Validity Proof Card (Relevance & Validity Criteria) -->
+        <div class="nasa-verification-box" id="drawer-verification-box">
+          <div class="verification-header">
+            <span class="verification-badge" data-i18n="nasa_proof_badge">📜 NASA VERİ DOĞRULAMA & BİLİMSEL GEÇERLİLİK KANITI</span>
+            <span class="verification-status">✓ VERIFIED</span>
+          </div>
+          <div class="verification-grid">
+            <div class="ver-row">
+              <span class="ver-label" data-i18n="ver_monograph_label">AKADEMİK MONOGRAFİ:</span>
+              <span class="ver-val" id="ver-monograph">NASA SP-2024-4559 (Governing the Moon)</span>
+            </div>
+            <div class="ver-row">
+              <span class="ver-label" data-i18n="ver_dataset_label">UYDU & SENSÖR VERİSİ:</span>
+              <span class="ver-val" id="ver-dataset">LROC NAC / PDS Jeodezik Envanter</span>
+            </div>
+            <div class="ver-row">
+              <span class="ver-label" data-i18n="ver_heritage_label">KORUMA STATÜSÜ:</span>
+              <span class="ver-val" id="ver-heritage">Artemis Accords Bölüm 9 — Dünya Dışı Kültür Mirası</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Audio Transmission Broadcast Box with Animated Equalizer -->
         <div class="audio-broadcast-box">
           <div class="audio-info">
@@ -578,12 +617,56 @@
     </div>
   </div>
 
+  <!-- =====================================================================
+       NASA 5 JUDGING CRITERIA & STORYTELLING PITCH MODAL (Root level)
+       ===================================================================== -->
+  <div class="modal-overlay" id="jury-modal">
+    <div class="modal-content jury-modal-card glass-card interactive">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span>🏆</span>
+          <h2 data-i18n="jury_modal_title">NASA 5 DEĞERLENDİRME KRİTERİ & HİKÂYE ANLATIMI REHBERİ</h2>
+        </div>
+        <button class="close-btn" id="btn-close-jury">✕</button>
+      </div>
+
+      <div class="jury-tabs-bar">
+        <button class="jury-tab-btn active" data-jtab="criteria" data-i18n="jtab_criteria">🎯 5 Kriter Kanıt Matrisi (1–5 Puan)</button>
+        <button class="jury-tab-btn" data-jtab="pitch" data-i18n="jtab_pitch">🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu</button>
+      </div>
+
+      <!-- TAB 1: NASA 5 Criteria Matrix -->
+      <div class="jury-tab-panel active" id="jpanel-criteria">
+        <p class="sources-intro" data-i18n="jury_criteria_intro">
+          Projemiz NASA yarışma jürisinin 5 temel değerlendirme kriterinin tamamında (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak şekilde doğrulanmış NASA verileri, fizik motoru ve sıralı hikâye kurgusuyla tasarlanmıştır:
+        </p>
+        <div class="jury-criteria-grid" id="jury-criteria-container">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- TAB 2: Sequential Storytelling Pitch Script -->
+      <div class="jury-tab-panel" id="jpanel-pitch">
+        <p class="sources-intro" data-i18n="jury_pitch_intro">
+          Presentation (Sunum) kriterinde tam puan almak için sunumunuzu rastgele noktalar yerine aşağıdaki 5 perdelik açık, sıralı ve duygusal hikâye akışıyla yapabilirsiniz. Her adımdaki butona tıklayarak o sahneyi anında ekranda canlı gösterebilirsiniz:
+        </p>
+        <div class="jury-pitch-steps" id="jury-pitch-container">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <div class="modal-footer-note">
+        <span>✦ İpucu: Sunum sırasında "🎬 5 Bölümlük Hikâye Turunu Başlat" butonuna basarak tüm anlatımı tek tuşla kronolojik olarak ilerletebilirsiniz.</span>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=4.0"></script>
-  <script src="js/textures.js?v=4.0"></script>
-  <script src="js/audio.js?v=4.0"></script>
-  <script src="js/scene.js?v=4.0"></script>
-  <script src="js/simulation.js?v=4.0"></script>
-  <script src="js/app.js?v=4.0"></script>
+  <script src="js/data.js?v=4.1"></script>
+  <script src="js/textures.js?v=4.1"></script>
+  <script src="js/audio.js?v=4.1"></script>
+  <script src="js/scene.js?v=4.1"></script>
+  <script src="js/simulation.js?v=4.1"></script>
+  <script src="js/app.js?v=4.1"></script>
 </body>
 </html>

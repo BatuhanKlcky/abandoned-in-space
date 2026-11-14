@@ -2234,3 +2234,300 @@ body {
   color: #020617;
   box-shadow: 0 0 12px var(--cyan-glow);
 }
+
+
+/* ==========================================================================
+   V4.1 NASA 5 JUDGING CRITERIA & SEQUENTIAL STORYTELLING UPGRADES
+   ========================================================================== */
+
+.hud-btn.btn-jury-pitch {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(234, 88, 12, 0.28));
+  border-color: var(--amber-gold);
+  color: #fde68a;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.28);
+}
+.hud-btn.btn-jury-pitch:hover {
+  background: var(--amber-gold);
+  color: #020617;
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.65);
+}
+
+/* Upgraded 5-Chapter Story Tour Banner */
+.tour-banner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  max-width: 780px;
+  width: 92vw;
+  white-space: normal;
+}
+
+.tour-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tour-chapter-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.chapter-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--trans-smooth);
+}
+
+.chapter-pill:hover {
+  color: #fff;
+  border-color: var(--amber-gold);
+}
+
+.chapter-pill.active {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: var(--amber-gold);
+  color: #fde68a;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.tour-narrative-box {
+  background: rgba(15, 23, 42, 0.78);
+  border-left: 3px solid var(--amber-gold);
+  border-radius: 6px;
+  padding: 7px 11px;
+}
+
+.narrative-chapter-title {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.narrative-chapter-desc {
+  font-size: 11.5px;
+  color: #e2e8f0;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* NASA Verified Data & Scientific Proof Card in Story Drawer */
+.nasa-verification-box {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 78, 59, 0.22) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.verification-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.5px;
+}
+
+.verification-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.22);
+  color: #a7f3d0;
+  border: 1px solid #10b981;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.verification-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ver-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.ver-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.ver-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+/* NASA 5 Criteria & Storytelling Pitch Modal */
+.jury-modal-card {
+  max-width: 860px;
+  width: 94vw;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.jury-tabs-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+.jury-tab-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--trans-smooth);
+}
+
+.jury-tab-btn:hover {
+  color: #fff;
+  border-color: var(--cyan-primary);
+}
+
+.jury-tab-btn.active {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--cyan-primary);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+}
+
+.jury-tab-panel {
+  display: none;
+  overflow-y: auto;
+  padding-right: 6px;
+  flex: 1;
+}
+
+.jury-tab-panel.active {
+  display: block;
+}
+
+.jury-criteria-grid,
+.jury-pitch-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.criterion-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-left: 4px solid var(--amber-gold);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.criterion-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.criterion-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.criterion-score {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid var(--amber-gold);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.criterion-desc {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.criterion-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.criterion-proof-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #34d399;
+}
+
+.criterion-demo-btn {
+  background: rgba(0, 240, 255, 0.16);
+  border: 1px solid var(--cyan-primary);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--trans-smooth);
+}
+
+.criterion-demo-btn:hover {
+  background: var(--cyan-primary);
+  color: #020617;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}

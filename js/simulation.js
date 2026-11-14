@@ -720,50 +720,75 @@ class MissionSimulationTheater {
       }
       this.walkDescentPlayed = true;
 
+      const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(this.currentArtifact ? this.currentArtifact.id : '');
+
       if (this.spacecraft) {
         this.spacecraft.visible = true;
-        if (this.currentArtifact && this.currentArtifact.category === 'impact') {
-          this.spacecraft.position.set(-8.2, 2.3 + this.getDescentOffset(), -2.5);
-          this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
-        }
       }
       this.camera.rotation.order = 'YXZ';
       this.walkState.keys = { w: false, a: false, s: false, d: false };
       this.walkState.isLooking = false;
-      // Place the astronaut INSIDE the descending rocket cockpit facing the front windows & DSKY computer!
-      this.walkState.isInsideCabin = true;
-      this.walkState.isOnLadder = false;
-      this.walkState.isDrivingRover = false;
-      this.walkState.x = -0.52;
-      this.walkState.z = -0.78;
-      this.walkState.y = 4.5 + this.getDescentOffset();
-      this.walkState.vy = 0;
-      this.walkState.isGrounded = true;
-      this.walkState.yaw = -0.18;
-      this.walkState.pitch = -0.14;
-      this.walkState.smoothYaw = -0.18;
-      this.walkState.smoothPitch = -0.14;
-      this.walkState.moveBlend = 0;
-      this.walkState.handReachTimer = 0;
 
-      if (this.cabinState) {
-        this.cabinState.hatchOpen = false;
-        this.cabinState.hatchProgress = 0.0;
-        this.cabinState.innerHatchOpen = false;
-        this.cabinState.innerHatchProgress = 0.0;
-        this.cabinState.outerHatchOpen = false;
-        this.cabinState.outerHatchProgress = 0.0;
-        this.cabinState.airlockPressurePsi = 4.8;
-        this.cabinState.prog = '64';
-        this.cabinState.throttlePct = 82;
-        this.refreshCabinDisplays();
-      }
+      if (isApolloLM) {
+        // Place the astronaut INSIDE the descending Apollo LM cockpit facing the front windows & DSKY computer!
+        this.walkState.isInsideCabin = true;
+        this.walkState.isOnLadder = false;
+        this.walkState.isDrivingRover = false;
+        this.walkState.x = -0.52;
+        this.walkState.z = -0.78;
+        this.walkState.y = 4.5 + this.getDescentOffset();
+        this.walkState.vy = 0;
+        this.walkState.isGrounded = true;
+        this.walkState.yaw = -0.18;
+        this.walkState.pitch = -0.14;
+        this.walkState.smoothYaw = -0.18;
+        this.walkState.smoothPitch = -0.14;
+        this.walkState.moveBlend = 0;
+        this.walkState.handReachTimer = 0;
 
-      if (cabinBtn) {
-        cabinBtn.classList.add('active');
-        cabinBtn.innerText = isTr
-          ? '🚪 Çift Kapılı Hava Kilidini Aç & Çık (E)'
-          : '🚪 Open Dual-Door Airlock & Exit (E)';
+        if (this.cabinState) {
+          this.cabinState.hatchOpen = false;
+          this.cabinState.hatchProgress = 0.0;
+          this.cabinState.innerHatchOpen = false;
+          this.cabinState.innerHatchProgress = 0.0;
+          this.cabinState.outerHatchOpen = false;
+          this.cabinState.outerHatchProgress = 0.0;
+          this.cabinState.airlockPressurePsi = 4.8;
+          this.cabinState.prog = '64';
+          this.cabinState.throttlePct = 82;
+          this.refreshCabinDisplays();
+        }
+
+        if (cabinBtn) {
+          cabinBtn.style.display = 'inline-flex';
+          cabinBtn.classList.add('active');
+          cabinBtn.innerText = isTr
+            ? '🚪 Çift Kapılı Hava Kilidini Aç & Çık (E)'
+            : '🚪 Open Dual-Door Airlock & Exit (E)';
+        }
+        this.updateVRGameMiniPill(isTr ? 'Roket İnişte — İniş Sonrası Kapıyı Açın!' : 'Rocket Descending — Open Hatch After Touchdown!');
+      } else {
+        // FOR ALL UNMANNED SITES (Apollo 13 S-IVB, Rovers, Landers, Probes):
+        // Astronaut stands directly on foot on the planetary surface inspecting the spacecraft!
+        this.walkState.isInsideCabin = false;
+        this.walkState.isOnLadder = false;
+        this.walkState.isDrivingRover = false;
+        this.walkState.x = 0;
+        this.walkState.z = 8.5;
+        this.walkState.y = this.getTerrainHeight(0, 8.5);
+        this.walkState.vy = 0;
+        this.walkState.isGrounded = true;
+        this.walkState.yaw = 0;
+        this.walkState.pitch = 0;
+        this.walkState.smoothYaw = 0;
+        this.walkState.smoothPitch = 0;
+        this.walkState.moveBlend = 0;
+        this.walkState.handReachTimer = 0;
+
+        if (cabinBtn) {
+          cabinBtn.style.display = 'none';
+        }
+        this.updateVRGameMiniPill(isTr ? '1:1 Yüzey Yürüyüşü Aktif' : '1:1 Surface Walk Active');
       }
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
@@ -771,7 +796,6 @@ class MissionSimulationTheater {
       this.updateQuestVRButton();
       if (walkBtn) walkBtn.classList.add('active');
       if (this.controls) this.controls.enabled = false;
-      this.updateVRGameMiniPill(isTr ? 'Roket İnişte — İniş Sonrası Kapıyı Açın!' : 'Rocket Descending — Open Hatch After Touchdown!');
     } else {
       this.setCleanVRGameMode(false);
       this.camera.rotation.order = 'XYZ';
@@ -2795,21 +2819,6 @@ class MissionSimulationTheater {
       if (artifact.id === 'apollo-12-surveyor') {
         this.buildSurveyorProbeProp(18.5, -12.5);
       }
-
-      // 4. Mars Pathfinder & Sojourner Micro-Rover (10.6 kg):
-      if (artifact.id === 'pathfinder-sojourner') {
-        this.buildSojournerRoverProp(7.5, -4.5);
-      }
-
-      // 5. Mars Exploration Rovers Spirit & Opportunity (MER):
-      if (artifact.id === 'spirit-rover' || artifact.id === 'opportunity-rover') {
-        this.buildMarsExplorationRoverProp(12.5, -6.5);
-      }
-
-      // 6. InSight Mars Lander (SEIS dome & HP3 heat probe):
-      if (artifact.id === 'insight-lander') {
-        this.buildInSightStationProps(6.5, -3.5);
-      }
     }
 
     // Build First-Person & Third-Person Astronaut Rigs
@@ -3069,8 +3078,280 @@ class MissionSimulationTheater {
 
       this.spacecraft.position.set(0, 80, 0);
 
+    } else if (artifact.id === 'spirit-rover' || artifact.id === 'opportunity-rover') {
+      // MARS EXPLORATION ROVERS (MER: SPIRIT & OPPORTUNITY) — SINGLE PRIMARY VEHICLE
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22, bumpMap: kaptonBump, bumpScale: 0.04 });
+      const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85, roughness: 0.28 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.76, 3.0), goldMat);
+      body.position.y = 0.55;
+      body.castShadow = true;
+      this.spacecraft.add(body);
+
+      const solarDeck = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.08, 3.2), solarMat);
+      solarDeck.position.y = 0.96;
+      solarDeck.castShadow = true;
+      this.spacecraft.add(solarDeck);
+
+      for (let side = -1; side <= 1; side += 2) {
+        for (let w = -1; w <= 1; w++) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.22, 16), metalMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(side * 1.64, 0.26, w * 1.16);
+          wheel.castShadow = true;
+          this.spacecraft.add(wheel);
+        }
+      }
+
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.5), metalMat);
+      mast.position.set(0.7, 2.2, 0.9);
+      const cameraHead = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.32, 0.36), darkMat);
+      cameraHead.position.set(0.7, 3.45, 0.9);
+      this.spacecraft.add(mast, cameraHead);
+
+      const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.04, 0.16, 20), metalMat);
+      dish.position.set(-0.7, 1.35, -0.9);
+      dish.rotation.x = -0.45;
+      this.spacecraft.add(dish);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (artifact.id === 'insight-lander') {
+      // NASA INSIGHT MARS SEISMOLOGY STATION — SINGLE PRIMARY VEHICLE
+      const copperMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.22 });
+      const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+      const solarCellMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+
+      const landerBody = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.3, 0.9, 8), silverMat);
+      landerBody.position.y = 1.15;
+      landerBody.castShadow = true;
+      this.spacecraft.add(landerBody);
+
+      for (let side = -1; side <= 1; side += 2) {
+        const arrayDisc = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.15, 0.04, 32), solarCellMat);
+        arrayDisc.position.set(side * 3.4, 1.25, 0);
+        arrayDisc.castShadow = true;
+        this.spacecraft.add(arrayDisc);
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3;
+        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.4), silverMat);
+        strut.position.set(Math.cos(ang) * 1.8, 0.65, Math.sin(ang) * 1.8);
+        strut.rotation.z = Math.cos(ang) * 0.45;
+        strut.rotation.x = -Math.sin(ang) * 0.45;
+        this.spacecraft.add(strut);
+      }
+
+      const seisDome = new THREE.Mesh(new THREE.SphereGeometry(0.68, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), copperMat);
+      seisDome.position.set(1.85, 0.02, 1.6);
+      seisDome.castShadow = true;
+      this.spacecraft.add(seisDome);
+
+      const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.6), darkMat);
+      arm1.position.set(1.0, 1.4, 0.9);
+      arm1.rotation.z = -0.6;
+      this.spacecraft.add(arm1);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (artifact.id === 'pathfinder-sojourner') {
+      // MARS PATHFINDER LANDER & SOJOURNER ROVER — SINGLE INTEGRATED SYSTEM
+      const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+      const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22, bumpMap: kaptonBump, bumpScale: 0.04 });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85 });
+
+      const basePetal = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.5, 0.22, 6), solarMat);
+      basePetal.position.y = 0.12;
+      basePetal.castShadow = true;
+      this.spacecraft.add(basePetal);
+
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3;
+        const petal = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 2.4), solarMat);
+        petal.position.set(Math.cos(ang) * 2.6, 0.08, Math.sin(ang) * 2.6);
+        petal.rotation.y = -ang;
+        petal.castShadow = true;
+        this.spacecraft.add(petal);
+      }
+
+      const impMast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.8), silverMat);
+      impMast.position.set(0, 1.0, 0);
+      const impHead = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.3), metalMat);
+      impHead.position.set(0, 1.9, 0);
+      this.spacecraft.add(impMast, impHead);
+
+      const sojGroup = new THREE.Group();
+      sojGroup.position.set(0.6, 0.16, 2.8);
+      const sojBody = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.22, 0.85), goldMat);
+      sojBody.position.y = 0.14;
+      sojGroup.add(sojBody);
+      const sojSolar = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.02, 0.82), solarMat);
+      sojSolar.position.y = 0.26;
+      sojGroup.add(sojSolar);
+      for (let s = -1; s <= 1; s += 2) {
+        for (let w = -1; w <= 1; w++) {
+          const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 12), metalMat);
+          wh.rotation.z = Math.PI / 2;
+          wh.position.set(s * 0.38, 0.08, w * 0.28);
+          sojGroup.add(wh);
+        }
+      }
+      this.spacecraft.add(sojGroup);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (artifact.id === 'viking-1-lander' || artifact.id === 'phoenix-lander') {
+      // VIKING 1 / PHOENIX MARS ROBOTIC LANDER — SINGLE PRIMARY VEHICLE
+      const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+      const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 });
+
+      const landerHex = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.5, 0.95, 6), silverMat);
+      landerHex.position.y = 1.35;
+      landerHex.castShadow = true;
+      this.spacecraft.add(landerHex);
+
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6), silverMat);
+        leg.position.set(Math.cos(ang) * 2.4, 0.8, Math.sin(ang) * 2.4);
+        leg.rotation.z = Math.cos(ang) * 0.52;
+        leg.rotation.x = -Math.sin(ang) * 0.52;
+        leg.castShadow = true;
+        this.spacecraft.add(leg);
+      }
+
+      for (let s = -1; s <= 1; s += 2) {
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.05, 24), solarMat);
+        disc.position.set(s * 3.1, 1.5, 0);
+        disc.castShadow = true;
+        this.spacecraft.add(disc);
+      }
+
+      const metMast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.1), darkMat);
+      metMast.position.set(-0.8, 2.3, 0.5);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2), darkMat);
+      arm.position.set(1.2, 1.0, 1.2);
+      arm.rotation.x = 0.5;
+      this.spacecraft.add(metMast, arm);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (artifact.id === 'perseverance-backshell-chute') {
+      // PERSEVERANCE CONICAL BACKSHELL & SUPERSONIC PARACHUTE — SINGLE RELIC SITE
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.35, metalness: 0.6 });
+      const heatShieldMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.75, metalness: 0.3 });
+      const orangeChuteMat = new THREE.MeshStandardMaterial({ color: 0xe05626, roughness: 0.85, side: THREE.DoubleSide });
+      const whiteChuteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, side: THREE.DoubleSide });
+
+      const backshell = new THREE.Mesh(new THREE.ConeGeometry(2.35, 2.4, 28, 1, true), whiteMat);
+      backshell.position.set(-2.5, 1.15, 0);
+      backshell.rotation.z = Math.PI * 0.42;
+      backshell.castShadow = true;
+      this.spacecraft.add(backshell);
+
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(2.35, 0.12, 12, 28), heatShieldMat);
+      ring.position.set(-2.5, 1.15, 0);
+      ring.rotation.z = Math.PI * 0.42;
+      this.spacecraft.add(ring);
+
+      for (let ci = 0; ci < 8; ci++) {
+        const cGeo = new THREE.PlaneGeometry(12.5, 1.4, 12, 4);
+        const cPos = cGeo.attributes.position;
+        for (let pi = 0; pi < cPos.count; pi++) {
+          const px = cPos.getX(pi);
+          cPos.setZ(pi, Math.sin(px * 1.8 + ci) * 0.18);
+        }
+        cGeo.computeVertexNormals();
+        const mat = ci % 2 === 0 ? orangeChuteMat : whiteChuteMat;
+        const stripe = new THREE.Mesh(cGeo, mat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(4.8, 0.04 + ci * 0.015, -4.5 + ci * 1.3);
+        stripe.castShadow = true;
+        this.spacecraft.add(stripe);
+      }
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (isOuter && artifact.id === 'rosetta-philae') {
+      // PHILAE COMET LANDER ON COMET 67P — SINGLE PRIMARY VEHICLE
+      const carbonMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45 });
+      const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85 });
+
+      const philaeBody = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), solarMat);
+      philaeBody.position.y = 1.35;
+      philaeBody.castShadow = true;
+      this.spacecraft.add(philaeBody);
+
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.2), legMat);
+        leg.position.set(Math.cos(ang) * 1.6, 0.65, Math.sin(ang) * 1.6);
+        leg.rotation.z = Math.cos(ang) * 0.55;
+        leg.rotation.x = -Math.sin(ang) * 0.55;
+        leg.castShadow = true;
+        this.spacecraft.add(leg);
+      }
+
+      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.8), carbonMat);
+      antenna.position.set(0.6, 2.4, 0);
+      this.spacecraft.add(antenna);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (isOuter && artifact.id === 'near-shoemaker-eros') {
+      // NEAR SHOEMAKER ASTEROID PROBE — SINGLE PRIMARY VEHICLE
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22, bumpMap: kaptonBump, bumpScale: 0.04 });
+      const solarMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.92, roughness: 0.12 });
+      const dishMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+
+      const nearBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.2, 1.8), goldMat);
+      nearBody.position.y = 1.15;
+      nearBody.castShadow = true;
+      this.spacecraft.add(nearBody);
+
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * Math.PI) / 2;
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 1.2), solarMat);
+        wing.position.set(Math.cos(ang) * 2.2, 1.15, Math.sin(ang) * 2.2);
+        wing.rotation.y = -ang;
+        wing.castShadow = true;
+        this.spacecraft.add(wing);
+      }
+
+      const dish = new THREE.Mesh(new THREE.SphereGeometry(1.1, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.4), dishMat);
+      dish.position.set(0, 2.5, 0);
+      dish.rotation.x = -Math.PI / 2;
+      this.spacecraft.add(dish);
+
+      this.spacecraft.position.set(0, 0, 0);
+
+    } else if (isOuter && artifact.id === 'galileo-probe') {
+      // GALILEO JUPITER ATMOSPHERIC ENTRY PROBE — SINGLE PRIMARY VEHICLE
+      const heatMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.2 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22, bumpMap: kaptonBump, bumpScale: 0.04 });
+
+      const heatShield = new THREE.Mesh(new THREE.ConeGeometry(2.1, 1.4, 28, 1, true), heatMat);
+      heatShield.rotation.x = Math.PI;
+      heatShield.position.y = 0.9;
+      heatShield.castShadow = true;
+      this.spacecraft.add(heatShield);
+
+      const aft = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.9, 0.95, 24), goldMat);
+      aft.position.y = 1.6;
+      aft.castShadow = true;
+      this.spacecraft.add(aft);
+
+      this.spacecraft.position.set(0, 0, 0);
+
     } else {
-      // APOLLO LUNAR MODULE (LM) — HIGH-DETAIL DESCENT & ASCENT STAGE
+      // APOLLO CREWED LUNAR MODULE (LM) ONLY (Apollo 11, 12, 14, 15, 16, 17)
       const goldKapton = new THREE.MeshStandardMaterial({
         color: 0xf59e0b,
         metalness: 0.9,
@@ -3187,8 +3468,19 @@ class MissionSimulationTheater {
 
     this.scene.add(this.spacecraft);
 
-    // Build 1:1 Climbable Boarding Ladder & Detailed Walk-In Spacecraft / Rocket / Satellite Interior Cabin
-    this.buildWalkableLadderAndInterior(artifact);
+    // Build 1:1 Climbable Boarding Ladder & Detailed Walk-In Spacecraft Interior: ONLY FOR CREWED APOLLO LUNAR MODULES!
+    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
+    if (isApolloLM) {
+      this.buildWalkableLadderAndInterior(artifact);
+    } else {
+      if (this.walkableInteriorGroup) {
+        this.scene.remove(this.walkableInteriorGroup);
+      }
+      this.walkableInteriorGroup = null;
+      this.dummyAscentSolidGroup = null;
+      this.cabinState = null;
+      this.interactables = this.surfaceInteractables ? [...this.surfaceInteractables] : [];
+    }
 
     // Disable frustum culling & backface culling across the entire 3D scene so no rocket/lander part ever disappears at any camera angle!
     this.scene.traverse((obj) => {
@@ -5172,18 +5464,19 @@ class MissionSimulationTheater {
     const artifact = this.currentArtifact;
     if (!artifact || !this.spacecraft) return;
 
+    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
     const descentOffset = this.getDescentOffset(t);
-    const showWalkCabin = (this.cameraMode === 'walk' || t >= 5.8);
+    const showWalkCabin = isApolloLM && (this.cameraMode === 'walk' || t >= 5.8);
     if (this.walkableInteriorGroup) {
       this.walkableInteriorGroup.visible = showWalkCabin;
       this.walkableInteriorGroup.position.y = descentOffset;
     }
     if (this.dummyAscentSolidGroup) {
-      this.dummyAscentSolidGroup.visible = !showWalkCabin;
+      this.dummyAscentSolidGroup.visible = isApolloLM && !showWalkCabin;
     }
 
     // Live Cockpit Avionics & Window Dust Plumes while descending in Walk Mode (t < 5.8)
-    if (this.cameraMode === 'walk') {
+    if (this.cameraMode === 'walk' && isApolloLM) {
       if (t < 5.8) {
         if (!this.lastCockpitTick || t - this.lastCockpitTick > 0.45) {
           this.lastCockpitTick = t;
@@ -5230,13 +5523,13 @@ class MissionSimulationTheater {
     if (artifact.category === 'impact') {
       if (this.cameraMode === 'walk') {
         this.spacecraft.visible = true;
-        this.spacecraft.position.set(-8.2, 2.3 + descentOffset, -2.5);
-        this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
+        this.spacecraft.position.set(0, 1.8 + descentOffset, 0);
+        this.spacecraft.rotation.set(0.1, 0.4, Math.PI * 0.46);
       } else if (t < 3.2) {
         const progress = t / 3.2;
-        this.spacecraft.position.x = -75 + progress * 66.8;
-        this.spacecraft.position.y = 100 - progress * 97.7;
-        this.spacecraft.position.z = -2.5;
+        this.spacecraft.position.x = -75 + progress * 75;
+        this.spacecraft.position.y = 100 - progress * 98.2;
+        this.spacecraft.position.z = 0;
 
         if (Math.random() < 0.9) {
           this.createParticle(
@@ -5250,8 +5543,8 @@ class MissionSimulationTheater {
         this.impactTriggered = true;
         // Keep the impacted rocket stage visible resting in the impact crater at all camera angles!
         this.spacecraft.visible = true;
-        this.spacecraft.position.set(-8.2, 2.3, -2.5);
-        this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
+        this.spacecraft.position.set(0, 1.8, 0);
+        this.spacecraft.rotation.set(0.1, 0.4, Math.PI * 0.46);
         this.shakeIntensity = 4.0;
 
         const flashLight = new THREE.PointLight(0xfffaed, 18, 120);
@@ -5351,8 +5644,12 @@ class MissionSimulationTheater {
       }
 
     } else {
+      const isApolloCrewedLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
+      const isGroundSurfaceLander = ['spirit-rover', 'opportunity-rover', 'insight-lander', 'pathfinder-sojourner', 'viking-1-lander', 'phoenix-lander', 'perseverance-backshell-chute', 'rosetta-philae', 'near-shoemaker-eros', 'galileo-probe'].includes(artifact.id);
+      const targetRestY = isGroundSurfaceLander ? 0.0 : 3.2;
+
       if (t < 5.8) {
-        const currentY = 3.2 + descentOffset;
+        const currentY = targetRestY + descentOffset;
         this.spacecraft.position.y = currentY;
 
         if (this.engineLight) {
@@ -5385,7 +5682,7 @@ class MissionSimulationTheater {
           this.createParticle(dustOrigin, dustVel, artifact.body === 'venus' ? 0xd97706 : 0x9ca3af, 1.4);
         }
       } else {
-        this.spacecraft.position.y = 3.2;
+        this.spacecraft.position.y = targetRestY;
         if (this.engineLight) this.engineLight.intensity = 0;
         if (this.exhaustPlume) this.exhaustPlume.visible = false;
         if (t < 6.1 && !this.touchdownConfirmed) {

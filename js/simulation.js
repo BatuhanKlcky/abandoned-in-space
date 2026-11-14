@@ -299,10 +299,16 @@ class MissionSimulationTheater {
       }
       this.walkState.x = 0;
       this.walkState.z = 13.5;
-      this.walkState.y = this.getTerrainHeight(0, 13.5);
+      this.walkState.y = this.getExactSurfaceHeight(0, 13.5);
       this.walkState.vy = 0;
       this.walkState.yaw = 0;
       this.walkState.pitch = 0.05;
+      this.walkState.smoothYaw = 0;
+      this.walkState.smoothPitch = 0.05;
+      this.walkState.moveBlend = 0;
+      // Stamp initial left & right footprints directly under astronaut's starting boots
+      this.spawnFootprint(0, 13.5, 0, true);
+      this.spawnFootprint(0, 13.5, 0, false);
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
       if (walkHud) walkHud.classList.remove('hidden');
@@ -630,93 +636,432 @@ class MissionSimulationTheater {
 
   createFullAstronautMesh() {
     const root = new THREE.Group();
-    const suitWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.65, metalness: 0.1 });
-    const visorGold = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.12, metalness: 0.96 });
-    const bootGrey = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7, metalness: 0.25 });
-    const redPatch = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 });
-    const blueValve = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.25 });
 
-    // Torso (A7L EMU Suit)
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.68, 0.34), suitWhite);
-    torso.position.y = 1.15;
-    torso.castShadow = true;
-    root.add(torso);
+    // High-grade PBR Spacesuit Materials (Apollo A7L / Artemis xEMU)
+    const suitWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.68, metalness: 0.08 });
+    const suitSoftGrey = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.75, metalness: 0.12 });
+    const bellowsDark = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6, metalness: 0.35 });
+    const visorGold = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.08, metalness: 0.98 });
+    const visorInnerDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.25, metalness: 0.8 });
+    const bootGrey = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.65, metalness: 0.25 });
+    const treadDark = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.92, metalness: 0.15 });
+    const redCommander = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.42, metalness: 0.2 });
+    const blueAnodized = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.22 });
+    const redAnodized = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.85, roughness: 0.22 });
+    const chromeMetal = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.92, roughness: 0.16 });
+    const goldKapton = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.82, roughness: 0.28 });
+    const ledGreen = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    const ledCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
 
-    // PLSS Life Support Backpack
-    const plss = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.66, 0.26), suitWhite);
-    plss.position.set(0, 1.18, 0.28);
-    plss.castShadow = true;
-    root.add(plss);
+    // -------------------------------------------------------------------------
+    // 1. UPPER BODY GROUP (Torso, Waist Bellows, Pelvis, PLSS, Chest Camera, Helmet)
+    // -------------------------------------------------------------------------
+    const upperBody = new THREE.Group();
+    upperBody.position.set(0, 0.86, 0);
+    root.add(upperBody);
 
-    // Chest RCU Control Box + Commander Red Stripes
-    const rcu = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.10), suitWhite);
-    rcu.position.set(0, 1.22, -0.20);
-    root.add(rcu);
+    // Sculpted Pelvis / Hip Brief (connects legs to waist smoothly)
+    const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.20, 0.20, 20), suitWhite);
+    pelvis.scale.set(1.08, 1.0, 0.82);
+    pelvis.position.set(0, 0.02, 0);
+    pelvis.castShadow = true;
+    upperBody.add(pelvis);
 
-    const valveL = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.04, 10), blueValve);
-    valveL.rotation.x = Math.PI / 2;
-    valveL.position.set(-0.14, 1.05, -0.18);
-    const valveR = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.04, 10), redPatch);
-    valveR.rotation.x = Math.PI / 2;
-    valveR.position.set(0.14, 1.05, -0.18);
-    root.add(valveL, valveR);
+    // Corrugated Rubber Waist Bellows Ring
+    for (let w = 0; w < 2; w++) {
+      const waistRing = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.024, 12, 24), bellowsDark);
+      waistRing.rotation.x = Math.PI / 2;
+      waistRing.scale.set(1.08, 0.82, 1.0);
+      waistRing.position.set(0, 0.11 + w * 0.04, 0);
+      upperBody.add(waistRing);
+    }
 
-    // Helmet & Reflective 24K Gold LEVA Visor
-    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), suitWhite);
-    helmet.position.set(0, 1.68, 0);
-    helmet.castShadow = true;
-    root.add(helmet);
+    // Pressurized Upper Chest & Abdomen Shell (contoured elliptical cylinder + shoulder slope)
+    const chestCore = new THREE.Mesh(new THREE.CylinderGeometry(0.245, 0.215, 0.48, 24), suitWhite);
+    chestCore.scale.set(1.12, 1.0, 0.80);
+    chestCore.position.set(0, 0.37, 0);
+    chestCore.castShadow = true;
+    upperBody.add(chestCore);
 
+    // Upper Shoulder Yoke & Collar Taper
+    const shoulderYoke = new THREE.Mesh(new THREE.SphereGeometry(0.25, 24, 16), suitWhite);
+    shoulderYoke.scale.set(1.18, 0.48, 0.80);
+    shoulderYoke.position.set(0, 0.58, 0);
+    shoulderYoke.castShadow = true;
+    upperBody.add(shoulderYoke);
+
+    // Commander Diagonal Chest Straps (Apollo PLSS Harness)
+    for (let side = -1; side <= 1; side += 2) {
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.50, 0.02), suitSoftGrey);
+      strap.position.set(side * 0.14, 0.39, -0.185);
+      strap.rotation.z = side * 0.08;
+      upperBody.add(strap);
+    }
+
+    // Anodized Aluminum Neck Locking Ring
+    const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.02, 14, 28), chromeMetal);
+    neckRing.rotation.x = Math.PI / 2;
+    neckRing.position.set(0, 0.68, 0);
+    upperBody.add(neckRing);
+
+    // -------------------------------------------------------------------------
+    // 2. HELMET & 24K GOLD LEVA BUBBLE VISOR + SIDE LAMPS
+    // -------------------------------------------------------------------------
+    const helmetGroup = new THREE.Group();
+    helmetGroup.position.set(0, 0.84, 0);
+    upperBody.add(helmetGroup);
+
+    // Outer White LEVA Protective Shell (back & crown of helmet)
+    const helmetShell = new THREE.Mesh(new THREE.SphereGeometry(0.215, 28, 28), suitWhite);
+    helmetShell.scale.set(0.96, 1.05, 1.02);
+    helmetShell.castShadow = true;
+    helmetGroup.add(helmetShell);
+
+    // Inner Dark Pressure Bubble
+    const innerVisor = new THREE.Mesh(
+      new THREE.SphereGeometry(0.198, 24, 24, -Math.PI * 0.88, Math.PI * 0.76, Math.PI * 0.16, Math.PI * 0.62),
+      visorInnerDark
+    );
+    innerVisor.position.set(0, -0.01, -0.025);
+    helmetGroup.add(innerVisor);
+
+    // Reflective 24K Gold Curved Sun Visor
     const goldVisor = new THREE.Mesh(
-      new THREE.SphereGeometry(0.225, 24, 24, -Math.PI * 0.85, Math.PI * 0.7, Math.PI * 0.2, Math.PI * 0.55),
+      new THREE.SphereGeometry(0.208, 28, 28, -Math.PI * 0.86, Math.PI * 0.72, Math.PI * 0.18, Math.PI * 0.56),
       visorGold
     );
-    goldVisor.position.set(0, 1.68, -0.02);
-    root.add(goldVisor);
+    goldVisor.position.set(0, 0.0, -0.025);
+    helmetGroup.add(goldVisor);
 
-    // Articulated Left & Right Arms
-    const leftArm = new THREE.Group();
-    leftArm.position.set(-0.34, 1.42, 0);
-    const lArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.58, 12), suitWhite);
-    lArmMesh.position.y = -0.26;
-    lArmMesh.castShadow = true;
-    const lGlove = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), bootGrey);
-    lGlove.position.y = -0.56;
-    leftArm.add(lArmMesh, lGlove);
-    root.add(leftArm);
+    // Visor Sunshield Brow Visor Cap + Center Latch Tab
+    const sunShieldCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.222, 24, 16, -Math.PI * 0.9, Math.PI * 0.8, Math.PI * 0.08, Math.PI * 0.24),
+      suitWhite
+    );
+    helmetGroup.add(sunShieldCap);
 
-    const rightArm = new THREE.Group();
-    rightArm.position.set(0.34, 1.42, 0);
-    const rArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.58, 12), suitWhite);
-    rArmMesh.position.y = -0.26;
-    rArmMesh.castShadow = true;
-    const rGlove = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), bootGrey);
-    rGlove.position.y = -0.56;
-    rightArm.add(rArmMesh, rGlove);
-    root.add(rightArm);
+    // Left & Right Temple EVA Floodlights + Ear Pivot Knobs
+    for (let s = -1; s <= 1; s += 2) {
+      const earPivot = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.03, 14), chromeMetal);
+      earPivot.rotation.z = Math.PI / 2;
+      earPivot.position.set(s * 0.205, 0.01, 0.01);
+      helmetGroup.add(earPivot);
 
-    // Articulated Left & Right Legs + Lunar Overshoe Boots
-    const leftLeg = new THREE.Group();
-    leftLeg.position.set(-0.14, 0.80, 0);
-    const lLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.68, 12), suitWhite);
-    lLegMesh.position.y = -0.34;
-    lLegMesh.castShadow = true;
-    const lBoot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.28), bootGrey);
-    lBoot.position.set(0, -0.72, -0.04);
-    leftLeg.add(lLegMesh, lBoot);
-    root.add(leftLeg);
+      const lampPod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.08, 12), suitSoftGrey);
+      lampPod.rotation.x = Math.PI / 2;
+      lampPod.position.set(s * 0.215, 0.05, -0.04);
+      const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.018, 12), ledCyan);
+      lampLens.position.set(s * 0.215, 0.05, -0.082);
+      lampLens.rotation.y = Math.PI;
+      helmetGroup.add(lampPod, lampLens);
+    }
 
-    const rightLeg = new THREE.Group();
-    rightLeg.position.set(0.14, 0.80, 0);
-    const rLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.68, 12), suitWhite);
-    rLegMesh.position.y = -0.34;
-    rLegMesh.castShadow = true;
-    const rBoot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.28), bootGrey);
-    rBoot.position.set(0, -0.72, -0.04);
-    rightLeg.add(rLegMesh, rBoot);
-    root.add(rightLeg);
+    // -------------------------------------------------------------------------
+    // 3. PLSS LIFE SUPPORT BACKPACK + OPS MODULE + ANTENNA + OXYGEN HOSES
+    // -------------------------------------------------------------------------
+    const plssGroup = new THREE.Group();
+    plssGroup.position.set(0, 0.38, 0.26);
+    upperBody.add(plssGroup);
 
-    this.tpLimbs = { leftArm, rightArm, leftLeg, rightLeg, torso };
+    // Main Contoured Fiberglass PLSS Housing
+    const plssMain = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.54, 0.22), suitWhite);
+    plssMain.castShadow = true;
+    plssGroup.add(plssMain);
+
+    // Rounded Side Pillars of PLSS
+    for (let s = -1; s <= 1; s += 2) {
+      const sideEdge = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.54, 16), suitWhite);
+      sideEdge.position.set(s * 0.19, 0, 0);
+      sideEdge.castShadow = true;
+      plssGroup.add(sideEdge);
+    }
+
+    // Top OPS (Oxygen Purge System) Emergency Module & Commander Stripe
+    const opsBox = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.15, 0.21), suitSoftGrey);
+    opsBox.position.set(0, 0.34, 0.0);
+    opsBox.castShadow = true;
+    plssGroup.add(opsBox);
+
+    const opsRedBand = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.038, 0.22), redCommander);
+    opsRedBand.position.set(0, 0.36, 0.0);
+    plssGroup.add(opsRedBand);
+
+    // Collapsible VHF Dipole Whip Antenna
+    const antennaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.06, 10), chromeMetal);
+    antennaBase.position.set(0.13, 0.44, 0.02);
+    const antennaWhip = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.009, 0.38, 8), chromeMetal);
+    antennaWhip.position.set(0.13, 0.64, 0.02);
+    plssGroup.add(antennaBase, antennaWhip);
+
+    // Back Thermal Louvers & Telemetry Status Lights
+    const backPanel = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.28, 0.025), bellowsDark);
+    backPanel.position.set(0, 0.02, 0.11);
+    plssGroup.add(backPanel);
+
+    const plssLed = new THREE.Mesh(new THREE.SphereGeometry(0.015, 10, 10), ledGreen);
+    plssLed.position.set(-0.14, 0.20, 0.115);
+    plssGroup.add(plssLed);
+
+    // Dual Braided Oxygen & Water Umbilical Hoses curving from PLSS to Front Torso
+    for (let s = -1; s <= 1; s += 2) {
+      const hoseMat = s < 0 ? blueAnodized : redAnodized;
+      const hoseCurve = new THREE.TorusGeometry(0.22, 0.022, 10, 20, Math.PI * 0.95);
+      const hoseMesh = new THREE.Mesh(hoseCurve, suitSoftGrey);
+      hoseMesh.rotation.y = Math.PI / 2;
+      hoseMesh.rotation.x = Math.PI * 0.12;
+      hoseMesh.position.set(s * 0.23, 0.18, 0.02);
+      upperBody.add(hoseMesh);
+
+      // Front Anodized Umbilical Gas Valves (Blue Inlet / Red Outlet)
+      const valve = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.055, 14), hoseMat);
+      valve.rotation.x = Math.PI / 2;
+      valve.position.set(s * 0.125, 0.22, -0.195);
+      upperBody.add(valve);
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. CHEST RCU DISPLAY & HASSELBLAD 500EL LUNAR DATA CAMERA
+    // -------------------------------------------------------------------------
+    const rcuBox = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.15, 0.09), suitWhite);
+    rcuBox.position.set(0, 0.44, -0.21);
+    rcuBox.castShadow = true;
+    upperBody.add(rcuBox);
+
+    const rcuScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.045), ledGreen);
+    rcuScreen.rotation.x = -Math.PI / 3;
+    rcuScreen.position.set(0, 0.518, -0.21);
+    upperBody.add(rcuScreen);
+
+    // Authentic Apollo Silver Hasselblad 500EL Data Camera mounted below RCU
+    const camGroup = new THREE.Group();
+    camGroup.position.set(0, 0.31, -0.235);
+    const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.095, 0.11), chromeMetal);
+    const camMagazine = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.09, 0.06), suitSoftGrey);
+    camMagazine.position.z = 0.06;
+    const camLensBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.085, 18), bellowsDark);
+    camLensBarrel.rotation.x = Math.PI / 2;
+    camLensBarrel.position.z = -0.08;
+    const camLensGlass = new THREE.Mesh(new THREE.CircleGeometry(0.032, 16), visorInnerDark);
+    camLensGlass.position.z = -0.124;
+    camLensGlass.rotation.y = Math.PI;
+    camGroup.add(camBody, camMagazine, camLensBarrel, camLensGlass);
+    upperBody.add(camGroup);
+
+    // -------------------------------------------------------------------------
+    // 5. 2-BONE ARTICULATED ARMS (Shoulder -> Upper Arm -> Elbow Bellows -> Forearm -> 5-Finger Glove)
+    // -------------------------------------------------------------------------
+    const buildArm = (isLeft) => {
+      const sign = isLeft ? -1 : 1;
+      const shoulderGroup = new THREE.Group();
+      shoulderGroup.position.set(sign * 0.31, 0.54, 0.0);
+
+      // Shoulder Joint Dome & Corrugated Convolutes
+      const shoulderBall = new THREE.Mesh(new THREE.SphereGeometry(0.095, 16, 16), suitWhite);
+      shoulderBall.castShadow = true;
+      shoulderGroup.add(shoulderBall);
+
+      // Upper Arm Segment
+      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.074, 0.27, 16), suitWhite);
+      upperArm.position.y = -0.14;
+      upperArm.castShadow = true;
+      shoulderGroup.add(upperArm);
+
+      // Commander Red Armband & Mission Patch
+      const armBand = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.081, 0.042, 16), redCommander);
+      armBand.position.y = -0.12;
+      shoulderGroup.add(armBand);
+
+      const patch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.015, 0.055, 0.075),
+        isLeft ? blueAnodized : redCommander
+      );
+      patch.position.set(sign * 0.078, -0.06, 0);
+      shoulderGroup.add(patch);
+
+      // Elbow Joint & Forearm Group (2nd Bone for natural elbow bend!)
+      const forearmGroup = new THREE.Group();
+      forearmGroup.position.set(0, -0.28, 0);
+      shoulderGroup.add(forearmGroup);
+
+      // Corrugated Black Rubber Elbow Bellows
+      for (let b = -1; b <= 1; b++) {
+        const elbowRing = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.014, 10, 18), bellowsDark);
+        elbowRing.rotation.x = Math.PI / 2;
+        elbowRing.position.y = b * 0.022;
+        forearmGroup.add(elbowRing);
+      }
+
+      // Forearm Pressurized Sleeve
+      const forearmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.062, 0.25, 16), suitWhite);
+      forearmMesh.position.y = -0.14;
+      forearmMesh.castShadow = true;
+      forearmGroup.add(forearmMesh);
+
+      // Left Wrist OLED Cuff Checklist
+      if (isLeft) {
+        const cuffChecklist = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.095, 0.03), bellowsDark);
+        cuffChecklist.position.set(-0.02, -0.18, -0.058);
+        const cuffGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.068, 0.075), ledGreen);
+        cuffGlow.position.z = -0.016;
+        cuffGlow.rotation.y = Math.PI;
+        cuffChecklist.add(cuffGlow);
+        forearmGroup.add(cuffChecklist);
+      }
+
+      // Anodized Wrist Locking Ring (Blue Left / Red Right)
+      const wristRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.060, 0.011, 10, 20),
+        isLeft ? blueAnodized : redAnodized
+      );
+      wristRing.rotation.x = Math.PI / 2;
+      wristRing.position.y = -0.265;
+      forearmGroup.add(wristRing);
+
+      // Sculpted EVA Gauntlet & 5-Finger Glove
+      const gloveGroup = new THREE.Group();
+      gloveGroup.position.set(0, -0.31, 0);
+      forearmGroup.add(gloveGroup);
+
+      const palm = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.085, 0.042), bootGrey);
+      palm.castShadow = true;
+      gloveGroup.add(palm);
+
+      const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.015, 0.055, 8), bootGrey);
+      thumb.position.set(sign * -0.042, -0.01, -0.025);
+      thumb.rotation.x = 0.5;
+      thumb.rotation.z = sign * 0.45;
+      gloveGroup.add(thumb);
+
+      for (let f = 0; f < 4; f++) {
+        const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.012, 0.062, 8), bootGrey);
+        finger.position.set((f - 1.5) * 0.018, -0.062, -0.01);
+        finger.rotation.x = 0.35;
+        gloveGroup.add(finger);
+      }
+
+      // If Right Hand: attach EVA Handheld Torch + 3rd-Person SpotLight Beam
+      if (!isLeft) {
+        const tpTorch = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.02, 0.18, 12), bellowsDark);
+        tpTorch.rotation.x = Math.PI / 2;
+        tpTorch.position.set(0, -0.04, -0.07);
+        const tpTorchLens = new THREE.Mesh(new THREE.CircleGeometry(0.019, 12), ledCyan);
+        tpTorchLens.position.set(0, -0.04, -0.162);
+        tpTorchLens.rotation.y = Math.PI;
+        gloveGroup.add(tpTorch, tpTorchLens);
+      }
+
+      // Slight natural outward resting angle for pressurized suit arms
+      shoulderGroup.rotation.z = sign * -0.08;
+      forearmGroup.rotation.x = 0.28; // Natural forward elbow bend
+
+      upperBody.add(shoulderGroup);
+      return { shoulderGroup, forearmGroup };
+    };
+
+    const leftArmRig = buildArm(true);
+    const rightArmRig = buildArm(false);
+
+    // -------------------------------------------------------------------------
+    // 6. 2-BONE ARTICULATED LEGS (Hip -> Thigh -> Knee Bellows -> Shin -> Lunar Overshoe Boot)
+    // -------------------------------------------------------------------------
+    const buildLeg = (isLeft) => {
+      const sign = isLeft ? -1 : 1;
+      const hipGroup = new THREE.Group();
+      hipGroup.position.set(sign * 0.135, 0.84, 0);
+
+      // Hip Joint Ball
+      const hipJoint = new THREE.Mesh(new THREE.SphereGeometry(0.105, 14, 14), suitWhite);
+      hipGroup.add(hipJoint);
+
+      // Upper Thigh Pressurized Cylinder
+      const thighMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.092, 0.38, 16), suitWhite);
+      thighMesh.position.y = -0.20;
+      thighMesh.castShadow = true;
+      hipGroup.add(thighMesh);
+
+      // Apollo Commander Red Thigh Stripe
+      const thighStripe = new THREE.Mesh(new THREE.CylinderGeometry(0.103, 0.099, 0.055, 16), redCommander);
+      thighStripe.position.y = -0.18;
+      hipGroup.add(thighStripe);
+
+      // Knee Joint & Lower Shin Group (2nd Bone for natural knee flexion!)
+      const shinGroup = new THREE.Group();
+      shinGroup.position.set(0, -0.40, 0);
+      hipGroup.add(shinGroup);
+
+      // Corrugated Knee Bellows Rings
+      for (let k = -1; k <= 1; k++) {
+        const kneeRing = new THREE.Mesh(new THREE.TorusGeometry(0.086, 0.016, 10, 18), bellowsDark);
+        kneeRing.rotation.x = Math.PI / 2;
+        kneeRing.position.y = k * 0.025;
+        shinGroup.add(kneeRing);
+      }
+
+      // Lower Calf / Shin Pressurized Cylinder
+      const shinMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.090, 0.082, 0.34, 16), suitWhite);
+      shinMesh.position.y = -0.19;
+      shinMesh.castShadow = true;
+      shinGroup.add(shinMesh);
+
+      // Sculpted Apollo Lunar Overshoe Boot (Ankle cuff + Rounded Toe + Gold Straps + Deep Ribbed Sole)
+      const bootGroup = new THREE.Group();
+      bootGroup.position.set(0, -0.37, 0);
+      shinGroup.add(bootGroup);
+
+      // Boot Ankle Collar
+      const bootAnkle = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.094, 0.09, 16), bootGrey);
+      bootAnkle.position.y = 0.02;
+      bootGroup.add(bootAnkle);
+
+      // Main Boot Foot Body & Rounded Toe Dome
+      const bootFoot = new THREE.Mesh(new THREE.BoxGeometry(0.155, 0.095, 0.25), bootGrey);
+      bootFoot.position.set(0, -0.02, -0.045);
+      bootFoot.castShadow = true;
+      bootGroup.add(bootFoot);
+
+      const bootToe = new THREE.Mesh(new THREE.SphereGeometry(0.078, 16, 12), bootGrey);
+      bootToe.scale.set(1.0, 0.65, 1.15);
+      bootToe.position.set(0, -0.022, -0.155);
+      bootToe.castShadow = true;
+      bootGroup.add(bootToe);
+
+      // Gold Thermal Kapton Overshoe Straps across the instep
+      for (let st = 0; st < 2; st++) {
+        const bootStrap = new THREE.Mesh(new THREE.BoxGeometry(0.162, 0.022, 0.028), goldKapton);
+        bootStrap.position.set(0, 0.022, -0.03 - st * 0.075);
+        bootGroup.add(bootStrap);
+      }
+
+      // Heavy Dark-Grey Silicone Ribbed Lunar Tread Sole
+      const bootSole = new THREE.Mesh(new THREE.BoxGeometry(0.165, 0.028, 0.31), treadDark);
+      bootSole.position.set(0, -0.062, -0.05);
+      bootGroup.add(bootSole);
+
+      for (let r = -3; r <= 3; r++) {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.168, 0.014, 0.022), bellowsDark);
+        rib.position.set(0, -0.072, -0.05 + r * 0.038);
+        bootGroup.add(rib);
+      }
+
+      root.add(hipGroup);
+      return { hipGroup, shinGroup, bootGroup };
+    };
+
+    const leftLegRig = buildLeg(true);
+    const rightLegRig = buildLeg(false);
+
+    this.tpLimbs = {
+      upperBody,
+      helmetGroup,
+      leftArm: leftArmRig.shoulderGroup,
+      leftForearm: leftArmRig.forearmGroup,
+      rightArm: rightArmRig.shoulderGroup,
+      rightForearm: rightArmRig.forearmGroup,
+      leftLeg: leftLegRig.hipGroup,
+      leftShin: leftLegRig.shinGroup,
+      rightLeg: rightLegRig.hipGroup,
+      rightShin: rightLegRig.shinGroup
+    };
     return root;
   }
 
@@ -784,34 +1129,144 @@ class MissionSimulationTheater {
     this.scene.add(lrv);
   }
 
+  getExactSurfaceHeight(x, z) {
+    if (this.terrain) {
+      if (!this.surfaceRaycaster) {
+        this.surfaceRaycaster = new THREE.Raycaster();
+        this.downVector = new THREE.Vector3(0, -1, 0);
+        this.rayOrigin = new THREE.Vector3();
+      }
+      this.terrain.updateMatrixWorld();
+      this.rayOrigin.set(x, 60, z);
+      this.surfaceRaycaster.set(this.rayOrigin, this.downVector);
+      const hits = this.surfaceRaycaster.intersectObject(this.terrain, false);
+      if (hits && hits.length > 0) {
+        return hits[0].point.y;
+      }
+    }
+    return this.getTerrainHeight(x, z);
+  }
+
+  getBootprintTexture() {
+    if (this.bootprintTexture) return this.bootprintTexture;
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, 256, 512);
+
+    // Outer displaced regolith dust halo (bright rim around compressed boot sole)
+    const rimGrad = ctx.createRadialGradient(128, 256, 65, 128, 256, 124);
+    rimGrad.addColorStop(0, 'rgba(15, 23, 42, 0.92)');
+    rimGrad.addColorStop(0.76, 'rgba(30, 41, 59, 0.85)');
+    rimGrad.addColorStop(0.90, 'rgba(203, 213, 225, 0.65)');
+    rimGrad.addColorStop(1.0, 'rgba(203, 213, 225, 0.0)');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(128, 256, 92, 215, 0, 0, Math.PI * 2);
+    ctx.fillStyle = rimGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // Deep compressed boot sole cavity
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(128, 256, 74, 192, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15, 20, 28, 0.88)';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)';
+    ctx.stroke();
+    ctx.restore();
+
+    // 9 Iconic Apollo Horizontal Ribbed Tread Bars (dark groove + bright sunlit ridge)
+    for (let i = -4; i <= 4; i++) {
+      const y = 256 + i * 36;
+      const halfWidth = Math.sqrt(Math.max(0, 1 - Math.pow((i * 36) / 188, 2))) * 68;
+      if (halfWidth > 20) {
+        // Deep dark groove
+        ctx.fillStyle = 'rgba(5, 8, 15, 0.96)';
+        ctx.fillRect(128 - halfWidth, y - 10, halfWidth * 2, 13);
+        // Sunlit compressed regolith ridge
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.72)';
+        ctx.fillRect(128 - halfWidth, y + 4, halfWidth * 2, 6);
+      }
+    }
+
+    this.bootprintTexture = new THREE.CanvasTexture(canvas);
+    this.bootprintTexture.needsUpdate = true;
+    return this.bootprintTexture;
+  }
+
   spawnFootprint(x, z, yaw, isLeft) {
-    const groundY = this.getTerrainHeight(x, z);
-    const offsetSide = isLeft ? -0.16 : 0.16;
+    const offsetSide = isLeft ? -0.17 : 0.17;
     const fx = x + Math.cos(yaw) * offsetSide;
     const fz = z - Math.sin(yaw) * offsetSide;
+    const groundY = this.getExactSurfaceHeight(fx, fz);
 
     const printGroup = new THREE.Group();
-    printGroup.position.set(fx, groundY + 0.015, fz);
-    printGroup.rotation.y = yaw;
+    printGroup.position.set(fx, groundY + 0.024, fz);
+    // Slight natural toe-out angle for left and right boots
+    printGroup.rotation.y = yaw + (isLeft ? 0.06 : -0.06);
 
-    const printMat = new THREE.MeshStandardMaterial({
-      color: 0x333842,
-      roughness: 0.98,
+    // 1. High-contrast textured Apollo Bootprint Decal Plane
+    const decalMat = new THREE.MeshStandardMaterial({
+      map: this.getBootprintTexture(),
       transparent: true,
-      opacity: 0.78
+      opacity: 0.95,
+      roughness: 0.95,
+      metalness: 0.05,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -4
     });
 
-    // Ribbed Apollo Lunar Bootprint treads
+    const decalMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.58), decalMat);
+    decalMesh.rotation.x = -Math.PI / 2;
+    printGroup.add(decalMesh);
+
+    // 2. 3D Sculpted Ribbed Tread Bars & Raised Regolith Rim for 3D Depth
+    const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
+    const ridgeColor = body === 'mars' ? 0x9a3412 : body === 'venus' ? 0x78350f : 0x64748b;
+    const grooveColor = body === 'mars' ? 0x3b1106 : body === 'venus' ? 0x291003 : 0x1e293b;
+
+    const grooveMat = new THREE.MeshStandardMaterial({
+      color: grooveColor,
+      roughness: 0.98,
+      polygonOffset: true,
+      polygonOffsetFactor: -5
+    });
+    const ridgeMat = new THREE.MeshStandardMaterial({
+      color: ridgeColor,
+      roughness: 0.92,
+      polygonOffset: true,
+      polygonOffsetFactor: -5
+    });
+
     for (let r = -3; r <= 3; r++) {
-      const tread = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.022), printMat);
-      tread.rotation.x = -Math.PI / 2;
-      tread.position.z = r * 0.036;
-      printGroup.add(tread);
+      const wScale = 1 - Math.abs(r) * 0.08;
+      const treadGroove = new THREE.Mesh(new THREE.BoxGeometry(0.15 * wScale, 0.008, 0.022), grooveMat);
+      treadGroove.position.set(0, 0.004, r * 0.048);
+      printGroup.add(treadGroove);
+
+      const treadRidge = new THREE.Mesh(new THREE.BoxGeometry(0.155 * wScale, 0.012, 0.012), ridgeMat);
+      treadRidge.position.set(0, 0.007, r * 0.048 + 0.016);
+      printGroup.add(treadRidge);
     }
+
+    // Raised outer boot rim in regolith dust
+    const rimMesh = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.012, 8, 24), ridgeMat);
+    rimMesh.rotation.x = Math.PI / 2;
+    rimMesh.scale.set(0.95, 1.85, 0.65);
+    rimMesh.position.y = 0.006;
+    printGroup.add(rimMesh);
 
     this.scene.add(printGroup);
     this.footprints.push(printGroup);
-    if (this.footprints.length > 60) {
+    if (this.footprints.length > 160) {
       const old = this.footprints.shift();
       this.scene.remove(old);
     }
@@ -1074,6 +1529,12 @@ class MissionSimulationTheater {
 
     // Build First-Person & Third-Person Astronaut Rigs
     this.buildAstronautRigs();
+
+    // Pre-spawn an initial EVA footprint trail leading from the spacecraft ladder to the astronaut's boots
+    for (let s = 0; s < 10; s++) {
+      const trailZ = 7.6 + s * 0.62;
+      this.spawnFootprint(0, trailZ, 0, s % 2 === 0);
+    }
 
     // Dynamic Sun Light with Crisp Soft Shadows
     const sunColor = isVenus ? 0xffb74d : isOuter ? 0xffe0b2 : 0xfffaed;
@@ -1729,8 +2190,8 @@ class MissionSimulationTheater {
   // ===========================================================================
   updateAstronautWalk(dt) {
     const ws = this.walkState;
-    ws.breathPhase += dt * 1.9;
-    const speed = 5.0; // EVA surface speed
+    ws.breathPhase += dt * 1.65;
+    const speed = 4.8; // Authentic EVA surface pace
     let moveForward = 0;
     let moveRight = 0;
 
@@ -1751,12 +2212,24 @@ class MissionSimulationTheater {
       }
     }
 
-    const forwardX = -Math.sin(ws.yaw);
-    const forwardZ = -Math.cos(ws.yaw);
-    const rightX = Math.cos(ws.yaw);
-    const rightZ = -Math.sin(ws.yaw);
+    // Smoothly damp mouse-look rotation for cinematic visor feel
+    if (ws.smoothYaw === undefined) ws.smoothYaw = ws.yaw;
+    if (ws.smoothPitch === undefined) ws.smoothPitch = ws.pitch;
+    const lookLerp = Math.min(1, dt * 16.0);
+    ws.smoothYaw += (ws.yaw - ws.smoothYaw) * lookLerp;
+    ws.smoothPitch += (ws.pitch - ws.smoothPitch) * lookLerp;
+
+    const forwardX = -Math.sin(ws.smoothYaw);
+    const forwardZ = -Math.cos(ws.smoothYaw);
+    const rightX = Math.cos(ws.smoothYaw);
+    const rightZ = -Math.sin(ws.smoothYaw);
 
     const isMoving = (Math.abs(moveForward) > 0.01 || Math.abs(moveRight) > 0.01);
+
+    // Smooth acceleration / deceleration blend factor (prevents sudden camera jerk!)
+    if (ws.moveBlend === undefined) ws.moveBlend = 0;
+    const targetBlend = isMoving ? 1.0 : 0.0;
+    ws.moveBlend += (targetBlend - ws.moveBlend) * Math.min(1, dt * 7.5);
 
     if (isMoving) {
       const len = Math.hypot(moveForward, moveRight) || 1;
@@ -1770,22 +2243,27 @@ class MissionSimulationTheater {
         ws.x = candidateX;
         ws.z = candidateZ;
       }
-      ws.stepPhase += dt * 7.2;
+      ws.stepPhase += dt * 6.4;
 
-      // Spawn ribbed lunar footprint & dust puff on each footfall!
-      const stepIndex = Math.floor(ws.stepPhase / Math.PI);
+      // Spawn ribbed lunar footprint & dust puff on every footfall!
+      const stepInterval = Math.PI * 0.72;
+      const stepIndex = Math.floor(ws.stepPhase / stepInterval);
       if (stepIndex > ws.lastStepCount && ws.isGrounded) {
         ws.lastStepCount = stepIndex;
         const isLeftFoot = (stepIndex % 2 === 0);
-        this.spawnFootprint(ws.x, ws.z, ws.yaw, isLeftFoot);
-        this.spawnBootDust(ws.x, ws.z, 3);
+        // Place bootprint slightly behind/under current stride foot
+        const strideBack = -0.10;
+        const footX = ws.x + forwardX * strideBack;
+        const footZ = ws.z + forwardZ * strideBack;
+        this.spawnFootprint(footX, footZ, ws.smoothYaw, isLeftFoot);
+        this.spawnBootDust(footX, footZ, 4);
       }
     }
 
-    // Planetary gravity physics for jumping / walking over craters
+    // Planetary gravity physics for jumping / walking over craters using exact triangle surface height
     const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
     const gravity = body === 'moon' ? 3.2 : body === 'outer' ? 2.8 : body === 'mars' ? 5.5 : 9.8;
-    const groundY = this.getTerrainHeight(ws.x, ws.z);
+    const groundY = this.getExactSurfaceHeight(ws.x, ws.z);
 
     if (!ws.isGrounded || ws.y > groundY + 0.04) {
       ws.vy -= gravity * dt;
@@ -1794,38 +2272,80 @@ class MissionSimulationTheater {
         ws.y = groundY;
         ws.vy = 0;
         ws.isGrounded = true;
-        this.spawnBootDust(ws.x, ws.z, 8);
+        // Stamp both boots when landing from a lunar jump!
+        this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, true);
+        this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, false);
+        this.spawnBootDust(ws.x, ws.z, 10);
       }
     } else {
       ws.y = groundY;
     }
 
-    // Low-gravity EVA bounce & lateral sway
-    const verticalBounce = (isMoving && ws.isGrounded) ? Math.abs(Math.sin(ws.stepPhase)) * 0.14 : Math.sin(ws.breathPhase) * 0.012;
-    const lateralSway = (isMoving && ws.isGrounded) ? Math.cos(ws.stepPhase) * 0.045 : 0;
+    // Smooth C2-continuous sinusoidal EVA stride bob & natural weight-transfer sway
+    const groundFactor = ws.isGrounded ? ws.moveBlend : 0;
+    const strideWave = 0.5 - 0.5 * Math.cos(ws.stepPhase * 2.0); // Smooth [0..1] wave without sharp cusps!
+    const verticalBounce = groundFactor * strideWave * 0.085 + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.010;
+    const lateralSway = groundFactor * Math.sin(ws.stepPhase) * 0.042;
+    const rollSway = groundFactor * Math.sin(ws.stepPhase) * 0.015 + Math.cos(ws.breathPhase * 0.7) * 0.002;
+    const pitchBob = groundFactor * Math.cos(ws.stepPhase * 2.0) * 0.011 + Math.sin(ws.breathPhase) * 0.003;
 
     // Animate First-Person Astronaut Arms & Gloved Hands
     if (this.fpLeftArm && this.fpRightArm) {
-      const swing = isMoving ? Math.sin(ws.stepPhase) * 0.16 : Math.sin(ws.breathPhase) * 0.025;
-      const jumpLift = ws.isGrounded ? 0 : Math.min(0.18, Math.abs(ws.vy) * 0.04);
+      const swing = groundFactor * Math.sin(ws.stepPhase) * 0.14 + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.022;
+      const jumpLift = ws.isGrounded ? 0 : Math.min(0.16, Math.abs(ws.vy) * 0.038);
 
-      this.fpLeftArm.position.set(-0.27 + lateralSway * 0.3, -0.26 + Math.abs(swing) * 0.18 + jumpLift * 0.4, -0.44 - swing * 0.35);
-      this.fpLeftArm.rotation.set(0.42 + swing * 0.55 + jumpLift, 0.22, -0.18);
+      this.fpLeftArm.position.set(-0.27 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35, -0.44 - swing * 0.32);
+      this.fpLeftArm.rotation.set(0.42 + swing * 0.48 + jumpLift, 0.22 + lateralSway * 0.2, -0.18 - rollSway * 1.5);
 
-      this.fpRightArm.position.set(0.28 + lateralSway * 0.3, -0.26 + Math.abs(swing) * 0.18 + jumpLift * 0.4, -0.44 + swing * 0.35);
-      this.fpRightArm.rotation.set(0.38 - swing * 0.55 + jumpLift, -0.20, 0.15);
+      this.fpRightArm.position.set(0.28 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35, -0.44 + swing * 0.32);
+      this.fpRightArm.rotation.set(0.38 - swing * 0.48 + jumpLift, -0.20 + lateralSway * 0.2, 0.15 - rollSway * 1.5);
     }
 
-    // Animate 3rd-Person Full Astronaut Suit
+    // Animate 3rd-Person Full Articulated Astronaut Suit (2-Bone Arms + 2-Bone Legs + Torso Twist)
     if (this.tpAstronaut) {
-      this.tpAstronaut.position.set(ws.x, ws.y + verticalBounce * 0.6, ws.z);
-      this.tpAstronaut.rotation.y = ws.yaw;
-      if (this.tpLimbs.leftArm) {
-        const limbSwing = isMoving ? Math.sin(ws.stepPhase) * 0.52 : 0;
-        this.tpLimbs.leftArm.rotation.x = limbSwing;
-        this.tpLimbs.rightArm.rotation.x = -limbSwing;
-        this.tpLimbs.leftLeg.rotation.x = -limbSwing * 0.85;
-        this.tpLimbs.rightLeg.rotation.x = limbSwing * 0.85;
+      this.tpAstronaut.position.set(ws.x, ws.y + verticalBounce * 0.75, ws.z);
+      this.tpAstronaut.rotation.y = ws.smoothYaw;
+
+      if (this.tpLimbs && this.tpLimbs.leftArm) {
+        const phase = ws.stepPhase;
+        const blend = ws.moveBlend;
+        const jumpPose = ws.isGrounded ? 0 : 0.35;
+
+        // Upper body subtle forward EVA lean, breathing & counter-rotation twist
+        if (this.tpLimbs.upperBody) {
+          this.tpLimbs.upperBody.rotation.x = 0.06 * blend + Math.sin(ws.breathPhase) * 0.012;
+          this.tpLimbs.upperBody.rotation.y = -Math.sin(phase) * 0.08 * blend;
+          this.tpLimbs.upperBody.rotation.z = Math.cos(phase) * 0.035 * blend;
+        }
+
+        // Helmet tracks camera pitch and subtle scan
+        if (this.tpLimbs.helmetGroup) {
+          this.tpLimbs.helmetGroup.rotation.x = -ws.smoothPitch * 0.45;
+          this.tpLimbs.helmetGroup.rotation.y = Math.sin(ws.breathPhase * 0.6) * 0.04;
+        }
+
+        // 2-Bone Arms: Shoulder swing + Elbow flexion
+        const armSwing = Math.sin(phase) * 0.46 * blend;
+        this.tpLimbs.leftArm.rotation.x = armSwing - jumpPose * 0.5;
+        this.tpLimbs.rightArm.rotation.x = -armSwing - jumpPose * 0.5;
+
+        if (this.tpLimbs.leftForearm && this.tpLimbs.rightForearm) {
+          this.tpLimbs.leftForearm.rotation.x = 0.28 + Math.max(0, Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4;
+          this.tpLimbs.rightForearm.rotation.x = 0.28 + Math.max(0, -Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4;
+        }
+
+        // 2-Bone Legs: Hip stride + Realistic Knee bend (shin bends backward during forward leg lift)
+        const leftHipAngle = -Math.sin(phase) * 0.55 * blend - jumpPose * 0.35;
+        const rightHipAngle = Math.sin(phase) * 0.55 * blend - jumpPose * 0.20;
+        this.tpLimbs.leftLeg.rotation.x = leftHipAngle;
+        this.tpLimbs.rightLeg.rotation.x = rightHipAngle;
+
+        if (this.tpLimbs.leftShin && this.tpLimbs.rightShin) {
+          const leftKneeBend = Math.max(0, -Math.cos(phase)) * 0.68 * blend + jumpPose * 0.65;
+          const rightKneeBend = Math.max(0, Math.cos(phase)) * 0.68 * blend + jumpPose * 0.55;
+          this.tpLimbs.leftShin.rotation.x = leftKneeBend;
+          this.tpLimbs.rightShin.rotation.x = rightKneeBend;
+        }
       }
     }
 
@@ -1833,29 +2353,39 @@ class MissionSimulationTheater {
     if (this.renderer.xr && this.renderer.xr.isPresenting) {
       // In real WebXR VR headset: move the cameraRig dolly on the surface; headset controls head look!
       this.cameraRig.position.set(ws.x, ws.y, ws.z);
-      this.cameraRig.rotation.y = ws.yaw;
+      this.cameraRig.rotation.y = ws.smoothYaw;
     } else if (this.walkViewMode === 'tp') {
-      // 3rd-Person Over-the-Shoulder Astronaut Camera
+      // 3rd-Person Over-the-Shoulder Cinematic Astronaut Camera
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
-      const camDist = 3.8;
-      const camX = ws.x - forwardX * camDist + rightX * 0.55;
-      const camZ = ws.z - forwardZ * camDist + rightZ * 0.55;
-      const camY = Math.max(this.getTerrainHeight(camX, camZ) + 0.6, ws.y + 2.35 - Math.sin(ws.pitch) * 1.4);
+      const camDist = 3.55;
+      const camX = ws.x - forwardX * camDist + rightX * (0.48 + lateralSway * 0.4);
+      const camZ = ws.z - forwardZ * camDist + rightZ * (0.48 + lateralSway * 0.4);
+      const camY = Math.max(
+        this.getExactSurfaceHeight(camX, camZ) + 0.55,
+        ws.y + 2.15 + verticalBounce * 0.45 - Math.sin(ws.smoothPitch) * 1.35
+      );
       this.camera.position.set(camX, camY, camZ);
-      this.camera.lookAt(ws.x + forwardX * 4, ws.y + 1.55 + Math.sin(ws.pitch) * 2, ws.z + forwardZ * 4);
+      this.camera.lookAt(
+        ws.x + forwardX * 3.5,
+        ws.y + 1.42 + verticalBounce * 0.3 + Math.sin(ws.smoothPitch) * 1.8,
+        ws.z + forwardZ * 3.5
+      );
+      this.camera.rotation.z = rollSway * 0.45;
     } else {
-      // 1st-Person Astronaut Visor & Hands Camera
+      // 1st-Person Astronaut Visor & Hands Camera with Smooth Organic Head-Bob & Roll Sway
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
       const eyeY = ws.y + ws.eyeHeight + verticalBounce;
+      const effectivePitch = ws.smoothPitch + pitchBob;
       this.camera.position.set(ws.x + rightX * lateralSway, eyeY, ws.z + rightZ * lateralSway);
       const lookTarget = new THREE.Vector3(
-        ws.x + forwardX * Math.cos(ws.pitch),
-        eyeY + Math.sin(ws.pitch),
-        ws.z + forwardZ * Math.cos(ws.pitch)
+        ws.x + rightX * lateralSway + forwardX * Math.cos(effectivePitch),
+        eyeY + Math.sin(effectivePitch),
+        ws.z + rightZ * lateralSway + forwardZ * Math.cos(effectivePitch)
       );
       this.camera.lookAt(lookTarget);
+      this.camera.rotation.z = rollSway;
     }
 
     // Update 1:1 Walk HUD telemetry
@@ -1868,7 +2398,7 @@ class MissionSimulationTheater {
     }
     if (gravEl) {
       const gravLabel = body === 'moon' ? '1.62 m/s² (0.16g)' : body === 'mars' ? '3.72 m/s² (0.38g)' : body === 'venus' ? '8.87 m/s² (92 bar)' : '1.35 m/s² (0.14g)';
-      gravEl.innerText = isTr ? `YERÇEKİMİ: ${gravLabel} | GÖZ HİZASI: 1.75 m | ADIM: ${ws.lastStepCount}` : `GRAVITY: ${gravLabel} | EYE LEVEL: 1.75 m | STEPS: ${ws.lastStepCount}`;
+      gravEl.innerText = isTr ? `YERÇEKİMİ: ${gravLabel} | GÖZ HİZASI: 1.75 m | AYAK İZİ: ${this.footprints.length}` : `GRAVITY: ${gravLabel} | EYE LEVEL: 1.75 m | FOOTPRINTS: ${this.footprints.length}`;
     }
   }
 

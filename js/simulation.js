@@ -1,10 +1,12 @@
 /**
- * Cinematic 3D Mission Simulation Theater & True WebXR 1:1 Astronaut Surface Walk (v4.2)
- * Features:
- * - Articulated 3D Astronaut with First-Person EVA Arms/Gloves/Wrist-Computer/Flashlight & Third-Person Full EMU Suit
- * - Realistic low-gravity walking kinematics, ribbed lunar bootprint trail, and boot-dust particle physics
- * - True WebXR VR/AR session support via renderer.setAnimationLoop, cameraRig dolly, and XR controller thumbstick locomotion
- * - High-resolution procedural PBR terrain & multi-part spacecraft (Apollo LM + LRV Moon Buggy + ALSEP, Sky Crane, Ingenuity, Venera 13, Huygens)
+ * Cinematic 3D Mission Simulation Theater & True WebXR 1:1 Astronaut Surface Walk (v4.6)
+ *
+ * [AI & PROCEDURAL GENERATION DISCLOSURE — NASA SPACE APPS CHALLENGE 2026 COMPLIANCE]:
+ * - Core project concept, 5-Act storytelling arc, and NASA archival research were conceived and curated by the human developer.
+ * - AI coding assistant (Google DeepMind Antigravity) was used for pair-programming the Three.js procedural geometry,
+ *   1:1 WebXR walk-in cabin interiors, and interactive avionics switches.
+ * - All 3D viewports and procedural Canvas2D textures include visible watermarks ("AI-ASSISTED PROCEDURAL RENDER • NO NASA LOGO").
+ * - ZERO official NASA logos ("Meatball" or "Worm") are used anywhere in the generated content.
  */
 
 class MissionSimulationTheater {
@@ -2312,10 +2314,13 @@ class MissionSimulationTheater {
       ctx.fillRect(510, my + 12, 470 * m.pct, 26);
     });
 
-    // Bottom Schematic Readout
+    // Bottom Schematic Readout + Visible Procedural Watermark (NASA Space Apps AI Compliance)
     ctx.fillStyle = '#fde68a';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText(`COORDS: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | CLICK ANY 3D BUTTON OR SWITCH TO OPERATE`, 34, 478);
+    ctx.font = 'bold 15px monospace';
+    ctx.fillText(`COORDS: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | CLICK ANY 3D BUTTON OR SWITCH`, 34, 468);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText('⚙️ WATERMARK: AI-ASSISTED PROCEDURAL WEBGL / CANVAS2D RENDER • NO OFFICIAL NASA LOGO USED', 34, 492);
 
     return new THREE.CanvasTexture(canvas);
   }

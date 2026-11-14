@@ -311,7 +311,10 @@ class AbandonedInSpaceApp {
         document.querySelectorAll('.jury-tab-panel').forEach(p => p.classList.remove('active'));
         e.currentTarget.classList.add('active');
         const tab = e.currentTarget.getAttribute('data-jtab');
-        const panel = document.getElementById(tab === 'pitch' ? 'jpanel-pitch' : 'jpanel-criteria');
+        const panelId = tab === 'pitch'
+          ? 'jpanel-pitch'
+          : (tab === 'compliance' ? 'jpanel-compliance' : 'jpanel-criteria');
+        const panel = document.getElementById(panelId);
         if (panel) panel.classList.add('active');
       });
     });
@@ -1096,6 +1099,45 @@ class AbandonedInSpaceApp {
         pitchContainer.appendChild(card);
       });
     }
+
+    const complianceContainer = document.getElementById('jury-compliance-container');
+    if (complianceContainer && typeof SPACE_APPS_SUBMISSION_DOSSIER !== 'undefined') {
+      complianceContainer.innerHTML = '';
+      const sections = [
+        SPACE_APPS_SUBMISSION_DOSSIER.nasa_data,
+        SPACE_APPS_SUBMISSION_DOSSIER.references,
+        SPACE_APPS_SUBMISSION_DOSSIER.super_intelligence
+      ];
+      sections.forEach(sec => {
+        if (!sec) return;
+        const card = document.createElement('div');
+        card.className = 'criterion-card';
+        const titleText = isTr ? sec.title_tr : sec.title_en;
+        const bodyText = isTr ? sec.body_tr : sec.body_en;
+        card.innerHTML = `
+          <div class="criterion-top">
+            <span class="criterion-name">${titleText}</span>
+            <span class="criterion-score">✓ NASA SPACE APPS 2026</span>
+          </div>
+          <pre class="dossier-pre-box">${bodyText}</pre>
+          <div class="criterion-action-row">
+            <span class="criterion-proof-tag">🛡️ ${isTr ? 'Global Ödül Uygunluğu • NASA Logosu Kullanılmamıştır • Görünür Filigran Aktif' : 'Global Award Compliant • Zero NASA Logos Used • Visible Watermark Active'}</span>
+            <button class="criterion-demo-btn copy-dossier-btn">📋 ${isTr ? 'Metni Kopyala (Copy)' : 'Copy Submission Text'}</button>
+          </div>
+        `;
+        const copyBtn = card.querySelector('.copy-dossier-btn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(bodyText).then(() => {
+              const orig = copyBtn.innerText;
+              copyBtn.innerText = isTr ? '✓ KOPYALANDI!' : '✓ COPIED!';
+              setTimeout(() => { copyBtn.innerText = orig; }, 2000);
+            });
+          });
+        }
+        complianceContainer.appendChild(card);
+      });
+    }
   }
 
   triggerJuryCriterionDemo(demoType) {
@@ -1257,8 +1299,11 @@ const TRANSLATIONS = {
     jury_modal_title: "NASA 5 DEĞERLENDİRME KRİTERİ & HİKÂYE ANLATIMI REHBERİ",
     jtab_criteria: "🎯 5 Kriter Kanıt Matrisi (1–5 Puan)",
     jtab_pitch: "🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu",
+    jtab_compliance: "📋 NASA Veri, Referans & Yapay Zekâ Beyanı",
     jury_criteria_intro: "Projemiz NASA yarışma jürisinin 5 temel değerlendirme kriterinin tamamında (Impact, Creativity, Validity, Relevance, Presentation) 5/5 tam puan alacak şekilde doğrulanmış NASA verileri, fizik motoru ve sıralı hikâye kurgusuyla tasarlanmıştır:",
     jury_pitch_intro: "Presentation (Sunum) kriterinde tam puan almak için sunumunuzu rastgele noktalar yerine aşağıdaki 5 perdelik açık, sıralı ve duygusal hikâye akışıyla yapabilirsiniz. Her adımdaki butona tıklayarak o sahneyi anında ekranda canlı gösterebilirsiniz:",
+    jury_compliance_intro: "NASA Space Apps Challenge 2026 Global Ödül uygunluğu için başvuru formundaki 'NASA & Space Agency Partner Data', 'References' ve 'Use of Super Intelligence' alanlarına doğrudan kopyalayıp yapıştırabileceğiniz resmi beyan ve proje içi doğrulama kayıtları:",
+    watermark_badge: "⚙️ AI-DESTEKLİ PROSEDÜREL WEBGL / THREE.JS SİMÜLASYONU • NASA LOGOSU İÇERMEZ",
     sources_modal_title: "RESMİ NASA VERİ KAYNAKLARI & TARİH SERİSİ ARŞİVLERİ",
     sources_intro: "Bu projede yer alan tüm koordinatlar, iniş tarihleri, donanım envanterleri, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) akademik referansları ve telsiz konuşmaları NASA'nın resmi bilimsel arşivlerinden doğrulanmıştır:",
     nasa_photos_label: "📷 GERÇEK NASA UYDU & YÜZEY FOTOĞRAFLARI",
@@ -1316,8 +1361,11 @@ const TRANSLATIONS = {
     jury_modal_title: "NASA 5 JUDGING CRITERIA & STORYTELLING PITCH GUIDE",
     jtab_criteria: "🎯 5 Criteria Proof Matrix (Score 1–5)",
     jtab_pitch: "🎤 Sequential Storytelling & Live Pitch Script",
+    jtab_compliance: "📋 NASA Data, References & AI Disclosure",
     jury_criteria_intro: "Our project is engineered to achieve a 5/5 score across all 5 official NASA judging criteria (Impact, Creativity, Validity, Relevance, Presentation) through verified NASA archives, physics simulation, and sequential storytelling:",
     jury_pitch_intro: "To maximize your Presentation score, deliver your pitch using this clear, sequential 5-Act narrative arc. Click any button below to launch that exact scene live during your presentation:",
+    jury_compliance_intro: "Copy-paste-ready official responses for the NASA Space Apps Challenge 2026 submission form ('NASA & Space Agency Partner Data', 'References', and 'Use of Super Intelligence') verifying Global Award eligibility:",
+    watermark_badge: "⚙️ AI-ASSISTED PROCEDURAL WEBGL / THREE.JS RENDER • NO OFFICIAL NASA LOGO USED",
     sources_modal_title: "OFFICIAL NASA DATA SOURCES & HISTORY SERIES ARCHIVES",
     sources_intro: "All coordinates, mission dates, discarded hardware manifests, NASA History Series (SP-2021-4705, SP-2022-4235, SP-2024-4559, SP-2026-4239) citations, and radio transmissions are compiled from NASA's official public archives:",
     nasa_photos_label: "📷 AUTHENTIC NASA SATELLITE & SURFACE PHOTOS",

@@ -21,6 +21,7 @@
 
   <!-- WebGL 3D Planetary Canvas -->
   <div id="canvas-container"></div>
+  <div class="procedural-watermark-badge main-globe-watermark" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
   <div class="scanlines-overlay"></div>
 
   <!-- UI HUD Layer -->
@@ -29,7 +30,7 @@
     <!-- Top Header Bar -->
     <header class="header-bar interactive">
       <div class="brand-section">
-        <div class="nasa-meatball" title="National Aeronautics and Space Administration"></div>
+        <div class="nasa-meatball" title="Solar System Archaeological Heritage Emblem (No Official NASA Logo Used)"></div>
         <div class="title-group">
           <h1>
             <span>ABANDONED BUT NOT FORGOTTEN</span>
@@ -511,6 +512,7 @@
       <!-- WebGL Simulation Viewport -->
       <div class="sim-canvas-wrapper">
         <canvas id="sim-canvas"></canvas>
+        <div class="procedural-watermark-badge" data-i18n="watermark_badge">✦ FİLİGRAN / WATERMARK: AI-DESTEKLİ PROSEDÜREL 3B GÖRSELLEŞTİRME • NASA AÇIK VERİSİ (RESMİ NASA LOGOSU KULLANILMAMIŞTIR)</div>
 
         <!-- 1:1 Astronaut Visor & WebXR Controls Overlay (Shown in 'walk' mode) -->
         <div class="walk-hud-overlay hidden" id="walk-hud-overlay">
@@ -644,6 +646,7 @@
       <div class="jury-tabs-bar">
         <button class="jury-tab-btn active" data-jtab="criteria" data-i18n="jtab_criteria">🎯 5 Kriter Kanıt Matrisi (1–5 Puan)</button>
         <button class="jury-tab-btn" data-jtab="pitch" data-i18n="jtab_pitch">🎤 Sıralı Hikâye Anlatımı & Sunum Senaryosu</button>
+        <button class="jury-tab-btn" data-jtab="compliance" data-i18n="jtab_compliance">📋 Space Apps 2026 Başvuru Metinleri & AI Beyanı</button>
       </div>
 
       <!-- TAB 1: NASA 5 Criteria Matrix -->
@@ -666,6 +669,16 @@
         </div>
       </div>
 
+      <!-- TAB 3: NASA Space Apps 2026 Official Submission & AI Compliance Dossier -->
+      <div class="jury-tab-panel" id="jpanel-compliance">
+        <p class="sources-intro" data-i18n="jury_compliance_intro">
+          Global ödüllere uygunluk (Global Awards Eligibility) için yarışma başvuru formunda istenen 3 zorunlu bölümün (1. NASA & Space Agency Partner Data, 2. References, 3. Use of Super Intelligence) hazır yanıtları aşağıdadır. Sağ üstteki butonlarla doğrudan kopyalayıp başvuru formuna yapıştırabilirsiniz:
+        </p>
+        <div class="jury-pitch-steps" id="jury-compliance-container">
+          <!-- Populated dynamically by app.js from SPACE_APPS_SUBMISSION_DOSSIER -->
+        </div>
+      </div>
+
       <div class="modal-footer-note">
         <span>✦ İpucu: Sunum sırasında "🎬 5 Bölümlük Hikâye Turunu Başlat" butonuna basarak tüm anlatımı tek tuşla kronolojik olarak ilerletebilirsiniz.</span>
       </div>
@@ -673,11 +686,11 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=4.5"></script>
-  <script src="js/textures.js?v=4.5"></script>
-  <script src="js/audio.js?v=4.5"></script>
-  <script src="js/scene.js?v=4.5"></script>
-  <script src="js/simulation.js?v=4.5"></script>
-  <script src="js/app.js?v=4.5"></script>
+  <script src="js/data.js?v=4.6"></script>
+  <script src="js/textures.js?v=4.6"></script>
+  <script src="js/audio.js?v=4.6"></script>
+  <script src="js/scene.js?v=4.6"></script>
+  <script src="js/simulation.js?v=4.6"></script>
+  <script src="js/app.js?v=4.6"></script>
 </body>
 </html>

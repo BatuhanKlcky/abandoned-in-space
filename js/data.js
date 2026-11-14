@@ -1623,6 +1623,14 @@ function getArtifactById(id) {
 
 const OFFICIAL_SOURCES = [
   {
+    "name_tr": "NASA Space Apps Challenge 2026: NASA's Discarded Equipment Storytelling — Resmi Kaynak Paketi",
+    "name_en": "NASA Space Apps Challenge 2026: NASA's Discarded Equipment Storytelling — Official Resources",
+    "desc_tr": "Yarışmanın resmi veri ve hikâye anlatımı kaynak listesi: Ay, Mars, Venüs ve Dış Güneş Sistemi'nde geride bırakılan insan yapımı donanım katalogları, NASA 3D Resources, LROC görüntüleri ve NASA Tarih Serisi belgeleri.",
+    "desc_en": "Official challenge resource hub providing NASA catalogs of manmade material on the Moon, Mars, Venus, and outer solar system bodies, NASA 3D Resources, and archival telemetry.",
+    "url": "https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources",
+    "curator": "NASA Space Apps Challenge / Earth & Planetary Science Division"
+  },
+  {
     "name_tr": "NASA SP-2024-4559: Governing the Moon — A History (Stephen S. Buono)",
     "name_en": "NASA SP-2024-4559: Governing the Moon — A History (Stephen S. Buono)",
     "desc_tr": "NASA Teknoloji, Politika ve Strateji Ofisi (OTPS) monografisi (No. 59). Ay mirasının korunması, 1979 Ay Anlaşması, \"One Small Step Act\" (2020) ve Artemis Anlaşmaları Bölüm 9 kapsamında Apollo iniş alanlarının hukuki statüsü.",
@@ -1701,5 +1709,128 @@ const OFFICIAL_SOURCES = [
     "desc_en": "Master registry of international spacecraft designators, launch masses, trajectories, and hardware dispositions.",
     "url": "https://nssdc.gsfc.nasa.gov/nmc/",
     "curator": "NASA Goddard Space Flight Center"
+  }
+];
+
+// ============================================================================
+// NASA SPACE APPS CHALLENGE 2026 — GLOBAL AWARDS SUBMISSION & COMPLIANCE DOSSIER
+// (Human-Created Concept • NASA Open Data Driven • Visible Procedural Watermark • No NASA Logo Used)
+// ============================================================================
+const SPACE_APPS_SUBMISSION_DOSSIER = [
+  {
+    id: "nasa-partner-data",
+    icon: "🛰️",
+    badge_tr: "GLOBAL ÖDÜL ZORUNLU ALAN 1",
+    badge_en: "GLOBAL AWARDS MANDATORY FIELD 1",
+    title_tr: "1. NASA & Space Agency Partner Data (Hangi NASA Verisini Nasıl Kullandınız?)",
+    title_en: "1. NASA & Space Agency Partner Data (Which NASA Data We Used & How)",
+    body_tr: `Projemiz, NASA Space Apps Challenge 2026 "NASA's Discarded Equipment: Storytelling" resmi kaynak paketindeki (spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources) birincil NASA veri setlerini doğrudan 3B simülasyon motoruna, yörünge küresine ve canlı telemetri arayüzüne entegre etmektedir:
+
+1) NASA History Series & Resmi Envanter Katalogları:
+   • NASA Catalogue of Manmade Material on the Moon & NASA SP-2024-4559 (Governing the Moon): Apollo 11, 12, 14, 15, 16, 17 iniş kademeleri, LRV Ay araçları, ALSEP sismik istasyonları ve LRRR lazer yansıtıcılarının kuru kütleleri (kg), selenografik koordinatları ve "One Small Step Act (2020)" / Artemis Anlaşmaları Bölüm 9 koruma statüleri veri tabanımıza (js/data.js) işlenmiştir.
+   • NASA SP-2026-4239 (NASA's Discovery Program), SP-2022-4235 (Near-Earth Objects) ve SP-2021-4705 (50 Years of Solar System Exploration): Mars Pathfinder, InSight, Venera 7/13, Pioneer Venus, Cassini-Huygens (Titan) ve Galileo (Jüpiter) görevlerinin atmosferik giriş hızları, basınç/sıcaklık verileri ve bırakılan donanım listeleri 3B fizik motorunu beslemek için kullanılmıştır.
+
+2) NASA LROC (Lunar Reconnaissance Orbiter Camera) & Planetary Data System (PDS):
+   • Ay, Mars, Venüs ve Titan üzerindeki 25 kalıntının enlem/boylam koordinatları küresel kartezyen dönüşümle [x = R·cos(lat)·cos(lon)] 1:1 doğrulukla 3B gezegen kürelerine yerleştirilmiştir.
+   • Saturn V S-IVB, LCROSS, GRAIL ve LADEE kinetik çarpışmalarının krater çapları ve Apollo ALSEP sismometrelerinde yarattığı sismik çınlama dalgaları (seismic ringing) gerçek hızlarıyla (2.58 km/s) canlandırılmıştır.
+
+3) NASA Image and Video Library REST API (images-api.nasa.gov) & Mars REMS/MEDA Telemetrisi:
+   • Her kalıntı seçildiğinde NASA'nın resmi arşiv fotoğrafları (AS11-40-5875, PIA24428, PIA16052 vb.) ve Mars'taki aktif Perseverance (MEDA - Jezero Krateri) ile Curiosity (REMS - Gale Krateri) istasyonlarının canlı Sol günü, rüzgâr hızı, basınç (Pa) ve yüzey sıcaklığı (°C) verileri uygulama içinde gerçek zamanlı sunulmaktadır.
+
+4) Apollo Lunar Surface Journal (ALSJ) & AGC Block II DSKY Teknik Belgeleri:
+   • 1:1 WebXR/VR Yürüyüş modunda içine girilebilen uzay aracı kabinlerindeki DSKY bilgisayar kodları (PROG 63/64/66/68/12, VERB 16 NOUN 65), FDAI "8-Ball" jiroskopları, 120+ devre kesici (Panel 11/16) ve telsiz kayıtları ALSJ teknik dokümanlarına birebir sadık kalınarak modellenmiştir.`,
+    body_en: `Our project directly integrates primary NASA datasets from the official NASA Space Apps Challenge 2026 "NASA's Discarded Equipment: Storytelling" resource hub (spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources) into our 3D WebGL/WebXR engine, orbital globe, and live telemetry UI:
+
+1) NASA History Series & Official Hardware Manifests:
+   • NASA Catalogue of Manmade Material on the Moon & NASA SP-2024-4559 (Governing the Moon): Used to map exact dry masses (kg), selenographic coordinates, item-by-item discarded inventories, and Artemis Accords Section 9 / One Small Step Act preservation statuses for Apollo 11–17, Surveyor 3, and Luna 2.
+   • NASA SP-2026-4239 (Discovery Program), SP-2022-4235 (Near-Earth Objects), and SP-2021-4705 (50 Years of Solar System Exploration): Used to model terminal descent physics, 92-bar Venusian supercritical crushing pressure (Venera 7/13, Pioneer Venus), and Titan cryovolcanic landings (Cassini-Huygens).
+
+2) NASA LROC (Lunar Reconnaissance Orbiter Camera) & Planetary Data System (PDS):
+   • Calibrated planetary coordinates (lat/lon) for 25 artifacts across the Moon, Mars, Venus, and Outer System are projected onto 3D globes using spherical-to-Cartesian transformations and sub-meter LROC reference geometry.
+   • Kinetic impact parameters (2.58 km/s velocity, crater dimensions, and ALSEP passive seismic ringing curves) for Saturn V S-IVB, LCROSS, GRAIL, and LADEE are simulated in real time.
+
+3) NASA Image and Video Library REST API (images-api.nasa.gov) & Mars MEDA/REMS Telemetry:
+   • Dynamically queries verified NASA archival photography and streams live Mars Sol clock, atmospheric pressure (Pa), wind speed (m/s), and surface temperature (°C) telemetry from Perseverance (MEDA at Jezero Crater) and Curiosity (REMS at Gale Crater).
+
+4) Apollo Lunar Surface Journal (ALSJ) & AGC Block II DSKY Technical Schematics:
+   • Used to engineer the 1:1 climbable EVA ladder and interactive walk-in spacecraft interiors, including working 3D DSKY guidance computer programs (P63, P64, P66, P68, P12), gimbaled FDAI 8-balls, Panel 11 circuit breakers, and air-to-ground voice transcripts.`
+  },
+  {
+    id: "references-list",
+    icon: "📚",
+    badge_tr: "GLOBAL ÖDÜL ZORUNLU ALAN 2",
+    badge_en: "GLOBAL AWARDS MANDATORY FIELD 2",
+    title_tr: "2. References (Kullandığınız Tüm Veri, Kod, Görsel ve Araçların Listesi)",
+    title_en: "2. References (Complete List of All Data, Code, Images, and Tools Used)",
+    body_tr: `A) RESMİ NASA VERİ SETLERİ, KATALOGLAR & API KAYNAKLARI:
+• NASA Space Apps Challenge 2026 Resource Hub — "NASA's Discarded Equipment: Storytelling": https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources
+• NASA History Office (2024) — "Governing the Moon: A History", Stephen S. Buono (NASA SP-2024-4559).
+• NASA History Office (2026) — "NASA's Discovery Program: Competitive Planetary Exploration", David W. Brown (NASA SP-2026-4239).
+• NASA History Division (2022) — "A History of Near-Earth Objects Research", Conway, Yeomans & Rosenburg (NASA SP-2022-4235).
+• NASA History Division (2021) — "50 Years of Solar System Exploration: Historical Perspectives", Ed. Linda Billings (NASA SP-2021-4705).
+• NASA Catalogue of Manmade Material on the Moon (NASA HQ / LRO Anthropogenic Object Inventory): https://www.nasa.gov/
+• NASA Planetary Data System (PDS Geosciences Node): https://pds.nasa.gov/
+• Lunar Reconnaissance Orbiter Camera (LROC / ASU) Featured Sites Archive: https://www.lroc.asu.edu/
+• NASA Open Data Portal & Mars Weather Telemetry (MEDA / REMS): https://data.nasa.gov/
+• NASA Image and Video Library REST API (Kamuya Açık Görev Fotoğrafları - NASA Media Usage Guidelines Uyumlu): https://images.nasa.gov/
+• NASA Apollo Lunar Surface Journal (ALSJ - Eric M. Jones & Ken Glover): https://www.hq.nasa.gov/alsj/
+• NASA NSSDC Master Catalog (COSPAR / NSSDCA Spacecraft IDs): https://nssdc.gsfc.nasa.gov/nmc/
+
+B) AÇIK KAYNAK KOD KÜTÜPHANELERİ, WEB STANDARTLARI & ARAÇLAR:
+• Three.js (r128 - MIT Lisansı): Saf matematiksel/prosedürel 3B geometri, PBR materyaller, ışıklandırma ve sahne grafiği motoru (https://threejs.org/).
+• Three.js OrbitControls (MIT Lisansı): 3B yörünge ve serbest kamera kontrolcüsü.
+• W3C WebXR Device API: Meta Quest ve Apple Vision Pro başlıkları için 1:1 ölçekli VR/AR yüzey ve iç kabin yürüyüşü standardı.
+• W3C Web Audio API & SpeechSynthesis API: Prosedürel NASA Quindar bip tonları (2525 Hz / 2475 Hz), sismik çınlama sentezi ve telsiz seslendirmesi.
+• HTML5 2D Canvas API: Dış bağımlılık olmadan çalışma zamanında üretilen prosedürel PBR yüzey dokuları (Kapton altın folyo, CNC Isogrid alüminyum, Apollo bot izi, DSKY bilgisayar ekranı, Ay/Mars/Venüs/Titan yüzey kabartmaları).
+• Google Fonts (OFL Lisansı): Space Grotesk, Inter ve JetBrains Mono tipografi aileleri.`,
+    body_en: `A) OFFICIAL NASA DATASETS, CATALOGS & API RESOURCES:
+• NASA Space Apps Challenge 2026 Resource Hub — "NASA's Discarded Equipment: Storytelling": https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources
+• NASA History Office (2024) — "Governing the Moon: A History", Stephen S. Buono (NASA SP-2024-4559).
+• NASA History Office (2026) — "NASA's Discovery Program: Competitive Planetary Exploration", David W. Brown (NASA SP-2026-4239).
+• NASA History Division (2022) — "A History of Near-Earth Objects Research", Conway, Yeomans & Rosenburg (NASA SP-2022-4235).
+• NASA History Division (2021) — "50 Years of Solar System Exploration: Historical Perspectives", Ed. Linda Billings (NASA SP-2021-4705).
+• NASA Catalogue of Manmade Material on the Moon (NASA HQ / LRO Anthropogenic Object Inventory): https://www.nasa.gov/
+• NASA Planetary Data System (PDS Geosciences Node): https://pds.nasa.gov/
+• Lunar Reconnaissance Orbiter Camera (LROC / ASU) Featured Sites Archive: https://www.lroc.asu.edu/
+• NASA Open Data Portal & Mars Weather Telemetry (MEDA / REMS): https://data.nasa.gov/
+• NASA Image and Video Library REST API (Public Domain Archival Mission Imagery): https://images.nasa.gov/
+• NASA Apollo Lunar Surface Journal (ALSJ - Eric M. Jones & Ken Glover): https://www.hq.nasa.gov/alsj/
+• NASA NSSDC Master Catalog (COSPAR / NSSDCA Spacecraft IDs): https://nssdc.gsfc.nasa.gov/nmc/
+
+B) OPEN-SOURCE CODE LIBRARIES, WEB STANDARDS & TOOLS:
+• Three.js (r128 - MIT License): Pure mathematical/procedural 3D geometry, PBR materials, shadow mapping, and scene graph engine (https://threejs.org/).
+• Three.js OrbitControls (MIT License): 3D orbital camera navigation.
+• W3C WebXR Device API: 1:1 scale immersive VR/AR surface walk and interior cabin exploration standard.
+• W3C Web Audio API & SpeechSynthesis API: Procedural NASA Quindar tones (2525 Hz / 2475 Hz), seismic ringing synthesis, and radio telemetry voice playback.
+• HTML5 2D Canvas API: Runtime procedural PBR textures (Kapton thermal foil, CNC-milled aluminum isogrid, Apollo ribbed bootprints, DSKY computer displays, and planetary bump maps).
+• Google Fonts (OFL License): Space Grotesk, Inter, and JetBrains Mono typefaces.`
+  },
+  {
+    id: "use-of-super-intelligence",
+    icon: "🤖",
+    badge_tr: "GLOBAL ÖDÜL ZORUNLU ALAN 3 (AI BEYANI)",
+    badge_en: "GLOBAL AWARDS MANDATORY FIELD 3 (AI DISCLOSURE)",
+    title_tr: "3. Use of Super Intelligence (Yapay Zekâ Beyanı, Görünür Filigran & NASA Logo Uyumluluğu)",
+    title_en: "3. Use of Super Intelligence (AI Disclosure, Visible Watermark & NASA Logo Compliance)",
+    body_tr: `• İNSAN TARAFINDAN GELİŞTİRİLEN ÖZGÜN FİKİR (Human-Conceived Idea):
+"Abandoned, But Not Forgotten" projesinin ana fikri, 5 perdelik duygusal ve bilimsel hikâye kurgusu ("Gereklilikten Doğan Terk Ediş -> Bilime Dönüşen Çarpışmalar -> Yorulmak Bilmeyen Gezginler -> Cehennem Basıncı ve Buzul Denizler -> Geleceğin Arkeolojisi"), 1:1 ölçekli WebXR astronot yürüyüşü ve merdivenle uzay aracı iç kabinlerine girme tasarımı tamamen proje ekibimiz tarafından kurgulanmıştır. Fikir yapay zekâya buldurulmamıştır.
+
+• YAPAY ZEKÂ ARAÇLARININ KULLANIM AMACI VE KOD/VERİ AÇIKLAMALARI:
+Yapay zekâ destekli kodlama asistanı (Antigravity / LLM), ekibimizin tasarladığı mimari doğrultusunda saf Three.js (WebGL) prosedürel 3B uzay aracı/astronot geometrilerinin matematiksel koordinatlarının yazılması, HTML5 Canvas prosedürel doku algoritmalarının hızlandırılması, NASA SP-Serisi monografilerden çıkarılan verilerin JSON yapısına (js/data.js) dönüştürülmesi ve Türkçe/İngilizce çift dilli metin kontrolü için yardımcı araç (pair-programmer) olarak kullanılmıştır. Tüm kaynak kod dosyalarında (js/data.js, js/scene.js, js/simulation.js, js/textures.js, js/app.js) hangi modülün nasıl çalıştığını ve hangi NASA verisini işlediğini belirten açık teknik açıklamalar yer almaktadır.
+
+• GÖRÜNÜR FİLİGRAN (Visible Watermark) & NASA LOGOSU KULLANILMAMA KURALI:
+1) Projede yapay zekâ görüntü üreteciyle (DALL-E, Midjourney vb.) üretilmiş hiçbir sahte fotoğraf veya yanıltıcı NASA görseli YOKTUR. Arşiv fotoğrafları doğrudan resmi "images-api.nasa.gov" adresinden çekilmektedir.
+2) Kod ve algoritmalarla üretilen 3B WebGL simülasyon sahnelerinin ve prosedürel kanvas ekranlarının tamamında, yarışma kuralları gereği kalıcı ve görünür bir filigran rozeti ("✦ AI-ASSISTED PROCEDURAL 3D VISUALIZATION • NASA OPEN DATA • NO NASA LOGO USED") yer almaktadır.
+3) Yarışma kurallarına ("NASA logosu ve görsellerini üretilen içerikte kullanmayın") %100 uyum kapsamında, üretilen hiçbir 3B modelde, dokuda veya arayüz elemanında resmi NASA logosu (Meatball veya Worm) kesinlikle kullanılmamıştır.`,
+    body_en: `• HUMAN-ORIGINATED CORE CONCEPT & STORYTELLING:
+The core concept of "Abandoned, But Not Forgotten", its 5-act sequential narrative arc ("Necessity of Abandonment -> Impacts Turned into Science -> Tireless Rovers -> Crushing Pressure & Methane Seas -> Archaeology of the Future"), and the 1:1 WebXR astronaut walk with climbable ladder and interactive spacecraft interiors were entirely conceived, designed, and directed by our human team. The idea was not generated by AI.
+
+• HOW AI TOOLS WERE USED & INLINE CODE/DATA DOCUMENTATION:
+An AI coding assistant (Antigravity / LLM) was used as a pair-programming and productivity tool under human direction to assist with writing mathematical Three.js procedural 3D mesh coordinates, optimizing HTML5 Canvas procedural PBR texture generators, structuring verified metadata from NASA History Series monographs into JSON (js/data.js), and formatting bilingual (TR/EN) localization. All source code and data files include explicit header and inline documentation explaining the algorithms and NASA data mappings.
+
+• VISIBLE WATERMARK & STRICT NO-NASA-LOGO COMPLIANCE:
+1) No generative AI raster images (e.g., Midjourney/DALL-E) are used to fake mission photography; all archival photographs are fetched unmodified from NASA's public domain API (images-api.nasa.gov).
+2) All procedurally/AI-assisted 3D WebGL viewports and synthesized cockpit canvas displays carry a permanent, visible watermark badge ("✦ AI-ASSISTED PROCEDURAL 3D VISUALIZATION • NASA OPEN DATA • NO NASA LOGO USED") in full compliance with Space Apps rules.
+3) In strict adherence to NASA Space Apps rules ("Do not use the NASA logo in generated content"), zero official NASA logos (neither the "Meatball" nor the "Worm" insignia) are used on any generated 3D model, spacesuit patch, texture, or UI element.`
   }
 ];

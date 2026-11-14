@@ -122,7 +122,6 @@ class MissionSimulationTheater {
     if (replayBtn) {
       replayBtn.addEventListener('click', () => {
         if (this.currentArtifact) {
-          if (this.cameraMode === 'walk') this.cameraMode = 'cinematic';
           this.startSimulation(this.currentArtifact);
         }
       });
@@ -297,33 +296,127 @@ class MissionSimulationTheater {
     this.updateAstronautVisibility();
   }
 
+  getDescentOffset(t = this.simTime) {
+    if (t >= 5.8) return 0;
+    const progress = Math.max(0, Math.min(1, t / 5.8));
+    const ease = 1 - Math.pow(1 - progress, 2.15);
+    return (1 - ease) * 68.0;
+  }
+
+  playHatchPneumaticSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.uiAudioCtx) this.uiAudioCtx = new AudioCtx();
+      if (this.uiAudioCtx.state === 'suspended') this.uiAudioCtx.resume();
+      const now = this.uiAudioCtx.currentTime;
+
+      // Mechanical valve wheel ratchet clicks (3 metallic turns)
+      [0, 0.14, 0.28].forEach((delay, idx) => {
+        const osc = this.uiAudioCtx.createOscillator();
+        const gain = this.uiAudioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(340 + idx * 90, now + delay);
+        osc.frequency.exponentialRampToValueAtTime(160, now + delay + 0.09);
+        gain.gain.setValueAtTime(0.16, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.10);
+        osc.connect(gain);
+        gain.connect(this.uiAudioCtx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.11);
+      });
+
+      // Pressurized cabin air seal release hiss (white-noise burst)
+      const bufSize = this.uiAudioCtx.sampleRate * 0.45;
+      const noiseBuf = this.uiAudioCtx.createBuffer(1, bufSize, this.uiAudioCtx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.uiAudioCtx.sampleRate * 0.16));
+      }
+      const noise = this.uiAudioCtx.createBufferSource();
+      noise.buffer = noiseBuf;
+      const filter = this.uiAudioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1400;
+      const nGain = this.uiAudioCtx.createGain();
+      nGain.gain.setValueAtTime(0.22, now + 0.30);
+      nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.72);
+      noise.connect(filter);
+      filter.connect(nGain);
+      nGain.connect(this.uiAudioCtx.destination);
+      noise.start(now + 0.30);
+    } catch (_) {}
+  }
+
+  triggerOpenHatch(autoStepOut = false) {
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const statusEl = document.getElementById('walk-xr-status');
+    const btn = document.getElementById('btn-walk-cabin');
+
+    // Prevent opening the pressurized hatch while the rocket is still descending in mid-air!
+    if (this.simTime < 5.5) {
+      this.playSwitchClickSound(290);
+      setTimeout(() => this.playSwitchClickSound(240), 110);
+      if (statusEl) {
+        statusEl.innerText = isTr
+          ? `⚠️ GÜVENLİK KİLİDİ: Roket अभी inişte (+${this.getDescentOffset().toFixed(1)}m)! Yüzeye inmeden kapak açılamaz!`
+          : `⚠️ SAFETY INTERLOCK: Rocket still descending (+${this.getDescentOffset().toFixed(1)}m)! Wait for touchdown to open hatch!`;
+      }
+      return false;
+    }
+
+    if (!this.cabinState.hatchOpen) {
+      this.cabinState.hatchOpen = true;
+      this.walkState.handReachTimer = 1.05; // Animate astronaut right hand reaching out to turn the valve & push hatch!
+      this.playHatchPneumaticSound();
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerText = isTr ? '🪜 Merdivenden Yüzeye İn (E)' : '🪜 Step Out & Climb Down (E)';
+      }
+      if (autoStepOut) {
+        // Turn astronaut toward the opening hatch door (+Z) so they watch the valve spin & door swing open, then step onto ladder porch!
+        this.walkState.x = 0;
+        this.walkState.z = 1.38;
+        this.walkState.yaw = Math.PI;
+        this.walkState.pitch = -0.05;
+        setTimeout(() => {
+          if (this.cameraMode === 'walk' && this.walkState.isInsideCabin) {
+            this.walkState.isInsideCabin = false;
+            this.walkState.isOnLadder = true;
+            this.walkState.x = 0;
+            this.walkState.z = 2.55;
+            this.walkState.yaw = 0;
+            this.walkState.smoothYaw = 0;
+            this.walkState.pitch = -0.22;
+            this.walkState.smoothPitch = -0.22;
+            if (btn) {
+              btn.classList.remove('active');
+              btn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
+            }
+          }
+        }, 680);
+      }
+      return true;
+    }
+    return true;
+  }
+
   toggleCabinInterior() {
     if (this.cameraMode !== 'walk') {
       this.setCameraMode('walk');
+      return;
     }
     const ws = this.walkState;
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const btn = document.getElementById('btn-walk-cabin');
 
-    if (!ws.isInsideCabin) {
-      // Climb up ladder and step into the center of the NASA Spacecraft / Rocket / Satellite Interior Cabin!
-      ws.isInsideCabin = true;
-      ws.isOnLadder = false;
-      ws.x = 0;
-      ws.z = 1.15;
-      ws.y = 4.5;
-      ws.vy = 0;
-      ws.isGrounded = true;
-      ws.yaw = 0;
-      ws.smoothYaw = 0;
-      ws.pitch = -0.04;
-      ws.smoothPitch = -0.04;
-      if (btn) {
-        btn.classList.add('active');
-        btn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
+    if (ws.isInsideCabin) {
+      // If hatch is still closed, first animate the astronaut opening the hatch door & stepping onto the top ladder porch!
+      if (!this.cabinState.hatchOpen) {
+        this.triggerOpenHatch(true);
+        return;
       }
-    } else {
-      // Step down ladder back onto the planetary surface at the foot of the boarding ladder
+      // Hatch is already open: step down the ladder onto the planetary surface!
       ws.isInsideCabin = false;
       ws.isOnLadder = false;
       ws.x = 0;
@@ -335,9 +428,46 @@ class MissionSimulationTheater {
       ws.smoothYaw = 0;
       ws.pitch = 0.05;
       ws.smoothPitch = 0.05;
+      this.spawnFootprint(0, 6.8, 0, true);
+      this.spawnFootprint(0, 6.8, 0, false);
+      this.spawnBootDust(0, 6.8, 8);
       if (btn) {
         btn.classList.remove('active');
         btn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+      }
+    } else if (ws.isOnLadder) {
+      // If currently on the ladder, step all the way down onto the planetary surface
+      ws.isOnLadder = false;
+      ws.isInsideCabin = false;
+      ws.x = 0;
+      ws.z = 6.8;
+      ws.y = this.getExactSurfaceHeight(0, 6.8);
+      ws.vy = 0;
+      ws.isGrounded = true;
+      this.spawnFootprint(0, 6.8, ws.smoothYaw, true);
+      this.spawnFootprint(0, 6.8, ws.smoothYaw, false);
+      this.spawnBootDust(0, 6.8, 8);
+      if (btn) {
+        btn.classList.remove('active');
+        btn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+      }
+    } else {
+      // Outside on the surface -> climb up ladder and enter the NASA Spacecraft Interior Cabin!
+      this.cabinState.hatchOpen = true;
+      ws.isInsideCabin = true;
+      ws.isOnLadder = false;
+      ws.x = 0;
+      ws.z = 0.85;
+      ws.y = 4.5 + this.getDescentOffset();
+      ws.vy = 0;
+      ws.isGrounded = true;
+      ws.yaw = 0;
+      ws.smoothYaw = 0;
+      ws.pitch = -0.04;
+      ws.smoothPitch = -0.04;
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
       }
     }
   }
@@ -384,35 +514,50 @@ class MissionSimulationTheater {
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
 
     if (mode === 'walk') {
-      if (this.simTime < 6.8) {
-        this.simTime = 7.0;
+      // Start the rocket/lander descending from the sky with the astronaut INSIDE the pressurized cabin!
+      if (this.simTime > 5.8 && !this.walkDescentPlayed) {
+        this.simTime = 0;
+        this.touchdownConfirmed = false;
       }
+      this.walkDescentPlayed = true;
+
       if (this.spacecraft) {
         this.spacecraft.visible = true;
         if (this.currentArtifact && this.currentArtifact.category === 'impact') {
-          this.spacecraft.position.set(-8.2, 2.3, -2.5);
+          this.spacecraft.position.set(-8.2, 2.3 + this.getDescentOffset(), -2.5);
           this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
         }
       }
       this.camera.rotation.order = 'YXZ';
-      this.walkState.x = 0;
-      this.walkState.z = 11.5;
-      this.walkState.y = this.getExactSurfaceHeight(0, 11.5);
-      this.walkState.vy = 0;
-      this.walkState.yaw = 0;
-      this.walkState.pitch = 0.05;
-      this.walkState.smoothYaw = 0;
-      this.walkState.smoothPitch = 0.05;
-      this.walkState.moveBlend = 0;
-      this.walkState.isInsideCabin = false;
+      // Place the astronaut INSIDE the descending rocket cockpit facing the front windows & DSKY computer!
+      this.walkState.isInsideCabin = true;
       this.walkState.isOnLadder = false;
-      if (cabinBtn) {
-        cabinBtn.classList.remove('active');
-        cabinBtn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+      this.walkState.x = -0.52;
+      this.walkState.z = -0.62;
+      this.walkState.y = 4.5 + this.getDescentOffset();
+      this.walkState.vy = 0;
+      this.walkState.isGrounded = true;
+      this.walkState.yaw = -0.18;
+      this.walkState.pitch = -0.14;
+      this.walkState.smoothYaw = -0.18;
+      this.walkState.smoothPitch = -0.14;
+      this.walkState.moveBlend = 0;
+      this.walkState.handReachTimer = 0;
+
+      if (this.cabinState) {
+        this.cabinState.hatchOpen = false;
+        this.cabinState.hatchProgress = 0.0;
+        this.cabinState.prog = '64';
+        this.cabinState.throttlePct = 82;
+        this.refreshCabinDisplays();
       }
-      // Stamp initial left & right footprints directly under astronaut's starting boots
-      this.spawnFootprint(0, 11.5, 0, true);
-      this.spawnFootprint(0, 11.5, 0, false);
+
+      if (cabinBtn) {
+        cabinBtn.classList.add('active');
+        cabinBtn.innerText = isTr
+          ? '🚪 Kapağı Aç & Dışarı Çık (E)'
+          : '🚪 Open Hatch & Exit (E)';
+      }
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
       if (walkHud) walkHud.classList.remove('hidden');
@@ -531,7 +676,10 @@ class MissionSimulationTheater {
     if (!this.overlay || !this.canvas) return;
 
     this.currentArtifact = artifact;
-    this.simTime = this.cameraMode === 'walk' ? 7.0 : 0;
+    this.simTime = 0;
+    this.walkDescentPlayed = (this.cameraMode === 'walk');
+    this.touchdownConfirmed = false;
+    this.lastCockpitTick = 0;
     this.isPlaying = true;
     this.shakeIntensity = 0;
     this.craneCrashed = false;
@@ -2400,7 +2548,8 @@ class MissionSimulationTheater {
       glycolPump: true,
       sBandLocked: true,
       lightMode: 0, // 0: Nominal White, 1: Deep-Space Cyan, 2: Red Night-Adaptation
-      hatchOpen: true
+      hatchOpen: false,
+      hatchProgress: 0.0
     };
 
     const body = artifact ? (artifact.body || 'moon') : 'moon';
@@ -2593,40 +2742,74 @@ class MissionSimulationTheater {
     backWallHeader.position.set(0, 2.68, 2.18);
     cabinGroup.add(backWallLeft, backWallRight, backWallHeader);
 
-    // Interactive Squared Ingress Hatch Door & Red Pressure-Relief Valve Wheel
-    const hatchDoor = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.15, 0.09), isogridAlum);
-    hatchDoor.position.set(1.15, 1.12, 2.65);
-    hatchDoor.rotation.y = -Math.PI * 0.35;
-    const hatchWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.028, 12, 24), redValve);
-    hatchWheel.position.set(0, 0, -0.06);
-    // Cross spokes for valve wheel
-    for (let sp = 0; sp < 2; sp++) {
-      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 8), chromeSwitchMat);
-      spoke.rotation.z = (sp * Math.PI) / 2;
-      spoke.position.z = -0.06;
-      hatchDoor.add(spoke);
+    // Interactive Hinged Squared Ingress/Egress Hatch Door & Red Pressure-Relief Valve Wheel
+    // Pivoted on the right doorframe hinge (x = +0.68, y = 1.12, z = 2.18) so it starts SEALED SHUT (hatchProgress = 0)
+    // during rocket descent and swings smoothly outward when the astronaut opens it!
+    this.hatchPivotGroup = new THREE.Group();
+    this.hatchPivotGroup.position.set(0.68, 1.12, 2.18);
+    cabinGroup.add(this.hatchPivotGroup);
+
+    const hatchDoor = new THREE.Mesh(new THREE.BoxGeometry(1.36, 2.15, 0.09), isogridAlum);
+    hatchDoor.position.set(-0.68, 0, 0);
+    this.hatchDoor = hatchDoor;
+    this.hatchPivotGroup.add(hatchDoor);
+
+    // Armored Upper Hatch Viewport Window Frame on Door so astronaut can see the ladder outside
+    const hatchWinFrame = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.38, 0.11), charcoalRack);
+    hatchWinFrame.position.set(0, 0.52, 0);
+    const hatchWinGlass = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.30, 0.12), glassMat);
+    hatchWinGlass.position.set(0, 0.52, 0);
+    hatchDoor.add(hatchWinFrame, hatchWinGlass);
+
+    // Dual-sided Red Pressure-Relief Valve Wheel on the Hatch Door
+    const hatchWheel = new THREE.Group();
+    hatchWheel.position.set(-0.22, -0.06, 0);
+    for (let wzSide = -1; wzSide <= 1; wzSide += 2) {
+      const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.028, 12, 24), redValve);
+      wheelRim.position.z = wzSide * 0.065;
+      hatchWheel.add(wheelRim);
+      for (let sp = 0; sp < 2; sp++) {
+        const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 8), chromeSwitchMat);
+        spoke.rotation.z = (sp * Math.PI) / 2;
+        spoke.position.z = wzSide * 0.065;
+        hatchWheel.add(spoke);
+      }
     }
+    const wheelShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.16, 12), brassNutMat);
+    wheelShaft.rotation.x = Math.PI / 2;
+    hatchWheel.add(wheelShaft);
+    this.hatchWheel = hatchWheel;
     hatchDoor.add(hatchWheel);
 
+    // Illuminated 3D Hatch Latch Handle & Status Lamp above the door
+    this.hatchStatusLamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.46, 0.08, 0.16),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+    );
+    this.hatchStatusLamp.position.set(0, 2.28, 2.16);
+    cabinGroup.add(this.hatchStatusLamp);
+
     const hatchInteract = {
-      label_tr: '🚪 [SOL TIK / VR TETİK] BASINÇLI GİRİŞ KAPAĞINI & VALFİNİ ÇEVİR (YÜZEYE ÇIK / AÇ-KAPAT)',
-      label_en: '🚪 [CLICK / VR TRIGGER] OPERATE PRESSURIZED HATCH & VALVE WHEEL',
+      label_tr: '🚪 [SOL TIK / E TUŞU] BASINÇLI KABİN KAPAĞINI & VALFİNİ AÇ / DIŞARI ÇIK',
+      label_en: '🚪 [CLICK / PRESS E] OPEN PRESSURIZED HATCH & STEP OUTSIDE',
       onClick: () => {
-        this.playSwitchClickSound(440);
-        this.cabinState.hatchOpen = !this.cabinState.hatchOpen;
-        hatchWheel.rotation.z += Math.PI * 0.5;
-        hatchDoor.rotation.y = this.cabinState.hatchOpen ? -Math.PI * 0.35 : 0;
-        hatchDoor.position.set(
-          this.cabinState.hatchOpen ? 1.15 : 0,
-          1.12,
-          this.cabinState.hatchOpen ? 2.65 : 2.18
-        );
+        if (!this.cabinState.hatchOpen) {
+          this.triggerOpenHatch(false);
+        } else if (this.walkState.isInsideCabin) {
+          this.playSwitchClickSound(580);
+          this.walkState.isInsideCabin = false;
+          this.walkState.isOnLadder = true;
+          this.walkState.x = 0;
+          this.walkState.z = 2.52;
+        } else {
+          this.playSwitchClickSound(440);
+          this.cabinState.hatchOpen = !this.cabinState.hatchOpen;
+        }
       }
     };
     hatchDoor.userData.interactive = hatchInteract;
     hatchWheel.userData.interactive = hatchInteract;
     this.interactables.push(hatchDoor, hatchWheel);
-    cabinGroup.add(hatchDoor);
 
     // Stowed EVA PLSS Backpacks & Apollo Lunar Sample Return Containers (ALSRC Rock Boxes) on Rear Wall
     for (let side = -1; side <= 1; side += 2) {
@@ -2672,12 +2855,12 @@ class MissionSimulationTheater {
       frontRightOuterWall
     );
 
-    // 3D Beveled Observation Window Frames + Double-Sided Tinted Solar-Shield Glass Panes
+    // 3D Beveled Observation Window Frames + Double-Sided Crystal-Clear Tinted Solar-Shield Glass Panes
     const windowGlassMat = new THREE.MeshStandardMaterial({
-      color: 0x0284c7,
+      color: 0x38bdf8,
       transparent: true,
-      opacity: 0.38,
-      roughness: 0.12,
+      opacity: 0.16,
+      roughness: 0.08,
       metalness: 0.85,
       side: THREE.DoubleSide,
       depthWrite: false
@@ -3333,16 +3516,68 @@ class MissionSimulationTheater {
   updateSimulationPhysics(t, dt) {
     const artifact = this.currentArtifact;
     if (!artifact || !this.spacecraft) return;
-    const showWalkCabin = (this.cameraMode === 'walk' || t >= 6.4);
+
+    const descentOffset = this.getDescentOffset(t);
+    const showWalkCabin = (this.cameraMode === 'walk' || t >= 5.8);
     if (this.walkableInteriorGroup) {
       this.walkableInteriorGroup.visible = showWalkCabin;
+      this.walkableInteriorGroup.position.y = descentOffset;
     }
     if (this.dummyAscentSolidGroup) {
       this.dummyAscentSolidGroup.visible = !showWalkCabin;
     }
 
+    // Live Cockpit Avionics & Window Dust Plumes while descending in Walk Mode (t < 5.8)
+    if (this.cameraMode === 'walk') {
+      if (t < 5.8) {
+        if (!this.lastCockpitTick || t - this.lastCockpitTick > 0.24) {
+          this.lastCockpitTick = t;
+          if (this.cabinState) {
+            this.cabinState.prog = t < 3.0 ? '64' : '66';
+            this.cabinState.throttlePct = Math.max(18, Math.round(85 - (t / 5.8) * 65));
+            this.cabinState.r1 = '+' + String(Math.round(descentOffset * 10)).padStart(5, '0');
+            this.cabinState.r2 = '-' + String(Math.round((descentOffset / 5.8) * 16 + 2)).padStart(5, '0');
+            this.refreshCabinDisplays();
+          }
+        }
+        // Spawn glowing rocket thruster plume & regolith dust flying past the front cockpit windows (-Z)!
+        if (Math.random() < 0.75) {
+          const winDustPos = new THREE.Vector3(
+            (Math.random() - 0.5) * 4.5,
+            descentOffset + 2.2,
+            -2.8 - Math.random() * 2.5
+          );
+          const winDustVel = new THREE.Vector3(
+            (Math.random() - 0.5) * 10,
+            12 + Math.random() * 14,
+            -6 - Math.random() * 10
+          );
+          const col = descentOffset < 22
+            ? (artifact.body === 'venus' ? 0xd97706 : artifact.body === 'mars' ? 0xc45c2c : 0xcbd5e1)
+            : 0x93c5fd;
+          this.createParticle(winDustPos, winDustVel, col, 0.55, 0.22);
+        }
+      } else if (!this.touchdownConfirmed) {
+        this.touchdownConfirmed = true;
+        this.shakeIntensity = 0.75;
+        this.playSwitchClickSound(1240);
+        setTimeout(() => this.playSwitchClickSound(1560), 140);
+        if (this.cabinState) {
+          this.cabinState.prog = '68';
+          this.cabinState.throttlePct = 0;
+          this.cabinState.r1 = '+00000';
+          this.cabinState.r2 = '+00000';
+          this.refreshCabinDisplays();
+        }
+      }
+    }
+
     if (artifact.category === 'impact') {
-      if (t < 3.2) {
+      if (this.cameraMode === 'walk') {
+        this.spacecraft.visible = true;
+        this.spacecraft.position.set(-8.2, 2.3 + descentOffset, -2.5);
+        this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
+      } else if (t < 3.2) {
         const progress = t / 3.2;
         this.spacecraft.position.x = -75 + progress * 66.8;
         this.spacecraft.position.y = 100 - progress * 97.7;
@@ -3411,7 +3646,9 @@ class MissionSimulationTheater {
         this.blade2.rotation.y -= rpm * dt;
       }
 
-      if (t > 1.5 && t < 6.4) {
+      if (this.cameraMode === 'walk') {
+        this.spacecraft.position.set(0, 2.4 + descentOffset, 0);
+      } else if (t > 1.5 && t < 6.4) {
         const targetY = Math.min((t - 1.5) * 3.8, 12);
         this.spacecraft.position.y = targetY;
         this.spacecraft.position.x = Math.sin((t - 1.5) * 1.2) * 6;
@@ -3430,7 +3667,11 @@ class MissionSimulationTheater {
       }
 
     } else if (artifact.id === 'curiosity-skycrane') {
-      if (t < 4.5) {
+      if (this.cameraMode === 'walk') {
+        this.roverBody.position.y = 1.2 + descentOffset;
+        if (this.tetherGroup) this.tetherGroup.visible = (t < 5.5);
+        if (this.cranePlatform) this.cranePlatform.position.y = 18 + descentOffset;
+      } else if (t < 4.5) {
         const progress = t / 4.5;
         this.roverBody.position.y = Math.max(1.2, 14 - progress * 12.8);
 
@@ -3455,16 +3696,15 @@ class MissionSimulationTheater {
       }
 
     } else {
-      if (t < 6.5) {
-        const progress = t / 6.5;
-        const ease = 1 - Math.pow(1 - progress, 2);
-        const currentY = 80 - ease * 76.8;
+      if (t < 5.8) {
+        const currentY = 3.2 + descentOffset;
         this.spacecraft.position.y = currentY;
 
         if (this.engineLight) {
           this.engineLight.intensity = 4.5 + Math.random() * 2.5;
         }
         if (this.exhaustPlume) {
+          this.exhaustPlume.visible = true;
           this.exhaustPlume.scale.set(1.0 + Math.random() * 0.2, 1.0 + Math.random() * 0.3, 1.0 + Math.random() * 0.2);
           this.exhaustPlume.material.opacity = 0.5 + Math.random() * 0.3;
 
@@ -3495,7 +3735,7 @@ class MissionSimulationTheater {
         this.spacecraft.position.y = 3.2;
         if (this.engineLight) this.engineLight.intensity = 0;
         if (this.exhaustPlume) this.exhaustPlume.visible = false;
-        if (t < 6.8) {
+        if (t < 6.1 && !this.touchdownConfirmed) {
           this.shakeIntensity = 0.8;
         }
       }
@@ -3625,9 +3865,39 @@ class MissionSimulationTheater {
     ws.moveBlend += (targetBlend - ws.moveBlend) * Math.min(1, dt * 7.5);
 
     const cabinFloorY = 4.5;
+    const descentOffset = this.getDescentOffset(this.simTime);
+    const isDescending = this.simTime < 5.8;
     const groundY0 = this.getExactSurfaceHeight(0, 6.2);
     const isTr = window.app ? window.app.currentLang === 'tr' : true;
     const cabinBtn = document.getElementById('btn-walk-cabin');
+
+    // Smoothly animate the Hinged Pressurized EVA Hatch Door & Spinning Red Valve Wheel!
+    if (this.cabinState) {
+      const targetHatch = this.cabinState.hatchOpen ? 1.0 : 0.0;
+      const diff = targetHatch - (this.cabinState.hatchProgress || 0);
+      if (Math.abs(diff) > 0.001) {
+        this.cabinState.hatchProgress = (this.cabinState.hatchProgress || 0) + Math.sign(diff) * Math.min(Math.abs(diff), dt * 1.75);
+      } else {
+        this.cabinState.hatchProgress = targetHatch;
+      }
+      const hp = this.cabinState.hatchProgress || 0;
+      if (this.hatchWheel) {
+        this.hatchWheel.rotation.z = hp * Math.PI * 3.5;
+      }
+      if (this.hatchPivotGroup) {
+        const doorSwing = Math.max(0, (hp - 0.16) / 0.84);
+        this.hatchPivotGroup.rotation.y = -doorSwing * (Math.PI * 0.62);
+      }
+      if (this.hatchStatusLamp && this.hatchStatusLamp.material) {
+        this.hatchStatusLamp.material.color.setHex(
+          isDescending ? 0xef4444 : (this.cabinState.hatchOpen ? 0x10b981 : 0xf59e0b)
+        );
+      }
+    }
+
+    if (ws.handReachTimer && ws.handReachTimer > 0) {
+      ws.handReachTimer = Math.max(0, ws.handReachTimer - dt);
+    }
 
     if (isMoving) {
       const len = Math.hypot(moveForward, moveRight) || 1;
@@ -3640,37 +3910,48 @@ class MissionSimulationTheater {
 
       // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin (|x| <= 1.88, z in [-1.72, 2.25])
       if (ws.isInsideCabin) {
-        // If walking out through the open +Z hatch doorway (|x| < 0.72 and z > 2.20), step onto the ladder!
-        if (candidateZ > 2.22 && Math.abs(candidateX) < 0.78) {
+        // When walking up to the rear +Z Hatch Door (z > 1.15 and |x| < 0.88):
+        // After touchdown, the astronaut automatically reaches out, spins the valve wheel, and opens the hatch door!
+        if (candidateZ > 1.15 && Math.abs(candidateX) < 0.88 && !this.cabinState.hatchOpen) {
+          this.triggerOpenHatch(false);
+        }
+
+        const hatchReadyToStepOut = !isDescending && this.cabinState && this.cabinState.hatchOpen && (this.cabinState.hatchProgress || 0) >= 0.62;
+
+        // If hatch is open and astronaut walks out through the +Z doorway (|x| < 0.78 and z > 2.24), step onto the top ladder porch!
+        if (hatchReadyToStepOut && candidateZ > 2.24 && Math.abs(candidateX) < 0.78) {
           ws.isInsideCabin = false;
           ws.isOnLadder = true;
           ws.x = Math.max(-0.45, Math.min(0.45, candidateX));
-          ws.z = candidateZ;
+          ws.z = 2.48;
           if (cabinBtn) {
             cabinBtn.classList.remove('active');
-            cabinBtn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+            cabinBtn.innerText = isTr ? '🦶 Yüzeye Tam İn / Kabine Dön (E)' : '🦶 Step to Surface / Return (E)';
           }
         } else {
           // Constrain smoothly within cabin walls & around center pedestal (radius 0.72m at z = -0.42)
+          const maxCabinZ = hatchReadyToStepOut ? 2.26 : 1.78;
           const clampedX = Math.max(-1.82, Math.min(1.82, candidateX));
-          const clampedZ = Math.max(-1.62, Math.min(2.12, candidateZ));
+          const clampedZ = Math.max(-1.62, Math.min(maxCabinZ, candidateZ));
           if (Math.hypot(clampedX, clampedZ + 0.42) > 0.72) {
             ws.x = clampedX;
             ws.z = clampedZ;
           }
         }
       } else {
-        // 2. Check if astronaut is in the Exterior Boarding Ladder Corridor (|x| < 0.95, z between 2.20 and 6.35)
-        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.15 && candidateZ <= 6.35;
+        // 2. Check if astronaut is in the Exterior Boarding Ladder Corridor (|x| < 0.95, z between 2.15 and 6.35)
+        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.10 && candidateZ <= 6.35;
         if (inLadderCorridor) {
           ws.isOnLadder = true;
           ws.x = Math.max(-0.55, Math.min(0.55, candidateX));
           ws.z = candidateZ;
-          // Reaching top of ladder (z <= 2.35) steps directly inside the cabin!
-          if (ws.z <= 2.35) {
+          // Climbing back up to the top of the ladder (z <= 2.18 while moving toward -Z) steps back inside the cabin!
+          if (ws.z <= 2.18 && nz < 0) {
+            this.cabinState.hatchOpen = true;
             ws.isInsideCabin = true;
             ws.isOnLadder = false;
-            ws.y = cabinFloorY;
+            ws.z = 1.85;
+            ws.y = cabinFloorY + descentOffset;
             if (cabinBtn) {
               cabinBtn.classList.add('active');
               cabinBtn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
@@ -3702,13 +3983,17 @@ class MissionSimulationTheater {
       }
     }
 
-    // Vertical Elevation: Inside Cabin vs. Climbing Ladder vs. Planetary Surface Gravity
+    // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Planetary Surface Gravity
     const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
     const gravity = body === 'moon' ? 3.2 : body === 'outer' ? 2.8 : body === 'mars' ? 5.5 : 9.8;
     const groundY = this.getExactSurfaceHeight(ws.x, ws.z);
 
     if (ws.isInsideCabin) {
-      ws.y = cabinFloorY;
+      // Ride smoothly inside the descending rocket cabin from 68m altitude down to 4.5m deck height!
+      const engineVib = isDescending
+        ? (Math.sin(this.simTime * 46) * 0.011 + Math.cos(this.simTime * 31) * 0.008)
+        : 0;
+      ws.y = cabinFloorY + descentOffset + engineVib;
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isOnLadder) {
@@ -3750,18 +4035,27 @@ class MissionSimulationTheater {
     const rollSway = groundFactor * Math.sin(ws.stepPhase) * (ws.isInsideCabin ? 0.006 : 0.012);
     const pitchBob = groundFactor * Math.cos(ws.stepPhase * 2.0) * (ws.isInsideCabin ? 0.005 : 0.009);
 
-    // Animate First-Person Astronaut Arms & Gloved Hands (including Ladder-Climbing Reach!)
+    // Animate First-Person Astronaut Arms & Gloved Hands (including Hatch Valve Opening & Ladder Climbing!)
     if (this.fpLeftArm && this.fpRightArm) {
       const swing = groundFactor * Math.sin(ws.stepPhase) * 0.14 + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.022;
       const climbLiftL = ws.isOnLadder ? Math.sin(ws.stepPhase) * 0.12 : 0;
       const climbLiftR = ws.isOnLadder ? -Math.sin(ws.stepPhase) * 0.12 : 0;
       const jumpLift = ws.isGrounded ? 0 : Math.min(0.16, Math.abs(ws.vy) * 0.038);
+      const reachWave = ws.handReachTimer > 0 ? Math.sin((1.05 - ws.handReachTimer) * Math.PI) : 0;
 
       this.fpLeftArm.position.set(-0.27 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35 + climbLiftL, -0.44 - swing * 0.32);
       this.fpLeftArm.rotation.set(0.42 + swing * 0.48 + jumpLift + climbLiftL * 1.4, 0.22 + lateralSway * 0.2, -0.18 - rollSway * 1.2);
 
-      this.fpRightArm.position.set(0.28 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35 + climbLiftR, -0.44 + swing * 0.32);
-      this.fpRightArm.rotation.set(0.38 - swing * 0.48 + jumpLift + climbLiftR * 1.4, -0.20 + lateralSway * 0.2, 0.15 - rollSway * 1.2);
+      this.fpRightArm.position.set(
+        0.28 + lateralSway * 0.35 - reachWave * 0.14,
+        -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35 + climbLiftR + reachWave * 0.18,
+        -0.44 + swing * 0.32 - reachWave * 0.22
+      );
+      this.fpRightArm.rotation.set(
+        0.38 - swing * 0.48 + jumpLift + climbLiftR * 1.4 + reachWave * 0.65,
+        -0.20 + lateralSway * 0.2 + reachWave * 0.35,
+        0.15 - rollSway * 1.2 - reachWave * Math.sin(this.simTime * 16) * 0.45
+      );
     }
 
     // Animate 3rd-Person Full Articulated Astronaut Suit (2-Bone Arms + 2-Bone Legs + Torso Twist)
@@ -3850,22 +4144,34 @@ class MissionSimulationTheater {
     const statusEl = document.getElementById('walk-xr-status');
     if (statusEl && !this.xrSession) {
       if (ws.isInsideCabin) {
-        statusEl.innerText = isTr
-          ? '🏠 UZAY ARACI İÇ KABİNİ AKTİF (DSKY Bilgisayarı, 120+ Devre Kesici, RTG/Motor Çekirdeği & Pencereler • Çıkmak için +Z Kapısına Yürü veya E Tuşu)'
-          : '🏠 SPACECRAFT INTERIOR CABIN ACTIVE (DSKY Computer, 120+ Breakers, RTG/Engine Core & Viewports • Walk to Hatch or Press E to Exit)';
+        if (isDescending) {
+          statusEl.innerText = isTr
+            ? `🚀 ROKET İNİŞİ AKTİF (İrtifa: +${descentOffset.toFixed(1)}m): Kokpit pencerelerinden inişi izleyin! Yüzeye temas edince arkadaki kapağı (+Z / E tuşu) açıp dışarı çıkabilirsiniz!`
+            : `🚀 POWERED DESCENT ACTIVE (Alt: +${descentOffset.toFixed(1)}m): Watch landing through cockpit windows! After touchdown, open rear hatch (+Z / E) to step outside!`;
+        } else if (!this.cabinState.hatchOpen) {
+          statusEl.innerText = isTr
+            ? '🛬 İNİŞ TAMAMLANDI! Arkadaki Basınçlı Kapağa (+Z) yürüyün, kırmızı valfe tıklayın veya [E] tuşuna basarak kapağı açıp yüzeye çıkın!'
+            : '🛬 TOUCHDOWN CONFIRMED! Walk to the rear Pressurized Hatch (+Z), click the red valve wheel, or press [E] to open the hatch and step outside!';
+        } else {
+          statusEl.innerText = isTr
+            ? '🚪 KAPAK AÇILDI! Açık kapıdan (+Z) merdivene yürüyün veya [E] tuşuna basarak gezegen yüzeyine inin!'
+            : '🚪 HATCH OPEN! Walk out through the open doorway (+Z) onto the ladder or press [E] to step onto the surface!';
+        }
       } else if (ws.isOnLadder) {
         statusEl.innerText = isTr
-          ? '🪜 EVA MERDİVEN TIRMANIŞI AKTİF (İleri [W]: Kabin İçine Tırman • Geri [S]: Yüzeye İn • E: Hızlı Giriş)'
-          : '🪜 CLIMBING EVA BOARDING LADDER (Forward [W]: Climb into Cabin • Back [S]: Descend to Surface)';
+          ? '🪜 EVA MERDİVENİ AKTİF (Yüzeye doğru yürüyün veya [E] tuşuna basarak doğrudan zemine inin)'
+          : '🪜 ON EVA BOARDING LADDER (Walk down toward the surface or press [E] to step onto the ground)';
       } else {
         statusEl.innerText = isTr
-          ? '🥽 1:1 ASTRONOT VİZÖR & ELLER MODU AKTİF (WASD: Yürü • Merdivene Yürü veya E: Aracın İçine Gir • V: 1./3. Şahıs • F: Fener)'
-          : '🥽 1:1 ASTRONAUT VISOR & HANDS ACTIVE (WASD: Walk • Walk to Ladder or Press E: Enter Spacecraft Cabin • V: View • F: Torch)';
+          ? '🥽 1:1 ASTRONOT YÜZEY YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • Merdivene Yürü / E: Kabine Gir • V: 1./3. Şahıs • F: Fener)'
+          : '🥽 1:1 ASTRONAUT SURFACE WALK ACTIVE (WASD: Walk • SPACE: Jump • Walk to Ladder / E: Enter Cabin • V: View • F: Torch)';
       }
     }
     if (distEl) {
       if (ws.isInsideCabin) {
-        distEl.innerText = isTr ? `KONUM: 🏠 ARACIN İÇ KABİNİ (Yükseklik: +4.5m)` : `LOCATION: 🏠 INSIDE CABIN (+4.5m Deck)`;
+        distEl.innerText = isDescending
+          ? (isTr ? `KONUM: 🚀 İNİŞ KOKPİTİ (İrtifa: +${descentOffset.toFixed(1)}m)` : `LOCATION: 🚀 DESCENT COCKPIT (Alt: +${descentOffset.toFixed(1)}m)`)
+          : (isTr ? `KONUM: 🏠 ARACIN İÇ KABİNİ (+4.5m Güverte)` : `LOCATION: 🏠 INSIDE CABIN (+4.5m Deck)`);
       } else if (ws.isOnLadder) {
         distEl.innerText = isTr ? `KONUM: 🪜 EVA MERDİVENİ (+${(ws.y - groundY0).toFixed(1)}m)` : `LOCATION: 🪜 EVA LADDER (+${(ws.y - groundY0).toFixed(1)}m)`;
       } else {
@@ -3892,14 +4198,30 @@ class MissionSimulationTheater {
     if (!artifact) return;
 
     if (this.cameraMode === 'walk') {
-      const dist = Math.hypot(this.walkState.x, this.walkState.z).toFixed(1);
-      if (altEl) altEl.innerText = "1.75 m (Astronot Göz Hizası)";
-      if (speedEl) speedEl.innerText = `${dist} m (Araca Mesafe)`;
-      if (thrustEl) thrustEl.innerText = this.walkViewMode === 'fp' ? "1. ŞAHIS (ELLER & VİZÖR)" : "3. ŞAHIS (TAM ASTRONOT)";
-      if (phaseEl) {
-        phaseEl.innerText = isTr
-          ? "🥽 1:1 ASTRONOT YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • V: Kamera Değiştir • F: Fener)"
-          : "🥽 1:1 ASTRONAUT WALK ACTIVE (WASD: Walk • SPACE: Jump • V: Switch View • F: Torch)";
+      const descentOffset = this.getDescentOffset(t);
+      if (t < 5.8) {
+        if (altEl) altEl.innerText = `${descentOffset.toFixed(1)} m (Kokpit İnişi)`;
+        if (speedEl) speedEl.innerText = `-${Math.max(1.2, descentOffset * 0.22).toFixed(1)} m/s`;
+        if (thrustEl) thrustEl.innerText = `${this.cabinState ? this.cabinState.throttlePct : 75}% (İniş Roketi Aktif)`;
+        if (phaseEl) {
+          phaseEl.innerText = isTr
+            ? "🚀 KOKPİT İÇİNDEN YÜZEYE İNİŞ SÜRÜYOR — Pencerelerden ve DSKY ekranından alçalmayı takip edin!"
+            : "🚀 FIRST-PERSON COCKPIT DESCENT IN PROGRESS — Monitor altitude via windows and DSKY!";
+        }
+      } else {
+        const dist = Math.hypot(this.walkState.x, this.walkState.z).toFixed(1);
+        if (altEl) altEl.innerText = this.walkState.isInsideCabin ? "+4.5 m (Kabin İçi)" : "1.75 m (Astronot Göz Hizası)";
+        if (speedEl) speedEl.innerText = this.walkState.isInsideCabin ? (this.cabinState.hatchOpen ? "KAPAK AÇIK (Çıkış Hazır)" : "KAPAK KAPALI (Açmak için E / Tıkla)") : `${dist} m (Araca Mesafe)`;
+        if (thrustEl) thrustEl.innerText = this.walkViewMode === 'fp' ? "1. ŞAHIS (ELLER & VİZÖR)" : "3. ŞAHIS (TAM ASTRONOT)";
+        if (phaseEl) {
+          phaseEl.innerText = this.walkState.isInsideCabin
+            ? (isTr
+                ? "🛬 İNİŞ TAMAMLANDI: Arkadaki kapağa (+Z) yürüyün, kırmızı valfe tıklayın veya [E] tuşuyla kapağı açıp dışarı çıkın!"
+                : "🛬 LANDED: Walk to the rear hatch (+Z), click the red valve wheel, or press [E] to open the hatch and exit!")
+            : (isTr
+                ? "🥽 1:1 ASTRONOT YÜZEY YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • V: Kamera Değiştir • E: Kabin)"
+                : "🥽 1:1 ASTRONAUT SURFACE WALK ACTIVE (WASD: Walk • SPACE: Jump • V: Switch View • E: Cabin)");
+        }
       }
       return;
     }

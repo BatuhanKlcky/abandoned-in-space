@@ -291,6 +291,162 @@ class SpaceAudioEngine {
       }
     });
   }
+
+  /**
+   * Procedural Lunar Regolith Footstep (soft dusty bootfall + micro-gravel crunch)
+   */
+  playRegolithStep() {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // Low-frequency hollow ground impact
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140 + Math.random() * 25, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.08);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.10);
+
+      // Regolith granule friction noise burst
+      const bufSize = Math.floor(this.ctx.sampleRate * 0.07);
+      const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.02));
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buf;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(580 + Math.random() * 120, now);
+      filter.Q.setValueAtTime(1.2, now);
+      const nGain = this.ctx.createGain();
+      nGain.gain.setValueAtTime(0.06, now);
+      nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      noise.connect(filter);
+      filter.connect(nGain);
+      nGain.connect(this.ctx.destination);
+      noise.start(now);
+    } catch (_) {}
+  }
+
+  /**
+   * Metallic Spacecraft Cabin Deck Footstep (crisp interior aluminum thud)
+   */
+  playDeckStep() {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320 + Math.random() * 40, now);
+      osc.frequency.exponentialRampToValueAtTime(110, now + 0.06);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } catch (_) {}
+  }
+
+  /**
+   * Metallic EVA Ladder Rung Clank (hollow steel tube rung strike)
+   */
+  playLadderClank() {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(840 + Math.random() * 80, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.09);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.11);
+    } catch (_) {}
+  }
+
+  /**
+   * Geological Science Sample Scan Chirp (futuristic 3-tone spectrometer arpeggio)
+   */
+  playSampleScanChirp() {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      [880, 1320, 1760].forEach((freq, idx) => {
+        const delay = idx * 0.055;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        gain.gain.setValueAtTime(0.14, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.09);
+      });
+    } catch (_) {}
+  }
+
+  /**
+   * Authentic NASA Apollo 1202/1201 Master Alarm Alternating Two-Tone Klaxon (750 Hz & 1500 Hz warble)
+   */
+  playMasterAlarmKlaxon(cycles = 2) {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      for (let c = 0; c < cycles; c++) {
+        const offset = c * 0.22;
+        // Tone 1: 750 Hz
+        const osc1 = this.ctx.createOscillator();
+        const gain1 = this.ctx.createGain();
+        osc1.type = 'square';
+        osc1.frequency.setValueAtTime(750, now + offset);
+        gain1.gain.setValueAtTime(0.10, now + offset);
+        gain1.gain.setValueAtTime(0.10, now + offset + 0.10);
+        gain1.gain.linearRampToValueAtTime(0.001, now + offset + 0.11);
+        osc1.connect(gain1);
+        gain1.connect(this.ctx.destination);
+        osc1.start(now + offset);
+        osc1.stop(now + offset + 0.11);
+
+        // Tone 2: 1500 Hz
+        const osc2 = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(1500, now + offset + 0.11);
+        gain2.gain.setValueAtTime(0.09, now + offset + 0.11);
+        gain2.gain.setValueAtTime(0.09, now + offset + 0.21);
+        gain2.gain.linearRampToValueAtTime(0.001, now + offset + 0.22);
+        osc2.connect(gain2);
+        gain2.connect(this.ctx.destination);
+        osc2.start(now + offset + 0.11);
+        osc2.stop(now + offset + 0.22);
+      }
+    } catch (_) {}
+  }
 }
 
 window.SpaceAudio = new SpaceAudioEngine();

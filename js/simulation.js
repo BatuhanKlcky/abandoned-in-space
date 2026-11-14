@@ -909,17 +909,17 @@ class MissionSimulationTheater {
     if (!this.vrHelpPanel) {
       const canvas = document.createElement('canvas');
       canvas.width = 1024;
-      canvas.height = 640;
+      canvas.height = 700;
       const ctx = canvas.getContext('2d');
       const isTr = window.app ? window.app.currentLang === 'tr' : true;
       ctx.fillStyle = 'rgba(4, 11, 24, 0.94)';
-      ctx.fillRect(0, 0, 1024, 640);
+      ctx.fillRect(0, 0, 1024, 700);
       ctx.strokeStyle = '#00f0ff';
       ctx.lineWidth = 8;
-      ctx.strokeRect(6, 6, 1012, 628);
+      ctx.strokeRect(6, 6, 1012, 688);
       ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 40px monospace';
-      ctx.fillText(isTr ? '🎮 META QUEST 3S KONTROLLERİ' : '🎮 META QUEST 3S CONTROLS', 40, 70);
+      ctx.font = 'bold 38px monospace';
+      ctx.fillText(isTr ? '🎮 META QUEST 3S KONTROLLERİ' : '🎮 META QUEST 3S CONTROLS', 40, 64);
       const rows = isTr ? [
         ['SOL ÇUBUK', 'Bakış yönüne yürü (analog hız)'],
         ['SOL ÇUBUK BAS', 'Koş (basılı tut)'],
@@ -931,8 +931,8 @@ class MissionSimulationTheater {
         ['ELLE DOKUN', 'Butona eldiveninle fiziksel dokun'],
         ['A', 'Zıpla (kabin içinde: kapıyı aç/kapat)'],
         ['B', 'Hava kilidi kapısı • LRV aracına bin/in'],
-        ['X', 'EVA feneri']  ,
-        ['Y', 'Bu yardım panelini göster / gizle']
+        ['X', 'EVA feneri'],
+        ['Y', 'Bu yardım panelini aç / kapat']
       ] : [
         ['LEFT STICK', 'Walk toward gaze (analog speed)'],
         ['LEFT STICK CLICK', 'Sprint (hold)'],
@@ -948,21 +948,51 @@ class MissionSimulationTheater {
         ['Y', 'Show / hide this help board']
       ];
       rows.forEach((r, i) => {
-        const y = 130 + i * 41;
+        const y = 112 + i * 38;
         ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 26px monospace';
+        ctx.font = 'bold 24px monospace';
         ctx.fillText(r[0], 40, y);
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = '26px monospace';
+        ctx.font = '24px monospace';
         ctx.fillText(r[1], 400, y);
       });
+
+      // Bottom Red Exit Bar
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(36, 592, 952, 74);
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(36, 592, 952, 74);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(
+        isTr
+          ? '🚪 [TETİKLE TIKLA VEYA DOKUN] VR MODUNDAN ÇIK & ANA EKRANA DÖN'
+          : '🚪 [CLICK TRIGGER OR TOUCH] EXIT VR & RETURN TO MAIN VIEW',
+        52,
+        640
+      );
+
       const tex = new THREE.CanvasTexture(canvas);
       this.vrHelpPanel = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.1, 0.6875),
+        new THREE.PlaneGeometry(1.15, 0.78),
         new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false })
       );
       this.vrHelpPanel.renderOrder = 999;
       this.vrHelpPanel.visible = false;
+
+      // Make the Help Panel interactable so pointing at it and clicking triggers exit!
+      this.vrHelpPanel.userData.interactive = {
+        label_tr: '🚪 [SOL TIK / VR TETİK] VR VE SİMÜLASYONDAN ÇIK & ANA EKRANA DÖN',
+        label_en: '🚪 [CLICK / VR TRIGGER] EXIT VR & RETURN TO MAIN VIEW',
+        onClick: () => {
+          this.pulseXRHaptics(0.85, 60);
+          this.stopSimulation();
+        }
+      };
+      if (this.interactables && !this.interactables.includes(this.vrHelpPanel)) {
+        this.interactables.push(this.vrHelpPanel);
+      }
     }
     if (this.cameraRig && this.vrHelpPanel.parent !== this.cameraRig) {
       this.cameraRig.add(this.vrHelpPanel);
@@ -2303,6 +2333,8 @@ class MissionSimulationTheater {
           collected = true;
           this.walkState.collectedSamples = Math.min(this.walkState.totalSamples, (this.walkState.collectedSamples || 0) + 1);
           this.playSwitchClickSound(880);
+          if (window.SpaceAudio) window.SpaceAudio.playSampleScanChirp();
+          this.pulseXRHaptics(0.85, 70);
           setTimeout(() => this.playSwitchClickSound(1180), 90);
           this.spawnBootDust(scfg.x, scfg.z, 12);
           crystal.visible = false;
@@ -2312,7 +2344,11 @@ class MissionSimulationTheater {
           const isTr = window.app ? window.app.currentLang === 'tr' : true;
           sampleAction.label_tr = `✅ NUMUNE TOPLANDI (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_tr}`;
           sampleAction.label_en = `✅ SAMPLE COLLECTED (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_en}`;
-          this.updateVRGameMiniPill(isTr ? `${scfg.mineral_tr} Toplandı!` : `${scfg.mineral_en} Collected!`);
+          if (this.walkState.collectedSamples >= this.walkState.totalSamples) {
+            this.updateVRGameMiniPill(isTr ? '🏆 8/8 TÜM JEOLOJİK NUMUNELER TOPLANDI!' : '🏆 8/8 ALL LUNAR SAMPLES COLLECTED!');
+          } else {
+            this.updateVRGameMiniPill(isTr ? `${scfg.mineral_tr} Toplandı! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})` : `${scfg.mineral_en} Collected! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})`);
+          }
         }
       };
       sRock.userData.interactive = sampleAction;
@@ -2885,8 +2921,8 @@ class MissionSimulationTheater {
     );
     ctx.fillText(
       isTr
-        ? 'Tetik: Etkileşim | A: Zıpla | B: Kapı/LRV | X: Fener | Y: Yardım'
-        : 'Trigger: Interact | A: Jump | B: Door/LRV | X: Torch | Y: Help',
+        ? 'Tetik: Etkileşim | A: Zıpla | B: Kapı/LRV | X: Fener | Y: ÇIKIŞ & YARDIM'
+        : 'Trigger: Interact | A: Jump | B: Door/LRV | X: Torch | Y: EXIT & HELP',
       18,
       134
     );
@@ -4359,6 +4395,9 @@ class MissionSimulationTheater {
       onClick: () => {
         this.cabinState.masterAlarm = !this.cabinState.masterAlarm;
         this.playSwitchClickSound(this.cabinState.masterAlarm ? 1320 : 520);
+        if (this.cabinState.masterAlarm && window.SpaceAudio) {
+          window.SpaceAudio.playMasterAlarmKlaxon(2);
+        }
         abortPlunger.position.y = 0.008;
         setTimeout(() => { abortPlunger.position.y = 0.025; }, 160);
         if (this.cabinLightConsole) {
@@ -5394,17 +5433,28 @@ class MissionSimulationTheater {
 
       ws.stepPhase += dt * (ws.isInsideCabin ? 5.2 : 6.4);
 
-      // Spawn ribbed lunar footprint & dust puff on every surface footfall (when on planetary regolith)
+      // Dynamic Procedural Footsteps across Cabin Deck, EVA Ladder & Lunar Regolith:
       const stepInterval = Math.PI * 0.72;
       const stepIndex = Math.floor(ws.stepPhase / stepInterval);
-      if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isInsideCabin && !ws.isOnLadder && !ws.isDrivingRover) {
+      if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isDrivingRover) {
         ws.lastStepCount = stepIndex;
         const isLeftFoot = (stepIndex % 2 === 0);
-        const strideBack = -0.10;
-        const footX = ws.x + forwardX * strideBack;
-        const footZ = ws.z + forwardZ * strideBack;
-        this.spawnFootprint(footX, footZ, effectiveMoveYaw, isLeftFoot);
-        this.spawnBootDust(footX, footZ, 4);
+        if (ws.isInsideCabin) {
+          if (window.SpaceAudio) window.SpaceAudio.playDeckStep();
+          this.pulseXRHaptics(0.18, 14, isLeftFoot ? 'left' : 'right');
+        } else if (ws.isOnLadder) {
+          if (window.SpaceAudio) window.SpaceAudio.playLadderClank();
+          this.pulseXRHaptics(0.25, 18, isLeftFoot ? 'left' : 'right');
+        } else {
+          // Walking on planetary regolith
+          if (window.SpaceAudio) window.SpaceAudio.playRegolithStep();
+          this.pulseXRHaptics(0.22, 16, isLeftFoot ? 'left' : 'right');
+          const strideBack = -0.10;
+          const footX = ws.x + forwardX * strideBack;
+          const footZ = ws.z + forwardZ * strideBack;
+          this.spawnFootprint(footX, footZ, effectiveMoveYaw, isLeftFoot);
+          this.spawnBootDust(footX, footZ, 4);
+        }
       }
     }
 

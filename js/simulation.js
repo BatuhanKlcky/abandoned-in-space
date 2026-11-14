@@ -150,6 +150,11 @@ class MissionSimulationTheater {
       torchToggleBtn.addEventListener('click', () => this.toggleFlashlight());
     }
 
+    const cabinToggleBtn = document.getElementById('btn-walk-cabin');
+    if (cabinToggleBtn) {
+      cabinToggleBtn.addEventListener('click', () => this.toggleCabinInterior());
+    }
+
     const xrBtn = document.getElementById('btn-sim-webxr');
     if (xrBtn) {
       xrBtn.addEventListener('click', () => this.enterWebXR());
@@ -176,6 +181,9 @@ class MissionSimulationTheater {
       if (code === 'KeyF') {
         this.toggleFlashlight();
       }
+      if (code === 'KeyE') {
+        this.toggleCabinInterior();
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -196,16 +204,25 @@ class MissionSimulationTheater {
 
       window.addEventListener('pointermove', (e) => {
         if (!this.walkState.isLooking || this.cameraMode !== 'walk') return;
-        const dx = e.clientX - this.walkState.lastMouseX;
-        const dy = e.clientY - this.walkState.lastMouseY;
+        // Clamp pointer delta per frame to prevent any sudden jumps or violent camera jerks
+        const rawDx = e.clientX - this.walkState.lastMouseX;
+        const rawDy = e.clientY - this.walkState.lastMouseY;
         this.walkState.lastMouseX = e.clientX;
         this.walkState.lastMouseY = e.clientY;
 
-        this.walkState.yaw -= dx * 0.0045;
-        this.walkState.pitch = Math.max(-1.05, Math.min(1.05, this.walkState.pitch - dy * 0.0045));
+        const dx = Math.max(-42, Math.min(42, rawDx));
+        const dy = Math.max(-42, Math.min(42, rawDy));
+
+        this.walkState.yaw -= dx * 0.0030;
+        // Strictly clamp pitch to ±58 degrees (±1.01 rad) so camera NEVER flips upside down
+        this.walkState.pitch = Math.max(-1.01, Math.min(1.01, this.walkState.pitch - dy * 0.0028));
       });
 
       window.addEventListener('pointerup', () => {
+        this.walkState.isLooking = false;
+      });
+
+      window.addEventListener('pointercancel', () => {
         this.walkState.isLooking = false;
       });
     }
@@ -249,6 +266,51 @@ class MissionSimulationTheater {
     this.updateAstronautVisibility();
   }
 
+  toggleCabinInterior() {
+    if (this.cameraMode !== 'walk') {
+      this.setCameraMode('walk');
+    }
+    const ws = this.walkState;
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const btn = document.getElementById('btn-walk-cabin');
+
+    if (!ws.isInsideCabin) {
+      // Climb up ladder and step into the center of the NASA Spacecraft / Rocket / Satellite Interior Cabin!
+      ws.isInsideCabin = true;
+      ws.isOnLadder = false;
+      ws.x = 0;
+      ws.z = 1.15;
+      ws.y = 4.5;
+      ws.vy = 0;
+      ws.isGrounded = true;
+      ws.yaw = 0;
+      ws.smoothYaw = 0;
+      ws.pitch = -0.04;
+      ws.smoothPitch = -0.04;
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
+      }
+    } else {
+      // Step down ladder back onto the planetary surface at the foot of the boarding ladder
+      ws.isInsideCabin = false;
+      ws.isOnLadder = false;
+      ws.x = 0;
+      ws.z = 6.8;
+      ws.y = this.getExactSurfaceHeight(0, 6.8);
+      ws.vy = 0;
+      ws.isGrounded = true;
+      ws.yaw = 0;
+      ws.smoothYaw = 0;
+      ws.pitch = 0.05;
+      ws.smoothPitch = 0.05;
+      if (btn) {
+        btn.classList.remove('active');
+        btn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+      }
+    }
+  }
+
   toggleFlashlight() {
     this.flashlightOn = !this.flashlightOn;
     if (this.flashlight) {
@@ -271,7 +333,7 @@ class MissionSimulationTheater {
   }
 
   triggerAstronautJump() {
-    if (this.walkState.isGrounded) {
+    if (this.walkState.isGrounded && !this.walkState.isInsideCabin) {
       const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
       const jumpVel = body === 'moon' ? 4.4 : body === 'outer' ? 4.6 : body === 'mars' ? 3.5 : 2.6;
       this.walkState.vy = jumpVel;
@@ -287,6 +349,8 @@ class MissionSimulationTheater {
 
     const walkHud = document.getElementById('walk-hud-overlay');
     const walkBtn = document.getElementById('btn-sim-walk');
+    const cabinBtn = document.getElementById('btn-walk-cabin');
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
 
     if (mode === 'walk') {
       if (this.simTime < 6.8) {
@@ -297,26 +361,37 @@ class MissionSimulationTheater {
         this.spacecraft.position.set(0, 2.2, 0);
         this.spacecraft.rotation.set(0.2, 0.4, Math.PI * 0.42);
       }
+      this.camera.rotation.order = 'YXZ';
       this.walkState.x = 0;
-      this.walkState.z = 13.5;
-      this.walkState.y = this.getExactSurfaceHeight(0, 13.5);
+      this.walkState.z = 11.5;
+      this.walkState.y = this.getExactSurfaceHeight(0, 11.5);
       this.walkState.vy = 0;
       this.walkState.yaw = 0;
       this.walkState.pitch = 0.05;
       this.walkState.smoothYaw = 0;
       this.walkState.smoothPitch = 0.05;
       this.walkState.moveBlend = 0;
+      this.walkState.isInsideCabin = false;
+      this.walkState.isOnLadder = false;
+      if (cabinBtn) {
+        cabinBtn.classList.remove('active');
+        cabinBtn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+      }
       // Stamp initial left & right footprints directly under astronaut's starting boots
-      this.spawnFootprint(0, 13.5, 0, true);
-      this.spawnFootprint(0, 13.5, 0, false);
+      this.spawnFootprint(0, 11.5, 0, true);
+      this.spawnFootprint(0, 11.5, 0, false);
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
       if (walkHud) walkHud.classList.remove('hidden');
       if (walkBtn) walkBtn.classList.add('active');
       if (this.controls) this.controls.enabled = false;
     } else {
+      this.camera.rotation.order = 'XYZ';
+      this.camera.rotation.z = 0;
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
+      this.walkState.isInsideCabin = false;
+      this.walkState.isOnLadder = false;
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = false;
       if (walkHud) walkHud.classList.add('hidden');
       if (walkBtn) walkBtn.classList.remove('active');
@@ -1905,12 +1980,535 @@ class MissionSimulationTheater {
 
     this.scene.add(this.spacecraft);
 
+    // Build 1:1 Climbable Boarding Ladder & Detailed Walk-In Spacecraft / Rocket / Satellite Interior Cabin
+    this.buildWalkableLadderAndInterior(artifact);
+
     this.camera.position.set(30, 32, 65);
     this.camera.lookAt(0, 16, 0);
 
     if (this.controls && this.spacecraft) {
       this.controls.target.copy(this.spacecraft.position);
     }
+  }
+
+  // ===========================================================================
+  // 1:1 CLIMBABLE EVA LADDER & NASA SPACECRAFT / ROCKET / SATELLITE INTERIOR CABIN
+  // ===========================================================================
+  generateDSKYTexture(artifact) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Authentic AGC Block II DSKY Charcoal Anodized Bezel
+    ctx.fillStyle = '#1e242b';
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(8, 8, 496, 496);
+
+    // Left Status Annunciator Matrix (UPLINK ACTY, NO ATT, STBY, KEY REL, OPR ERR, TEMP, GIMBAL LOCK, PROG, RESTART, TRACKER)
+    ctx.fillStyle = '#0f1419';
+    ctx.fillRect(24, 28, 205, 250);
+    const lamps = [
+      { label: 'UPLINK ACTY', on: false, col: '#e2e8f0' },
+      { label: 'TEMP', on: false, col: '#f59e0b' },
+      { label: 'NO ATT', on: false, col: '#e2e8f0' },
+      { label: 'GIMBAL LOCK', on: false, col: '#f59e0b' },
+      { label: 'STBY', on: false, col: '#e2e8f0' },
+      { label: 'PROG', on: true, col: '#f59e0b' },
+      { label: 'KEY REL', on: false, col: '#e2e8f0' },
+      { label: 'RESTART', on: false, col: '#f59e0b' },
+      { label: 'OPR ERR', on: false, col: '#e2e8f0' },
+      { label: 'TRACKER', on: true, col: '#f59e0b' }
+    ];
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'center';
+    lamps.forEach((l, idx) => {
+      const colIdx = idx % 2;
+      const rowIdx = Math.floor(idx / 2);
+      const lx = 34 + colIdx * 96;
+      const ly = 38 + rowIdx * 46;
+      ctx.fillStyle = l.on ? l.col : '#262f38';
+      ctx.fillRect(lx, ly, 88, 36);
+      ctx.fillStyle = l.on ? '#090d16' : '#64748b';
+      ctx.fillText(l.label, lx + 44, ly + 23);
+    });
+
+    // Right Electroluminescent Green Digital Display Window (PROG, VERB, NOUN, R1, R2, R3)
+    ctx.fillStyle = '#04120a';
+    ctx.fillRect(248, 28, 238, 250);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(248, 28, 238, 250);
+
+    // COMP ACTY green indicator
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(262, 42, 68, 42);
+    ctx.fillStyle = '#022c22';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText('COMP', 296, 59);
+    ctx.fillText('ACTY', 296, 75);
+
+    // PROG / VERB / NOUN headers & 2-digit glowing green 7-segment numbers
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('PROG', 425, 48);
+    ctx.fillText('VERB', 296, 108);
+    ctx.fillText('NOUN', 425, 108);
+
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 34px monospace';
+    ctx.fillText('68', 425, 82);
+    ctx.fillText('16', 296, 140);
+    ctx.fillText('65', 425, 140);
+
+    // Three 5-Digit Signed Registers (R1, R2, R3)
+    ctx.font = 'bold 30px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('+00000', 468, 182);
+    ctx.fillText('+01969', 468, 222);
+    ctx.fillText('+00412', 468, 262);
+
+    // Bottom 19-Key Pushbutton Matrix
+    const keys = [
+      'VERB', '+', '7', '8', '9', 'CLR', 'ENTR',
+      'NOUN', '-', '4', '5', '6', 'PRO', 'RSET',
+      'KEY', '0', '1', '2', '3', 'REL', 'STBY'
+    ];
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 15px monospace';
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 7; c++) {
+        const kx = 22 + c * 67;
+        const ky = 304 + r * 64;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(kx, ky, 60, 54);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(kx, ky, 60, 54);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(keys[r * 7 + c], kx + 30, ky + 33);
+      }
+    }
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  generateTelemetryScreenTexture(artifact) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#030914';
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < 1024; x += 32) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+    }
+    for (let y = 0; y < 512; y += 32) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+    }
+
+    // Header Bar
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+    ctx.fillRect(16, 16, 992, 54);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(16, 16, 992, 54);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 24px monospace';
+    const name = artifact ? (artifact.name_en || artifact.id).toUpperCase() : 'NASA SPACECRAFT';
+    ctx.fillText(`NASA INTERNAL AVIONICS & TELEMETRY BUS // ${name}`, 34, 51);
+
+    // Left Radar / Descent Trajectory Plot
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i < 420; i += 8) {
+      const px = 36 + i;
+      const py = 220 + Math.sin(i * 0.045) * 48 + Math.cos(i * 0.11) * 18;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Right Internal Subsystem Bars (ECS O2, He TANK, RTG/FUEL, BUS VOLT)
+    const metrics = [
+      { label: 'CABIN / HULL PRESSURE', val: '4.8 PSI (33.1 kPa)', pct: 0.88, col: '#10b981' },
+      { label: 'PRIMARY POWER BUS (DC)', val: '28.4 V / 42.0 A', pct: 0.92, col: '#00f0ff' },
+      { label: 'THERMAL SHIELD / RTG CORE', val: '294.2 K (NOMINAL)', pct: 0.74, col: '#f59e0b' },
+      { label: 'HIGH-GAIN S-BAND TELEMETRY', val: 'LOCKED (DSN GOLDSTONE)', pct: 0.96, col: '#10b981' }
+    ];
+    metrics.forEach((m, idx) => {
+      const my = 110 + idx * 92;
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText(`${m.label}: ${m.val}`, 510, my);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(510, my + 12, 470, 26);
+      ctx.fillStyle = m.col;
+      ctx.fillRect(510, my + 12, 470 * m.pct, 26);
+    });
+
+    // Bottom Schematic Readout
+    ctx.fillStyle = '#fde68a';
+    ctx.font = 'bold 17px monospace';
+    ctx.fillText(`COORDINATES: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | STATUS: 1:1 CABIN INTERIOR`, 36, 475);
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  buildWalkableLadderAndInterior(artifact) {
+    if (this.walkableInteriorGroup) {
+      this.scene.remove(this.walkableInteriorGroup);
+    }
+    this.walkableInteriorGroup = new THREE.Group();
+
+    const body = artifact ? (artifact.body || 'moon') : 'moon';
+    const category = artifact ? (artifact.category || 'lander') : 'lander';
+    const groundY0 = this.getTerrainHeight(0, 0);
+    const cabinFloorY = 4.5; // 4.5m above terrain so astronaut climbs the 12-rung ladder up into the cabin!
+
+    // PBR Materials for NASA Spacecraft Interior & Boarding Ladder
+    const isogridAlum = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.78, roughness: 0.32 });
+    const darkPanelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.45 });
+    const charcoalRack = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.65, roughness: 0.4 });
+    const goldKapton = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
+    const copperPipe = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.25 });
+    const blueValve = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.22 });
+    const redValve = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.85, roughness: 0.22 });
+    const cyanGlow = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const greenGlow = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    const amberGlow = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.18,
+      roughness: 0.1,
+      metalness: 0.9
+    });
+
+    // =========================================================================
+    // 1. EXTERIOR CLIMBABLE 12-RUNG EVA BOARDING LADDER & INGRESS PORCH (+Z SIDE)
+    // =========================================================================
+    const ladderGroup = new THREE.Group();
+    this.walkableInteriorGroup.add(ladderGroup);
+
+    // Slanted Twin Ladder Rails from (z = 6.2, y = groundY0) to Porch (z = 2.4, y = cabinFloorY)
+    const ladderBottomZ = 6.2;
+    const ladderTopZ = 2.45;
+    const dy = cabinFloorY - groundY0;
+    const dz = ladderBottomZ - ladderTopZ;
+    const ladderLen = Math.hypot(dy, dz);
+    const ladderAngle = Math.atan2(dz, dy); // tilt angle from vertical
+
+    for (let side = -1; side <= 1; side += 2) {
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, ladderLen, 14), isogridAlum);
+      rail.position.set(side * 0.48, groundY0 + dy * 0.5, (ladderBottomZ + ladderTopZ) * 0.5);
+      rail.rotation.x = -ladderAngle;
+      rail.castShadow = true;
+      ladderGroup.add(rail);
+
+      // Raised Cyan Safety Handrail alongside the ladder for easy VR/Walk climbing
+      const handrail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, ladderLen, 12), cyanGlow);
+      handrail.position.set(side * 0.56, groundY0 + dy * 0.5 + 0.35, (ladderBottomZ + ladderTopZ) * 0.5);
+      handrail.rotation.x = -ladderAngle;
+      ladderGroup.add(handrail);
+    }
+
+    // 12 Grooved Non-Slip Aluminum Ladder Rungs
+    const rungCount = 12;
+    for (let r = 0; r < rungCount; r++) {
+      const frac = (r + 0.5) / rungCount;
+      const ry = groundY0 + frac * dy;
+      const rz = ladderBottomZ - frac * dz;
+      const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.96, 12), isogridAlum);
+      rung.rotation.z = Math.PI / 2;
+      rung.position.set(0, ry, rz);
+      rung.castShadow = true;
+      ladderGroup.add(rung);
+    }
+
+    // Glowing Green Footpad & Entry Marker at the Base of the Ladder (z = 6.2)
+    const entryPad = new THREE.Mesh(
+      new THREE.RingGeometry(0.55, 0.82, 32),
+      new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    );
+    entryPad.rotation.x = -Math.PI / 2;
+    entryPad.position.set(0, this.getExactSurfaceHeight(0, 6.3) + 0.04, 6.3);
+    ladderGroup.add(entryPad);
+
+    // Top Ingress Porch Platform (z = 2.15 to 2.65, y = cabinFloorY)
+    const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.12, 0.75), isogridAlum);
+    porchDeck.position.set(0, cabinFloorY - 0.06, 2.38);
+    porchDeck.castShadow = true;
+    ladderGroup.add(porchDeck);
+
+    // Lower Exterior Support Columns so the cabin stays supported even when exterior hull is cut away
+    for (let sx = -1; sx <= 1; sx += 2) {
+      for (let sz = -1; sz <= 1; sz += 2) {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, cabinFloorY, 12), goldKapton);
+        pillar.position.set(sx * 1.95, cabinFloorY * 0.5, sz * 1.95);
+        this.walkableInteriorGroup.add(pillar);
+      }
+    }
+
+    // =========================================================================
+    // 2. WALK-IN PRESSURIZED NASA CABIN SHELL (4.5m Wide x 3.1m High x 4.5m Deep)
+    // =========================================================================
+    const cabinGroup = new THREE.Group();
+    cabinGroup.position.set(0, cabinFloorY, 0);
+    this.walkableInteriorGroup.add(cabinGroup);
+
+    // Milled Aluminum Isogrid Cabin Floor Deck (with Blue Velcro EVA Restraint Pads)
+    const floorDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), isogridAlum);
+    floorDeck.position.set(0, -0.08, 0);
+    floorDeck.receiveShadow = true;
+    cabinGroup.add(floorDeck);
+
+    for (let vx = -1; vx <= 1; vx += 2) {
+      const velcroPad = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.015, 1.8), blueValve);
+      velcroPad.position.set(vx * 0.95, 0.01, 0.2);
+      cabinGroup.add(velcroPad);
+    }
+
+    // Cabin Ceiling Deck + Overhead Rendezvous Window + Interior LED Floodlights
+    const ceilingDeck = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.16, 4.5), darkPanelMat);
+    ceilingDeck.position.set(0, 3.1, 0);
+    cabinGroup.add(ceilingDeck);
+
+    // Overhead Docking / COAS Viewport Window
+    const topWindowFrame = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.06, 12, 28), isogridAlum);
+    topWindowFrame.rotation.x = Math.PI / 2;
+    topWindowFrame.position.set(0, 3.01, -0.4);
+    const topWindowGlass = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), cyanGlow);
+    topWindowGlass.rotation.x = Math.PI / 2;
+    topWindowGlass.position.set(0, 3.01, -0.4);
+    cabinGroup.add(topWindowFrame, topWindowGlass);
+
+    // Bright Warm & Cool Interior Cabin PointLights (so all switches & screens shine crisply)
+    const cabinLightMain = new THREE.PointLight(0xf8fafc, 2.4, 12);
+    cabinLightMain.position.set(0, 2.75, 0);
+    cabinGroup.add(cabinLightMain);
+
+    const cabinLightConsole = new THREE.PointLight(0x38bdf8, 1.4, 7);
+    cabinLightConsole.position.set(0, 1.85, -1.55);
+    cabinGroup.add(cabinLightConsole);
+
+    // Structural Isogrid Ring Frames (Ribs) around the Cabin Perimeter
+    for (let rz = -1.8; rz <= 1.8; rz += 1.2) {
+      const leftRib = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.1, 0.12), isogridAlum);
+      leftRib.position.set(-2.15, 1.55, rz);
+      const rightRib = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.1, 0.12), isogridAlum);
+      rightRib.position.set(2.15, 1.55, rz);
+      const topRib = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.12, 0.12), isogridAlum);
+      topRib.position.set(0, 2.98, rz);
+      cabinGroup.add(leftRib, rightRib, topRib);
+    }
+
+    // Back (+Z) Wall with Open Central Ingress/Egress Hatch Doorway (x from -0.75 to +0.75 is OPEN!)
+    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), darkPanelMat);
+    backWallLeft.position.set(-1.5, 1.55, 2.18);
+    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(1.45, 3.1, 0.14), darkPanelMat);
+    backWallRight.position.set(1.5, 1.55, 2.18);
+    const backWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.85, 0.14), darkPanelMat);
+    backWallHeader.position.set(0, 2.68, 2.18);
+    cabinGroup.add(backWallLeft, backWallRight, backWallHeader);
+
+    // Outward-Swung Open Squared Hatch Door with Pressure Relief Valve Wheel
+    const hatchDoor = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.15, 0.09), isogridAlum);
+    hatchDoor.position.set(1.15, 1.12, 2.65);
+    hatchDoor.rotation.y = -Math.PI * 0.35;
+    const hatchWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 10, 20), redValve);
+    hatchWheel.position.set(0, 0, -0.06);
+    hatchDoor.add(hatchWheel);
+    cabinGroup.add(hatchDoor);
+
+    // =========================================================================
+    // 3. FORWARD FLIGHT DECK (-Z WALL) WITH CANTILEVERED WINDOWS, DSKY & FDAI 8-BALLS
+    // =========================================================================
+    // Lower & Center Front Bulkhead (leaving Left & Right Observation Windows open!)
+    const frontLowerWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.15, 0.16), darkPanelMat);
+    frontLowerWall.position.set(0, 0.58, -2.18);
+    const frontTopWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.72, 0.16), darkPanelMat);
+    frontTopWall.position.set(0, 2.74, -2.18);
+    const frontCenterPillar = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.35, 0.18), charcoalRack);
+    frontCenterPillar.position.set(0, 1.80, -2.12);
+    cabinGroup.add(frontLowerWall, frontTopWall, frontCenterPillar);
+
+    // Left (Commander) & Right (LMP) Cantilevered Transparent Observation Windows (y = 1.15 to 2.38)
+    for (let side = -1; side <= 1; side += 2) {
+      const winGlass = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 1.18), glassMat);
+      winGlass.position.set(side * 1.42, 1.76, -2.16);
+      cabinGroup.add(winGlass);
+
+      // Glowing Reticle / COAS Landing LPD Scale Marks etched on the left Commander Window
+      if (side === -1) {
+        for (let tick = -4; tick <= 4; tick++) {
+          const tickBar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.006, 0.004), amberGlow);
+          tickBar.position.set(-1.42, 1.76 + tick * 0.09, -2.14);
+          cabinGroup.add(tickBar);
+        }
+      }
+    }
+
+    // Sloped Main Flight Instrument Console Desk (y = 1.05, z = -1.85)
+    const consoleDesk = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.18, 0.68), charcoalRack);
+    consoleDesk.position.set(0, 1.06, -1.86);
+    consoleDesk.rotation.x = 0.22;
+    cabinGroup.add(consoleDesk);
+
+    // High-Resolution Wide NASA Telemetry & Radar Altimeter Display on Center Pillar
+    const mainScreenMat = new THREE.MeshBasicMaterial({ map: this.generateTelemetryScreenTexture(artifact) });
+    const mainScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 0.66), mainScreenMat);
+    mainScreen.position.set(0, 2.02, -2.01);
+    cabinGroup.add(mainScreen);
+
+    // Authentic Apollo Guidance Computer DSKY (Display & Keyboard) mounted at Center Console
+    const dskyBox = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.16), charcoalRack);
+    dskyBox.position.set(0, 1.38, -1.96);
+    dskyBox.rotation.x = -0.18;
+    const dskyFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.39, 0.41),
+      new THREE.MeshBasicMaterial({ map: this.generateDSKYTexture(artifact) })
+    );
+    dskyFace.position.z = 0.082;
+    dskyBox.add(dskyFace);
+    cabinGroup.add(dskyBox);
+
+    // Dual 3D Gimbaled FDAI "8-Ball" Attitude Director Indicators (Left & Right of DSKY)
+    for (let side = -1; side <= 1; side += 2) {
+      const fdaiBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 24), isogridAlum);
+      fdaiBezel.rotation.x = Math.PI / 2;
+      fdaiBezel.position.set(side * 0.45, 1.46, -1.98);
+      cabinGroup.add(fdaiBezel);
+
+      const navBall = new THREE.Mesh(new THREE.SphereGeometry(0.125, 24, 24), charcoalRack);
+      navBall.position.set(side * 0.45, 1.46, -1.94);
+      // Equator & meridian rings on the 8-Ball
+      const eqRing = new THREE.Mesh(new THREE.TorusGeometry(0.126, 0.006, 8, 24), cyanGlow);
+      navBall.add(eqRing);
+      const merRing = new THREE.Mesh(new THREE.TorusGeometry(0.126, 0.006, 8, 24), amberGlow);
+      merRing.rotation.x = Math.PI / 2;
+      navBall.add(merRing);
+      cabinGroup.add(navBall);
+    }
+
+    // Center Thrust / Descent Engine Throttle Lever & Red Guarded ABORT STAGE Button
+    const throttleBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.26), darkPanelMat);
+    throttleBase.position.set(-0.42, 1.16, -1.68);
+    const throttleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24, 10), isogridAlum);
+    throttleHandle.position.set(0, 0.14, 0);
+    throttleHandle.rotation.x = 0.35;
+    const throttleGrip = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.045, 0.045), redValve);
+    throttleGrip.position.set(0, 0.24, 0.04);
+    throttleBase.add(throttleHandle, throttleGrip);
+    cabinGroup.add(throttleBase);
+
+    const abortButton = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.12), redValve);
+    abortButton.position.set(0.42, 1.15, -1.68);
+    cabinGroup.add(abortButton);
+
+    // =========================================================================
+    // 4. LEFT & RIGHT SIDE WALLS + MISSION-SPECIFIC INTERNAL PAYLOAD BAYS
+    // =========================================================================
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), darkPanelMat);
+    leftWall.position.set(-2.18, 1.55, 0);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.1, 4.4), darkPanelMat);
+    rightWall.position.set(2.18, 1.55, 0);
+    cabinGroup.add(leftWall, rightWall);
+
+    // Left Wall: Panels 11 & 16 Circuit Breaker Array (120+ Individual 3D Toggle Switches!)
+    const cbBoard = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.45, 2.6), charcoalRack);
+    cbBoard.position.set(-2.06, 1.72, -0.2);
+    cabinGroup.add(cbBoard);
+
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 15; col++) {
+        const swMat = (row + col) % 7 === 0 ? redValve : (row + col) % 5 === 0 ? amberGlow : isogridAlum;
+        const breaker = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.045, 8), swMat);
+        breaker.rotation.z = Math.PI / 2;
+        breaker.position.set(-2.01, 1.15 + row * 0.16, -1.32 + col * 0.16);
+        cabinGroup.add(breaker);
+      }
+    }
+
+    // Right Wall: Environmental Control System (ECS) LiOH Canisters, O2/Glycol Pipes & Avionics Racks
+    for (let p = 0; p < 4; p++) {
+      const pipe = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 2.8, 12),
+        p % 2 === 0 ? copperPipe : isogridAlum
+      );
+      pipe.position.set(2.02, 1.45, -1.2 + p * 0.32);
+      cabinGroup.add(pipe);
+
+      const valveWheel = new THREE.Mesh(
+        new THREE.TorusGeometry(0.075, 0.016, 8, 16),
+        p % 2 === 0 ? blueValve : redValve
+      );
+      valveWheel.rotation.y = Math.PI / 2;
+      valveWheel.position.set(1.96, 1.35 + (p % 2) * 0.35, -1.2 + p * 0.32);
+      cabinGroup.add(valveWheel);
+    }
+
+    // LiOH CO2 Scrubber Canisters & Stowed EVA PLSS Life-Support Packs
+    for (let c = 0; c < 2; c++) {
+      const canister = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.68, 18), isogridAlum);
+      canister.position.set(1.82, 0.55, 0.45 + c * 0.65);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 18), goldKapton);
+      cap.position.y = 0.34;
+      canister.add(cap);
+      cabinGroup.add(canister);
+    }
+
+    // Mission-Specific Center Pedestal / Internal Core Module (at x = 0, z = -0.35)
+    if (category === 'impact') {
+      // SATURN V S-IVB / ORBITER INSTRUMENT UNIT: ST-124M Inertial Gyro Platform & Cryogenic Feedlines
+      const gyroPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.58, 0.85, 24), charcoalRack);
+      gyroPedestal.position.set(0, 0.42, -0.45);
+      const gyroSphere = new THREE.Mesh(new THREE.SphereGeometry(0.38, 24, 24), goldKapton);
+      gyroSphere.position.set(0, 1.05, -0.45);
+      const gyroRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.025, 12, 28), cyanGlow);
+      gyroRing.position.set(0, 1.05, -0.45);
+      gyroRing.rotation.x = Math.PI / 3;
+      cabinGroup.add(gyroPedestal, gyroSphere, gyroRing);
+    } else if (body === 'mars' || body === 'venus' || body === 'outer') {
+      // ROVER / PROBE / VENERA / HUYGENS INTERNAL CORE: MMRTG Pu-238 Nuclear Heat Core + Sample Caching Carousel
+      const rtgPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.92, 20), charcoalRack);
+      rtgPedestal.position.set(0, 0.46, -0.45);
+      cabinGroup.add(rtgPedestal);
+
+      // Glowing Plutonium-238 RTG Core Cylinder with 8 Radial Cooling Fins
+      const rtgCore = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.22, 0.22, 0.65, 18),
+        new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0xea580c, emissiveIntensity: 0.85, roughness: 0.3 })
+      );
+      rtgCore.position.set(0, 1.15, -0.45);
+      cabinGroup.add(rtgCore);
+
+      // 12 Titanium Sample Tubes / GCMS Mass Spectrometer Vials in Carousel Ring
+      for (let t = 0; t < 12; t++) {
+        const ang = (t * Math.PI * 2) / 12;
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 10), isogridAlum);
+        tube.position.set(Math.cos(ang) * 0.38, 0.98, -0.45 + Math.sin(ang) * 0.38);
+        cabinGroup.add(tube);
+      }
+    } else {
+      // APOLLO LUNAR MODULE: Central Ascent Engine Cover ("Mid-Step" Cylinder) & Gimbal Housing
+      const engineCover = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.62, 0.88, 24), isogridAlum);
+      engineCover.position.set(0, 0.44, -0.42);
+      const engineTopCap = new THREE.Mesh(new THREE.CylinderGeometry(0.59, 0.59, 0.06, 24), goldKapton);
+      engineTopCap.position.set(0, 0.89, -0.42);
+      cabinGroup.add(engineCover, engineTopCap);
+    }
+
+    this.scene.add(this.walkableInteriorGroup);
   }
 
   renderFrame() {
@@ -1951,6 +2549,9 @@ class MissionSimulationTheater {
   updateSimulationPhysics(t, dt) {
     const artifact = this.currentArtifact;
     if (!artifact || !this.spacecraft) return;
+    if (this.walkableInteriorGroup) {
+      this.walkableInteriorGroup.visible = (this.cameraMode === 'walk' || t >= 6.4);
+    }
 
     if (artifact.category === 'impact') {
       if (t < 3.2) {
@@ -2186,12 +2787,12 @@ class MissionSimulationTheater {
   }
 
   // ===========================================================================
-  // REALISTIC ASTRONAUT WALKING KINEMATICS, HANDS SWING & WEBXR LOCOMOTION
+  // REALISTIC ASTRONAUT WALKING, LADDER CLIMBING, CABIN INTERIOR & YXZ CAMERA
   // ===========================================================================
   updateAstronautWalk(dt) {
     const ws = this.walkState;
     ws.breathPhase += dt * 1.65;
-    const speed = 4.8; // Authentic EVA surface pace
+    const speed = ws.isInsideCabin ? 2.6 : 4.8; // Careful indoor cabin movement vs. EVA surface stride
     let moveForward = 0;
     let moveRight = 0;
 
@@ -2212,12 +2813,14 @@ class MissionSimulationTheater {
       }
     }
 
-    // Smoothly damp mouse-look rotation for cinematic visor feel
+    // Smoothly damp mouse-look rotation without any angle wrapping or gimbal lock
     if (ws.smoothYaw === undefined) ws.smoothYaw = ws.yaw;
     if (ws.smoothPitch === undefined) ws.smoothPitch = ws.pitch;
-    const lookLerp = Math.min(1, dt * 16.0);
+    const lookLerp = Math.min(1, dt * 18.0);
     ws.smoothYaw += (ws.yaw - ws.smoothYaw) * lookLerp;
     ws.smoothPitch += (ws.pitch - ws.smoothPitch) * lookLerp;
+    // Guarantee pitch stays within safe human neck range (±58 deg)
+    ws.smoothPitch = Math.max(-1.01, Math.min(1.01, ws.smoothPitch));
 
     const forwardX = -Math.sin(ws.smoothYaw);
     const forwardZ = -Math.cos(ws.smoothYaw);
@@ -2226,10 +2829,15 @@ class MissionSimulationTheater {
 
     const isMoving = (Math.abs(moveForward) > 0.01 || Math.abs(moveRight) > 0.01);
 
-    // Smooth acceleration / deceleration blend factor (prevents sudden camera jerk!)
+    // Smooth acceleration / deceleration blend factor
     if (ws.moveBlend === undefined) ws.moveBlend = 0;
     const targetBlend = isMoving ? 1.0 : 0.0;
     ws.moveBlend += (targetBlend - ws.moveBlend) * Math.min(1, dt * 7.5);
+
+    const cabinFloorY = 4.5;
+    const groundY0 = this.getExactSurfaceHeight(0, 6.2);
+    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const cabinBtn = document.getElementById('btn-walk-cabin');
 
     if (isMoving) {
       const len = Math.hypot(moveForward, moveRight) || 1;
@@ -2238,20 +2846,64 @@ class MissionSimulationTheater {
 
       const candidateX = ws.x + nx * speed * dt;
       const candidateZ = ws.z + nz * speed * dt;
-      // Collision boundary with central lander hull (radius 4.4m)
-      if (Math.hypot(candidateX, candidateZ) > 4.4 && Math.hypot(candidateX, candidateZ) < 120) {
-        ws.x = candidateX;
-        ws.z = candidateZ;
-      }
-      ws.stepPhase += dt * 6.4;
+      const candidateDist = Math.hypot(candidateX, candidateZ);
 
-      // Spawn ribbed lunar footprint & dust puff on every footfall!
+      // 1. Check if astronaut is inside the Pressurized Spacecraft Cabin (|x| <= 1.88, z in [-1.72, 2.25])
+      if (ws.isInsideCabin) {
+        // If walking out through the open +Z hatch doorway (|x| < 0.72 and z > 2.20), step onto the ladder!
+        if (candidateZ > 2.22 && Math.abs(candidateX) < 0.78) {
+          ws.isInsideCabin = false;
+          ws.isOnLadder = true;
+          ws.x = Math.max(-0.45, Math.min(0.45, candidateX));
+          ws.z = candidateZ;
+          if (cabinBtn) {
+            cabinBtn.classList.remove('active');
+            cabinBtn.innerText = isTr ? '🪜 Aracın İçine Gir / Kabin (E)' : '🪜 Enter Spacecraft Cabin (E)';
+          }
+        } else {
+          // Constrain smoothly within cabin walls & around center pedestal (radius 0.72m at z = -0.42)
+          const clampedX = Math.max(-1.82, Math.min(1.82, candidateX));
+          const clampedZ = Math.max(-1.62, Math.min(2.12, candidateZ));
+          if (Math.hypot(clampedX, clampedZ + 0.42) > 0.72) {
+            ws.x = clampedX;
+            ws.z = clampedZ;
+          }
+        }
+      } else {
+        // 2. Check if astronaut is in the Exterior Boarding Ladder Corridor (|x| < 0.95, z between 2.20 and 6.35)
+        const inLadderCorridor = Math.abs(candidateX) < 0.95 && candidateZ >= 2.15 && candidateZ <= 6.35;
+        if (inLadderCorridor) {
+          ws.isOnLadder = true;
+          ws.x = Math.max(-0.55, Math.min(0.55, candidateX));
+          ws.z = candidateZ;
+          // Reaching top of ladder (z <= 2.35) steps directly inside the cabin!
+          if (ws.z <= 2.35) {
+            ws.isInsideCabin = true;
+            ws.isOnLadder = false;
+            ws.y = cabinFloorY;
+            if (cabinBtn) {
+              cabinBtn.classList.add('active');
+              cabinBtn.innerText = isTr ? '🚪 Kabinden Yüzeye Çık (E)' : '🚪 Exit Cabin to Surface (E)';
+            }
+          }
+        } else {
+          ws.isOnLadder = false;
+          // Standard surface movement outside central lander hull (radius 4.4m)
+          if (candidateDist > 4.4 && candidateDist < 120) {
+            ws.x = candidateX;
+            ws.z = candidateZ;
+          }
+        }
+      }
+
+      ws.stepPhase += dt * (ws.isInsideCabin ? 5.2 : 6.4);
+
+      // Spawn ribbed lunar footprint & dust puff on every surface footfall (when on planetary regolith)
       const stepInterval = Math.PI * 0.72;
       const stepIndex = Math.floor(ws.stepPhase / stepInterval);
-      if (stepIndex > ws.lastStepCount && ws.isGrounded) {
+      if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isInsideCabin && !ws.isOnLadder) {
         ws.lastStepCount = stepIndex;
         const isLeftFoot = (stepIndex % 2 === 0);
-        // Place bootprint slightly behind/under current stride foot
         const strideBack = -0.10;
         const footX = ws.x + forwardX * strideBack;
         const footZ = ws.z + forwardZ * strideBack;
@@ -2260,19 +2912,28 @@ class MissionSimulationTheater {
       }
     }
 
-    // Planetary gravity physics for jumping / walking over craters using exact triangle surface height
+    // Vertical Elevation: Inside Cabin vs. Climbing Ladder vs. Planetary Surface Gravity
     const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
     const gravity = body === 'moon' ? 3.2 : body === 'outer' ? 2.8 : body === 'mars' ? 5.5 : 9.8;
     const groundY = this.getExactSurfaceHeight(ws.x, ws.z);
 
-    if (!ws.isGrounded || ws.y > groundY + 0.04) {
+    if (ws.isInsideCabin) {
+      ws.y = cabinFloorY;
+      ws.vy = 0;
+      ws.isGrounded = true;
+    } else if (ws.isOnLadder) {
+      // Smoothly climb up/down the 12 ladder rungs based on z position (z = 6.35 -> groundY0, z = 2.35 -> cabinFloorY)
+      const climbFrac = Math.max(0, Math.min(1, (6.35 - ws.z) / (6.35 - 2.35)));
+      ws.y = groundY0 + climbFrac * (cabinFloorY - groundY0);
+      ws.vy = 0;
+      ws.isGrounded = true;
+    } else if (!ws.isGrounded || ws.y > groundY + 0.04) {
       ws.vy -= gravity * dt;
       ws.y += ws.vy * dt;
       if (ws.y <= groundY) {
         ws.y = groundY;
         ws.vy = 0;
         ws.isGrounded = true;
-        // Stamp both boots when landing from a lunar jump!
         this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, true);
         this.spawnFootprint(ws.x, ws.z, ws.smoothYaw, false);
         this.spawnBootDust(ws.x, ws.z, 10);
@@ -2281,24 +2942,33 @@ class MissionSimulationTheater {
       ws.y = groundY;
     }
 
+    // Automatically cut away solid exterior hull blocks when climbing into or standing inside the cabin
+    if (this.spacecraft) {
+      const showExteriorShell = !ws.isInsideCabin && ws.y < 2.1;
+      this.spacecraft.visible = showExteriorShell;
+    }
+
     // Smooth C2-continuous sinusoidal EVA stride bob & natural weight-transfer sway
     const groundFactor = ws.isGrounded ? ws.moveBlend : 0;
-    const strideWave = 0.5 - 0.5 * Math.cos(ws.stepPhase * 2.0); // Smooth [0..1] wave without sharp cusps!
-    const verticalBounce = groundFactor * strideWave * 0.085 + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.010;
-    const lateralSway = groundFactor * Math.sin(ws.stepPhase) * 0.042;
-    const rollSway = groundFactor * Math.sin(ws.stepPhase) * 0.015 + Math.cos(ws.breathPhase * 0.7) * 0.002;
-    const pitchBob = groundFactor * Math.cos(ws.stepPhase * 2.0) * 0.011 + Math.sin(ws.breathPhase) * 0.003;
+    const strideWave = 0.5 - 0.5 * Math.cos(ws.stepPhase * 2.0);
+    const bounceAmp = ws.isInsideCabin ? 0.032 : 0.075;
+    const verticalBounce = groundFactor * strideWave * bounceAmp + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.008;
+    const lateralSway = groundFactor * Math.sin(ws.stepPhase) * (ws.isInsideCabin ? 0.018 : 0.036);
+    const rollSway = groundFactor * Math.sin(ws.stepPhase) * (ws.isInsideCabin ? 0.006 : 0.012);
+    const pitchBob = groundFactor * Math.cos(ws.stepPhase * 2.0) * (ws.isInsideCabin ? 0.005 : 0.009);
 
-    // Animate First-Person Astronaut Arms & Gloved Hands
+    // Animate First-Person Astronaut Arms & Gloved Hands (including Ladder-Climbing Reach!)
     if (this.fpLeftArm && this.fpRightArm) {
       const swing = groundFactor * Math.sin(ws.stepPhase) * 0.14 + (1 - groundFactor) * Math.sin(ws.breathPhase) * 0.022;
+      const climbLiftL = ws.isOnLadder ? Math.sin(ws.stepPhase) * 0.12 : 0;
+      const climbLiftR = ws.isOnLadder ? -Math.sin(ws.stepPhase) * 0.12 : 0;
       const jumpLift = ws.isGrounded ? 0 : Math.min(0.16, Math.abs(ws.vy) * 0.038);
 
-      this.fpLeftArm.position.set(-0.27 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35, -0.44 - swing * 0.32);
-      this.fpLeftArm.rotation.set(0.42 + swing * 0.48 + jumpLift, 0.22 + lateralSway * 0.2, -0.18 - rollSway * 1.5);
+      this.fpLeftArm.position.set(-0.27 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35 + climbLiftL, -0.44 - swing * 0.32);
+      this.fpLeftArm.rotation.set(0.42 + swing * 0.48 + jumpLift + climbLiftL * 1.4, 0.22 + lateralSway * 0.2, -0.18 - rollSway * 1.2);
 
-      this.fpRightArm.position.set(0.28 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35, -0.44 + swing * 0.32);
-      this.fpRightArm.rotation.set(0.38 - swing * 0.48 + jumpLift, -0.20 + lateralSway * 0.2, 0.15 - rollSway * 1.5);
+      this.fpRightArm.position.set(0.28 + lateralSway * 0.35, -0.26 + strideWave * groundFactor * 0.025 + jumpLift * 0.35 + climbLiftR, -0.44 + swing * 0.32);
+      this.fpRightArm.rotation.set(0.38 - swing * 0.48 + jumpLift + climbLiftR * 1.4, -0.20 + lateralSway * 0.2, 0.15 - rollSway * 1.2);
     }
 
     // Animate 3rd-Person Full Articulated Astronaut Suit (2-Bone Arms + 2-Bone Legs + Torso Twist)
@@ -2310,95 +2980,108 @@ class MissionSimulationTheater {
         const phase = ws.stepPhase;
         const blend = ws.moveBlend;
         const jumpPose = ws.isGrounded ? 0 : 0.35;
+        const ladderPose = ws.isOnLadder ? 0.55 : 0;
 
-        // Upper body subtle forward EVA lean, breathing & counter-rotation twist
         if (this.tpLimbs.upperBody) {
-          this.tpLimbs.upperBody.rotation.x = 0.06 * blend + Math.sin(ws.breathPhase) * 0.012;
+          this.tpLimbs.upperBody.rotation.x = 0.06 * blend + ladderPose * 0.25 + Math.sin(ws.breathPhase) * 0.012;
           this.tpLimbs.upperBody.rotation.y = -Math.sin(phase) * 0.08 * blend;
           this.tpLimbs.upperBody.rotation.z = Math.cos(phase) * 0.035 * blend;
         }
 
-        // Helmet tracks camera pitch and subtle scan
         if (this.tpLimbs.helmetGroup) {
           this.tpLimbs.helmetGroup.rotation.x = -ws.smoothPitch * 0.45;
           this.tpLimbs.helmetGroup.rotation.y = Math.sin(ws.breathPhase * 0.6) * 0.04;
         }
 
-        // 2-Bone Arms: Shoulder swing + Elbow flexion
         const armSwing = Math.sin(phase) * 0.46 * blend;
-        this.tpLimbs.leftArm.rotation.x = armSwing - jumpPose * 0.5;
-        this.tpLimbs.rightArm.rotation.x = -armSwing - jumpPose * 0.5;
+        this.tpLimbs.leftArm.rotation.x = armSwing - jumpPose * 0.5 - ladderPose * 0.85;
+        this.tpLimbs.rightArm.rotation.x = -armSwing - jumpPose * 0.5 - ladderPose * 0.85;
 
         if (this.tpLimbs.leftForearm && this.tpLimbs.rightForearm) {
-          this.tpLimbs.leftForearm.rotation.x = 0.28 + Math.max(0, Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4;
-          this.tpLimbs.rightForearm.rotation.x = 0.28 + Math.max(0, -Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4;
+          this.tpLimbs.leftForearm.rotation.x = 0.28 + Math.max(0, Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4 + ladderPose * 0.5;
+          this.tpLimbs.rightForearm.rotation.x = 0.28 + Math.max(0, -Math.sin(phase)) * 0.42 * blend + jumpPose * 0.4 + ladderPose * 0.5;
         }
 
-        // 2-Bone Legs: Hip stride + Realistic Knee bend (shin bends backward during forward leg lift)
-        const leftHipAngle = -Math.sin(phase) * 0.55 * blend - jumpPose * 0.35;
-        const rightHipAngle = Math.sin(phase) * 0.55 * blend - jumpPose * 0.20;
+        const leftHipAngle = -Math.sin(phase) * 0.55 * blend - jumpPose * 0.35 - ladderPose * 0.4;
+        const rightHipAngle = Math.sin(phase) * 0.55 * blend - jumpPose * 0.20 - ladderPose * 0.4;
         this.tpLimbs.leftLeg.rotation.x = leftHipAngle;
         this.tpLimbs.rightLeg.rotation.x = rightHipAngle;
 
         if (this.tpLimbs.leftShin && this.tpLimbs.rightShin) {
-          const leftKneeBend = Math.max(0, -Math.cos(phase)) * 0.68 * blend + jumpPose * 0.65;
-          const rightKneeBend = Math.max(0, Math.cos(phase)) * 0.68 * blend + jumpPose * 0.55;
+          const leftKneeBend = Math.max(0, -Math.cos(phase)) * 0.68 * blend + jumpPose * 0.65 + ladderPose * 0.6;
+          const rightKneeBend = Math.max(0, Math.cos(phase)) * 0.68 * blend + jumpPose * 0.55 + ladderPose * 0.6;
           this.tpLimbs.leftShin.rotation.x = leftKneeBend;
           this.tpLimbs.rightShin.rotation.x = rightKneeBend;
         }
       }
     }
 
-    // Position Camera / WebXR Rig
+    // =========================================================================
+    // GIMBAL-FREE YXZ CAMERA ORIENTATION (NEVER FLIPS UPSIDE DOWN OR SHAKES!)
+    // =========================================================================
+    this.camera.rotation.order = 'YXZ';
+
     if (this.renderer.xr && this.renderer.xr.isPresenting) {
-      // In real WebXR VR headset: move the cameraRig dolly on the surface; headset controls head look!
+      // In real WebXR VR headset: move the cameraRig dolly on the surface or inside the cabin; headset controls head look!
       this.cameraRig.position.set(ws.x, ws.y, ws.z);
-      this.cameraRig.rotation.y = ws.smoothYaw;
+      this.cameraRig.rotation.set(0, ws.smoothYaw, 0, 'YXZ');
     } else if (this.walkViewMode === 'tp') {
-      // 3rd-Person Over-the-Shoulder Cinematic Astronaut Camera
+      // 3rd-Person Over-the-Shoulder Camera using direct YXZ Euler (no lookAt flip!)
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
-      const camDist = 3.55;
-      const camX = ws.x - forwardX * camDist + rightX * (0.48 + lateralSway * 0.4);
-      const camZ = ws.z - forwardZ * camDist + rightZ * (0.48 + lateralSway * 0.4);
-      const camY = Math.max(
-        this.getExactSurfaceHeight(camX, camZ) + 0.55,
-        ws.y + 2.15 + verticalBounce * 0.45 - Math.sin(ws.smoothPitch) * 1.35
-      );
+      const camDist = ws.isInsideCabin ? 1.65 : 3.45;
+      const tpPitch = Math.max(-0.85, Math.min(0.85, ws.smoothPitch * 0.75 - 0.10));
+      const horizDist = camDist * Math.cos(tpPitch);
+      const camX = ws.x - forwardX * horizDist + rightX * (0.42 + lateralSway * 0.35);
+      const camZ = ws.z - forwardZ * horizDist + rightZ * (0.42 + lateralSway * 0.35);
+      const minGroundY = ws.isInsideCabin ? cabinFloorY + 0.5 : this.getExactSurfaceHeight(camX, camZ) + 0.55;
+      const camY = Math.max(minGroundY, ws.y + 1.55 + verticalBounce * 0.45 - camDist * Math.sin(tpPitch));
+
       this.camera.position.set(camX, camY, camZ);
-      this.camera.lookAt(
-        ws.x + forwardX * 3.5,
-        ws.y + 1.42 + verticalBounce * 0.3 + Math.sin(ws.smoothPitch) * 1.8,
-        ws.z + forwardZ * 3.5
-      );
-      this.camera.rotation.z = rollSway * 0.45;
+      this.camera.rotation.set(tpPitch, ws.smoothYaw, rollSway * 0.35, 'YXZ');
     } else {
-      // 1st-Person Astronaut Visor & Hands Camera with Smooth Organic Head-Bob & Roll Sway
+      // 1st-Person Astronaut Visor & Hands Camera using pure YXZ Euler (zero gimbal lock, 360° smooth!)
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
       const eyeY = ws.y + ws.eyeHeight + verticalBounce;
-      const effectivePitch = ws.smoothPitch + pitchBob;
+      const effectivePitch = Math.max(-1.02, Math.min(1.02, ws.smoothPitch + pitchBob));
+
       this.camera.position.set(ws.x + rightX * lateralSway, eyeY, ws.z + rightZ * lateralSway);
-      const lookTarget = new THREE.Vector3(
-        ws.x + rightX * lateralSway + forwardX * Math.cos(effectivePitch),
-        eyeY + Math.sin(effectivePitch),
-        ws.z + rightZ * lateralSway + forwardZ * Math.cos(effectivePitch)
-      );
-      this.camera.lookAt(lookTarget);
-      this.camera.rotation.z = rollSway;
+      this.camera.rotation.set(effectivePitch, ws.smoothYaw, rollSway, 'YXZ');
     }
 
     // Update 1:1 Walk HUD telemetry
     const dist = Math.hypot(ws.x, ws.z).toFixed(1);
     const distEl = document.getElementById('walk-hud-dist');
     const gravEl = document.getElementById('walk-hud-grav');
-    const isTr = window.app ? window.app.currentLang === 'tr' : true;
+    const statusEl = document.getElementById('walk-xr-status');
+    if (statusEl && !this.xrSession) {
+      if (ws.isInsideCabin) {
+        statusEl.innerText = isTr
+          ? '🏠 UZAY ARACI İÇ KABİNİ AKTİF (DSKY Bilgisayarı, 120+ Devre Kesici, RTG/Motor Çekirdeği & Pencereler • Çıkmak için +Z Kapısına Yürü veya E Tuşu)'
+          : '🏠 SPACECRAFT INTERIOR CABIN ACTIVE (DSKY Computer, 120+ Breakers, RTG/Engine Core & Viewports • Walk to Hatch or Press E to Exit)';
+      } else if (ws.isOnLadder) {
+        statusEl.innerText = isTr
+          ? '🪜 EVA MERDİVEN TIRMANIŞI AKTİF (İleri [W]: Kabin İçine Tırman • Geri [S]: Yüzeye İn • E: Hızlı Giriş)'
+          : '🪜 CLIMBING EVA BOARDING LADDER (Forward [W]: Climb into Cabin • Back [S]: Descend to Surface)';
+      } else {
+        statusEl.innerText = isTr
+          ? '🥽 1:1 ASTRONOT VİZÖR & ELLER MODU AKTİF (WASD: Yürü • Merdivene Yürü veya E: Aracın İçine Gir • V: 1./3. Şahıs • F: Fener)'
+          : '🥽 1:1 ASTRONAUT VISOR & HANDS ACTIVE (WASD: Walk • Walk to Ladder or Press E: Enter Spacecraft Cabin • V: View • F: Torch)';
+      }
+    }
     if (distEl) {
-      distEl.innerText = isTr ? `ARACA MESAFE: ${dist} m (1:1 Ölçek)` : `DISTANCE TO CRAFT: ${dist} m (1:1 Scale)`;
+      if (ws.isInsideCabin) {
+        distEl.innerText = isTr ? `KONUM: 🏠 ARACIN İÇ KABİNİ (Yükseklik: +4.5m)` : `LOCATION: 🏠 INSIDE CABIN (+4.5m Deck)`;
+      } else if (ws.isOnLadder) {
+        distEl.innerText = isTr ? `KONUM: 🪜 EVA MERDİVENİ (+${(ws.y - groundY0).toFixed(1)}m)` : `LOCATION: 🪜 EVA LADDER (+${(ws.y - groundY0).toFixed(1)}m)`;
+      } else {
+        distEl.innerText = isTr ? `ARACA MESAFE: ${dist} m (1:1 Ölçek)` : `DISTANCE TO CRAFT: ${dist} m (1:1 Scale)`;
+      }
     }
     if (gravEl) {
       const gravLabel = body === 'moon' ? '1.62 m/s² (0.16g)' : body === 'mars' ? '3.72 m/s² (0.38g)' : body === 'venus' ? '8.87 m/s² (92 bar)' : '1.35 m/s² (0.14g)';
-      gravEl.innerText = isTr ? `YERÇEKİMİ: ${gravLabel} | GÖZ HİZASI: 1.75 m | AYAK İZİ: ${this.footprints.length}` : `GRAVITY: ${gravLabel} | EYE LEVEL: 1.75 m | FOOTPRINTS: ${this.footprints.length}`;
+      gravEl.innerText = isTr ? `YERÇEKİMİ: ${gravLabel} | GÖZ HİZASI: ${(ws.y + 1.75).toFixed(2)} m | AYAK İZİ: ${this.footprints.length}` : `GRAVITY: ${gravLabel} | EYE LEVEL: ${(ws.y + 1.75).toFixed(2)} m | FOOTPRINTS: ${this.footprints.length}`;
     }
   }
 

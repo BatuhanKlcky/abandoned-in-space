@@ -108,28 +108,33 @@ body {
   gap: 12px;
 }
 
-.nasa-meatball {
-  width: 42px;
-  height: 42px;
+.team-logo-badge {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #0b3d91, #001233);
+  background: radial-gradient(circle at 50% 50%, #0d1f3c, #040914);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 16px rgba(11, 61, 145, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45), 0 2px 8px rgba(0, 0, 0, 0.7);
+  border: 1.5px solid rgba(0, 240, 255, 0.65);
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.nasa-meatball::after {
-  content: "NASA";
-  font-family: var(--font-mono);
-  font-weight: 800;
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #fff;
+.team-logo-badge:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.75);
+}
+
+.team-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .title-group h1 {
@@ -1804,9 +1809,9 @@ body {
     gap: 8px;
   }
 
-  .nasa-meatball {
-    width: 34px;
-    height: 34px;
+  .team-logo-badge {
+    width: 38px;
+    height: 38px;
   }
 
   .title-group h1 {
@@ -2553,9 +2558,9 @@ body {
   gap: 10px;
 }
 
-.nasa-meatball {
-  width: 36px;
-  height: 36px;
+.team-logo-badge {
+  width: 44px;
+  height: 44px;
 }
 
 .title-group h1 {

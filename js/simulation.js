@@ -1549,10 +1549,14 @@ class MissionSimulationTheater {
   }
 
   getXRController(hand) {
-    if (!this.xrControllers) return null;
+    if (!this.xrControllers || this.xrControllers.length === 0) return null;
     const found = this.xrControllers.find((c) => c && c.userData && c.userData.handedness === hand);
     if (found) return found;
-    return hand === 'left' ? this.xrControllers[0] : this.xrControllers[1];
+    return hand === 'left' ? (this.xrControllers[0] || null) : (this.xrControllers[1] || this.xrControllers[0] || null);
+  }
+
+  findXRController(hand) {
+    return this.getXRController(hand);
   }
 
   handleQuestFaceButton(button) {
@@ -7207,7 +7211,11 @@ class MissionSimulationTheater {
 
     ctx.fillStyle = statusBg;
     ctx.beginPath();
-    ctx.roundRect(w - 200, 30, 170, 38, 8);
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(w - 200, 30, 170, 38, 8);
+    } else {
+      ctx.rect(w - 200, 30, 170, 38);
+    }
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 15px "Consolas", monospace';
@@ -7427,6 +7435,7 @@ class MissionSimulationTheater {
   }
 
   wrapTabletText(ctx, text, x, y, maxWidth, lineHeight) {
+    if (!text) return;
     const words = text.split(' ');
     let line = '';
     let currY = y;
@@ -7448,56 +7457,64 @@ class MissionSimulationTheater {
   }
 
   attachToolsToXRControllers() {
-    if (!this.spectrometerGroup) this.buildSpectrometerDevice();
-    if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
+    try {
+      if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+      if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
 
-    const rightCtrl = this.findXRController('right') || (this.xrControllers && this.xrControllers[1]);
-    const leftCtrl = this.findXRController('left') || (this.xrControllers && this.xrControllers[0]);
+      const rightCtrl = this.getXRController('right') || (this.xrControllers && this.xrControllers[1]);
+      const leftCtrl = this.getXRController('left') || (this.xrControllers && this.xrControllers[0]);
 
-    if (rightCtrl && this.spectrometerGroup) {
-      if (this.spectrometerGroup.parent !== rightCtrl) {
-        if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
-        rightCtrl.add(this.spectrometerGroup);
+      if (rightCtrl && this.spectrometerGroup) {
+        if (this.spectrometerGroup.parent !== rightCtrl) {
+          if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
+          rightCtrl.add(this.spectrometerGroup);
+        }
+        this.spectrometerGroup.position.set(0, -0.015, -0.08);
+        this.spectrometerGroup.rotation.set(-0.15, 0, 0);
+        this.spectrometerGroup.scale.set(1, 1, 1);
+        this.spectrometerGroup.visible = !!this.isSpectrometerActive;
       }
-      this.spectrometerGroup.position.set(0, -0.015, -0.08);
-      this.spectrometerGroup.rotation.set(-0.15, 0, 0);
-      this.spectrometerGroup.scale.set(1, 1, 1);
-      this.spectrometerGroup.visible = !!this.isSpectrometerActive;
-    }
 
-    if (leftCtrl && this.scienceTabletGroup) {
-      if (this.scienceTabletGroup.parent !== leftCtrl) {
-        if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
-        leftCtrl.add(this.scienceTabletGroup);
+      if (leftCtrl && this.scienceTabletGroup) {
+        if (this.scienceTabletGroup.parent !== leftCtrl) {
+          if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
+          leftCtrl.add(this.scienceTabletGroup);
+        }
+        this.scienceTabletGroup.position.set(0.02, 0.07, -0.08);
+        this.scienceTabletGroup.rotation.set(-Math.PI / 3.2, 0, 0);
+        this.scienceTabletGroup.scale.set(1, 1, 1);
+        this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
       }
-      this.scienceTabletGroup.position.set(0.02, 0.07, -0.08);
-      this.scienceTabletGroup.rotation.set(-Math.PI / 3.2, 0, 0);
-      this.scienceTabletGroup.scale.set(1, 1, 1);
-      this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
+    } catch (err) {
+      console.warn('attachToolsToXRControllers non-fatal error:', err);
     }
   }
 
   reattachToolsToFPArms() {
-    if (this.spectrometerGroup && this.spectrometerGroup.parent !== this.fpRightArm) {
-      if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
-      if (this.fpRightArm) {
-        this.spectrometerGroup.position.set(0, 0.04, -0.16);
-        this.spectrometerGroup.rotation.set(-0.12, 0.05, 0);
-        this.spectrometerGroup.scale.set(1, 1, 1);
-        this.fpRightArm.add(this.spectrometerGroup);
+    try {
+      if (this.spectrometerGroup && this.spectrometerGroup.parent !== this.fpRightArm) {
+        if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
+        if (this.fpRightArm) {
+          this.spectrometerGroup.position.set(0, 0.04, -0.16);
+          this.spectrometerGroup.rotation.set(-0.12, 0.05, 0);
+          this.spectrometerGroup.scale.set(1, 1, 1);
+          this.fpRightArm.add(this.spectrometerGroup);
+        }
+        this.spectrometerGroup.visible = !!this.isSpectrometerActive;
       }
-      this.spectrometerGroup.visible = !!this.isSpectrometerActive;
-    }
 
-    if (this.scienceTabletGroup && this.scienceTabletGroup.parent !== this.fpLeftArm) {
-      if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
-      if (this.fpLeftArm) {
-        this.scienceTabletGroup.position.set(0.08, 0.12, -0.18);
-        this.scienceTabletGroup.rotation.set(-0.45, 0.35, -0.18);
-        this.scienceTabletGroup.scale.set(0.85, 0.85, 0.85);
-        this.fpLeftArm.add(this.scienceTabletGroup);
+      if (this.scienceTabletGroup && this.scienceTabletGroup.parent !== this.fpLeftArm) {
+        if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
+        if (this.fpLeftArm) {
+          this.scienceTabletGroup.position.set(0.08, 0.12, -0.18);
+          this.scienceTabletGroup.rotation.set(-0.45, 0.35, -0.18);
+          this.scienceTabletGroup.scale.set(0.85, 0.85, 0.85);
+          this.fpLeftArm.add(this.scienceTabletGroup);
+        }
+        this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
       }
-      this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
+    } catch (err) {
+      console.warn('reattachToolsToFPArms non-fatal error:', err);
     }
   }
 
@@ -7538,10 +7555,10 @@ class MissionSimulationTheater {
     if (!this.isSpectrometerActive) {
       this.stopSpectrometerScan();
       if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
-      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+      if (this.spectrometerBeam && this.spectrometerBeam.material) this.spectrometerBeam.material.opacity = 0.0;
     } else {
       this.updateScienceTabletCanvas();
-      this.startSpectrometerScan();
+      this.startSpectrometerScan(false);
       setTimeout(() => {
         if (!this.isMouseDownScanning) this.stopSpectrometerScan();
       }, 700);
@@ -7554,128 +7571,189 @@ class MissionSimulationTheater {
     );
   }
 
-  startSpectrometerScan() {
-    this.isActivelyScanning = true;
-    this.isMouseDownScanning = true;
-    if (window.SpaceAudio) {
-      window.SpaceAudio.setSpectrometerBeamHum(true);
-      window.SpaceAudio.playSpectrometerAnalyzeChirp();
+  startSpectrometerScan(isHold = true) {
+    try {
+      if (!this.isSpectrometerActive) {
+        this.isSpectrometerActive = true;
+        if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
+          this.attachToolsToXRControllers();
+        } else {
+          this.reattachToolsToFPArms();
+        }
+        if (this.spectrometerGroup) this.spectrometerGroup.visible = true;
+        if (this.scienceTabletGroup) this.scienceTabletGroup.visible = true;
+      }
+
+      this.isActivelyScanning = true;
+      this.isMouseDownScanning = !!isHold;
+
+      if (window.SpaceAudio) {
+        window.SpaceAudio.setSpectrometerBeamHum(true);
+        window.SpaceAudio.playSpectrometerAnalyzeChirp();
+      }
+
+      const triggerBtn = document.getElementById('btn-spec-trigger');
+      if (triggerBtn) triggerBtn.classList.add('active');
+
+      if (this.scanSafetyTimeout) clearTimeout(this.scanSafetyTimeout);
+      this.scanSafetyTimeout = setTimeout(() => {
+        if (this.isActivelyScanning && !this.isMouseDownScanning) {
+          this.stopSpectrometerScan();
+        }
+      }, 6000);
+    } catch (err) {
+      console.warn('startSpectrometerScan non-fatal error:', err);
     }
-    const triggerBtn = document.getElementById('btn-spec-trigger');
-    if (triggerBtn) triggerBtn.classList.add('active');
   }
 
   stopSpectrometerScan() {
-    this.isActivelyScanning = false;
-    this.isMouseDownScanning = false;
-    if (window.SpaceAudio) {
-      window.SpaceAudio.setSpectrometerBeamHum(false);
+    try {
+      if (this.scanSafetyTimeout) {
+        clearTimeout(this.scanSafetyTimeout);
+        this.scanSafetyTimeout = null;
+      }
+      this.isActivelyScanning = false;
+      this.isMouseDownScanning = false;
+      if (window.SpaceAudio) {
+        window.SpaceAudio.setSpectrometerBeamHum(false);
+      }
+      const triggerBtn = document.getElementById('btn-spec-trigger');
+      if (triggerBtn) triggerBtn.classList.remove('active');
+    } catch (err) {
+      console.warn('stopSpectrometerScan non-fatal error:', err);
     }
-    const triggerBtn = document.getElementById('btn-spec-trigger');
-    if (triggerBtn) triggerBtn.classList.remove('active');
   }
 
   updateSpectrometer(dt) {
-    if (!this.isSpectrometerActive || this.cameraMode !== 'walk') {
-      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
-      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
-      if (this.scienceTabletGroup) this.scienceTabletGroup.visible = false;
-      if (window.SpaceAudio && this.isScanningAudioActive) {
-        window.SpaceAudio.setSpectrometerBeamHum(false);
-        this.isScanningAudioActive = false;
-      }
-      return;
-    }
-
-    if (!this.spectrometerGroup) this.buildSpectrometerDevice();
-    if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
-    if (this.spectrometerGroup) this.spectrometerGroup.visible = true;
-    if (this.scienceTabletGroup) this.scienceTabletGroup.visible = true;
-
-    // Scan progress animation
-    if (this.isActivelyScanning) {
-      this.spectrometerScanProgress = Math.min(1.0, (this.spectrometerScanProgress || 0) + dt * 0.85);
-    } else {
-      this.spectrometerScanProgress = Math.max(0.15, (this.spectrometerScanProgress || 0) - dt * 0.35);
-    }
-
-    // Raycast from camera center or XR controller into the scene
-    const rayOrigin = new THREE.Vector3();
-    const rayDir = new THREE.Vector3(0, 0, -1);
-
-    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers && this.xrControllers.length > 0) {
-      const rightCtrl = this.findXRController('right') || this.xrControllers[1] || this.xrControllers[0];
-      if (rightCtrl) {
-        const tempMatrix = new THREE.Matrix4().identity().extractRotation(rightCtrl.matrixWorld);
-        rayOrigin.setFromMatrixPosition(rightCtrl.matrixWorld);
-        rayDir.set(0, 0, -1).applyMatrix4(tempMatrix);
-      }
-    } else {
-      this.camera.getWorldPosition(rayOrigin);
-      this.camera.getWorldDirection(rayDir);
-    }
-
-    this.spectrometerRaycaster = this.spectrometerRaycaster || new THREE.Raycaster();
-    this.spectrometerRaycaster.ray.origin.copy(rayOrigin);
-    this.spectrometerRaycaster.ray.direction.copy(rayDir);
-    this.spectrometerRaycaster.far = 38.0;
-
-    const targetsToTest = [];
-    if (this.spacecraft) targetsToTest.push(this.spacecraft);
-    if (this.terrain) targetsToTest.push(this.terrain);
-    if (this.interactables && this.interactables.length > 0) targetsToTest.push(...this.interactables);
-
-    const hits = this.spectrometerRaycaster.intersectObjects(targetsToTest, true);
-
-    if (hits && hits.length > 0) {
-      const hit = hits[0];
-      const dist = hit.distance;
-      this.lastSpectrometerDist = dist;
-
-      // Position the contact ring on the hit point aligned with surface normal
-      if (this.spectrometerContactRing) {
-        this.spectrometerContactRing.visible = true;
-        const norm = (hit.face && hit.face.normal) ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0);
-        norm.transformDirection(hit.object.matrixWorld);
-        this.spectrometerContactRing.position.copy(hit.point).addScaledVector(norm, 0.03);
-        this.spectrometerContactRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), norm);
-        this.spectrometerContactRing.rotation.z += dt * 2.8;
-        this.spectrometerContactRing.material.opacity = this.isActivelyScanning ? 0.95 : 0.45;
-        this.spectrometerContactRing.scale.setScalar(this.isActivelyScanning ? 1.15 : 1.0);
-      }
-
-      // Update laser beam
-      if (this.spectrometerBeam && this.spectrometerGroup) {
-        const lensWorld = new THREE.Vector3();
-        if (this.spectrometerLens) {
-          this.spectrometerLens.getWorldPosition(lensWorld);
-        } else {
-          this.spectrometerGroup.getWorldPosition(lensWorld);
+    try {
+      if (!this.isSpectrometerActive || this.cameraMode !== 'walk') {
+        if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+        if (this.spectrometerBeam && this.spectrometerBeam.material) this.spectrometerBeam.material.opacity = 0.0;
+        if (this.scienceTabletGroup) this.scienceTabletGroup.visible = false;
+        if (window.SpaceAudio && this.isScanningAudioActive) {
+          window.SpaceAudio.setSpectrometerBeamHum(false);
+          this.isScanningAudioActive = false;
         }
-        const localLens = this.spectrometerGroup.worldToLocal(lensWorld);
-        const localHit = this.spectrometerGroup.worldToLocal(hit.point.clone());
-
-        const positions = this.spectrometerBeam.geometry.attributes.position;
-        positions.setXYZ(0, localLens.x, localLens.y, localLens.z);
-        positions.setXYZ(1, localHit.x, localHit.y, localHit.z);
-        positions.needsUpdate = true;
-        this.spectrometerBeam.material.opacity = this.isActivelyScanning ? 0.88 : 0.24;
+        return;
       }
 
-      // Analyze target and update HUD card & in-hand Science Tablet
-      this.analyzeSpectrometerTarget(hit.object, dist);
+      if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+      if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
+      if (this.spectrometerGroup) this.spectrometerGroup.visible = true;
+      if (this.scienceTabletGroup) this.scienceTabletGroup.visible = true;
 
-    } else {
-      this.lastSpectrometerDist = 0;
-      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
-      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
-    }
+      // Scan progress animation
+      if (this.isActivelyScanning) {
+        this.spectrometerScanProgress = Math.min(1.0, (this.spectrometerScanProgress || 0) + dt * 0.85);
+      } else {
+        this.spectrometerScanProgress = Math.max(0.15, (this.spectrometerScanProgress || 0) - dt * 0.35);
+      }
 
-    // Smooth periodic update of Science Tablet canvas (~20 fps)
-    const now = performance.now();
-    if (!this.lastTabletCanvasUpdate || now - this.lastTabletCanvasUpdate > 48) {
-      this.lastTabletCanvasUpdate = now;
-      this.updateScienceTabletCanvas();
+      // Raycast from camera center or XR controller into the scene
+      const rayOrigin = new THREE.Vector3();
+      const rayDir = new THREE.Vector3(0, 0, -1);
+
+      if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers && this.xrControllers.length > 0) {
+        const rightCtrl = this.getXRController('right') || this.xrControllers[1] || this.xrControllers[0];
+        if (rightCtrl) {
+          rightCtrl.updateMatrixWorld(true);
+          const tempMatrix = new THREE.Matrix4().identity().extractRotation(rightCtrl.matrixWorld);
+          rayOrigin.setFromMatrixPosition(rightCtrl.matrixWorld);
+          rayDir.set(0, 0, -1).applyMatrix4(tempMatrix);
+        }
+      } else {
+        this.camera.getWorldPosition(rayOrigin);
+        this.camera.getWorldDirection(rayDir);
+      }
+
+      if (rayDir.lengthSq() > 0.0001) rayDir.normalize();
+      else rayDir.set(0, 0, -1);
+
+      this.spectrometerRaycaster = this.spectrometerRaycaster || new THREE.Raycaster();
+      this.spectrometerRaycaster.ray.origin.copy(rayOrigin);
+      this.spectrometerRaycaster.ray.direction.copy(rayDir);
+      this.spectrometerRaycaster.far = 38.0;
+
+      const targetsToTest = [];
+      if (this.spacecraft) targetsToTest.push(this.spacecraft);
+      if (this.terrain) targetsToTest.push(this.terrain);
+      if (this.interactables && Array.isArray(this.interactables)) {
+        for (let i = 0; i < this.interactables.length; i++) {
+          const item = this.interactables[i];
+          if (item && item.isObject3D &&
+              item !== this.spectrometerContactRing &&
+              item !== this.spectrometerGroup &&
+              item !== this.scienceTabletGroup &&
+              item !== this.vrWristMesh) {
+            targetsToTest.push(item);
+          }
+        }
+      }
+
+      const hits = this.spectrometerRaycaster.intersectObjects(targetsToTest, true);
+
+      if (hits && hits.length > 0) {
+        const hit = hits[0];
+        const dist = hit.distance;
+        this.lastSpectrometerDist = dist;
+
+        // Position the contact ring on the hit point aligned with surface normal
+        if (this.spectrometerContactRing) {
+          this.spectrometerContactRing.visible = true;
+          const norm = (hit.face && hit.face.normal) ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0);
+          norm.transformDirection(hit.object.matrixWorld);
+          if (norm.lengthSq() > 0.0001) norm.normalize();
+          else norm.set(0, 1, 0);
+
+          this.spectrometerContactRing.position.copy(hit.point).addScaledVector(norm, 0.03);
+          this.spectrometerContactRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), norm);
+          this.spectrometerContactRing.rotation.z += dt * 2.8;
+          if (this.spectrometerContactRing.material) {
+            this.spectrometerContactRing.material.opacity = this.isActivelyScanning ? 0.95 : 0.45;
+          }
+          this.spectrometerContactRing.scale.setScalar(this.isActivelyScanning ? 1.15 : 1.0);
+        }
+
+        // Update laser beam
+        if (this.spectrometerBeam && this.spectrometerGroup) {
+          const lensWorld = new THREE.Vector3();
+          if (this.spectrometerLens) {
+            this.spectrometerLens.getWorldPosition(lensWorld);
+          } else {
+            this.spectrometerGroup.getWorldPosition(lensWorld);
+          }
+          this.spectrometerGroup.updateMatrixWorld(true);
+          const localLens = this.spectrometerGroup.worldToLocal(lensWorld);
+          const localHit = this.spectrometerGroup.worldToLocal(hit.point.clone());
+
+          const positions = this.spectrometerBeam.geometry.attributes.position;
+          positions.setXYZ(0, localLens.x, localLens.y, localLens.z);
+          positions.setXYZ(1, localHit.x, localHit.y, localHit.z);
+          positions.needsUpdate = true;
+          if (this.spectrometerBeam.material) {
+            this.spectrometerBeam.material.opacity = this.isActivelyScanning ? 0.88 : 0.24;
+          }
+        }
+
+        // Analyze target and update HUD card & in-hand Science Tablet
+        this.analyzeSpectrometerTarget(hit.object, dist);
+
+      } else {
+        this.lastSpectrometerDist = 0;
+        if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+        if (this.spectrometerBeam && this.spectrometerBeam.material) {
+          this.spectrometerBeam.material.opacity = 0.0;
+        }
+      }
+
+      // Smooth periodic update of Science Tablet canvas (~20 fps)
+      const now = performance.now();
+      if (!this.lastTabletCanvasUpdate || now - this.lastTabletCanvasUpdate > 48) {
+        this.lastTabletCanvasUpdate = now;
+        this.updateScienceTabletCanvas();
+      }
+    } catch (err) {
+      console.warn('updateSpectrometer non-fatal error:', err);
     }
   }
 
@@ -7915,54 +7993,62 @@ class MissionSimulationTheater {
   renderFrame() {
     if (!this.isPlaying) return;
 
-    if (!this.renderer.xr.isPresenting) {
-      const wrapper = this.canvas.parentElement;
-      const w = wrapper && wrapper.clientWidth > 0 ? wrapper.clientWidth : window.innerWidth;
-      const h = wrapper && wrapper.clientHeight > 0 ? wrapper.clientHeight : window.innerHeight;
-      const finalW = w > 0 ? w : window.innerWidth;
-      const finalH = h > 0 ? h : window.innerHeight;
+    try {
+      if (!this.renderer.xr.isPresenting) {
+        const wrapper = this.canvas.parentElement;
+        const w = wrapper && wrapper.clientWidth > 0 ? wrapper.clientWidth : window.innerWidth;
+        const h = wrapper && wrapper.clientHeight > 0 ? wrapper.clientHeight : window.innerHeight;
+        const finalW = w > 0 ? w : window.innerWidth;
+        const finalH = h > 0 ? h : window.innerHeight;
 
-      if (Math.abs(this.currentW - finalW) > 2 || Math.abs(this.currentH - finalH) > 2 || isNaN(this.camera.aspect)) {
-        this.currentW = finalW;
-        this.currentH = finalH;
-        this.camera.aspect = finalW / finalH;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(finalW, finalH, true);
-      }
-    }
-
-    const now = performance.now();
-    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
-    this.lastTime = now;
-    this.simTime += dt;
-
-    this.updateSimulationPhysics(this.simTime, dt);
-    this.updateHUD(this.simTime);
-    this.updateCamera(this.simTime, dt);
-
-    if (this.cameraMode === 'walk') {
-      this.updateSpectrometer(dt);
-    }
-
-    if (this.controls && this.cameraMode === 'free' && !this.renderer.xr.isPresenting) {
-      this.controls.update();
-    }
-
-    if (this.heritageBoundaryGroup) {
-      const bOsc = Math.sin(this.simTime * 2.5);
-      this.heritageBoundaryGroup.traverse(child => {
-        if (child.isMesh && child.geometry && child.geometry.type === 'SphereGeometry') {
-          child.scale.setScalar(1.0 + bOsc * 0.16);
+        if (Math.abs(this.currentW - finalW) > 2 || Math.abs(this.currentH - finalH) > 2 || isNaN(this.camera.aspect)) {
+          this.currentW = finalW;
+          this.currentH = finalH;
+          this.camera.aspect = finalW / finalH;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(finalW, finalH, true);
         }
-      });
+      }
+
+      const now = performance.now();
+      const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+      this.lastTime = now;
+      this.simTime += dt;
+
+      this.updateSimulationPhysics(this.simTime, dt);
+      this.updateHUD(this.simTime);
+      this.updateCamera(this.simTime, dt);
+
+      if (this.cameraMode === 'walk') {
+        this.updateSpectrometer(dt);
+      }
+
+      if (this.controls && this.cameraMode === 'free' && !this.renderer.xr.isPresenting) {
+        this.controls.update();
+      }
+
+      if (this.heritageBoundaryGroup) {
+        const bOsc = Math.sin(this.simTime * 2.5);
+        this.heritageBoundaryGroup.traverse(child => {
+          if (child.isMesh && child.geometry && child.geometry.type === 'SphereGeometry') {
+            child.scale.setScalar(1.0 + bOsc * 0.16);
+          }
+        });
+      }
+
+      // Pin deep cosmos starfield to camera position (zero translation parallax, true astronomical infinity)
+      if (this.starfieldGroup) {
+        this.starfieldGroup.position.copy(this.camera.position);
+      }
+    } catch (frameErr) {
+      console.warn('renderFrame non-fatal logic error:', frameErr);
     }
 
-    // Pin deep cosmos starfield to camera position (zero translation parallax, true astronomical infinity)
-    if (this.starfieldGroup) {
-      this.starfieldGroup.position.copy(this.camera.position);
+    try {
+      this.renderer.render(this.scene, this.camera);
+    } catch (renderErr) {
+      console.error('renderFrame render error:', renderErr);
     }
-
-    this.renderer.render(this.scene, this.camera);
   }
 
   updateSimulationPhysics(t, dt) {

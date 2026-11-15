@@ -1,4 +1,4 @@
-# 🛰️ Abandoned but not Forgotten: NASA's Discarded Equipment Across the Solar System (v4.6)
+# 🛰️ Abandoned but not Forgotten: NASA's Discarded Equipment Across the Solar System
 ### (Terk Edilmiş Ama Unutulmamış: Ay, Mars, Venüs ve Dış Gezegenlerdeki Tarihi Uzay Ekipmanları)
 
 > **"Buradan barış ve umutla ayrılıyoruz; geri döndüğümüzde tüm insanlık için döneceğiz."** — *Gene Cernan (Apollo 17, Ay'da yürüyen son insan)*
@@ -6,11 +6,10 @@
 İnsanlığın Dünya dışındaki gök cisimlerinde (**Ay, Mars, Venüs, Titan, 67P Kuyruklu Yıldızı, 433 Eros Asteroidi ve Jüpiter**) bıraktığı **25 tarihi donanımın**, iniş kademelerinin, keşif araçlarının ve bilimsel anıtların 3D interaktif haritası, **1:1 WebXR Yüzey Yürüyüşü & İç Kabin Keşfi** ve eğitici hikaye anlatımı platformu.
 
 🔗 **Canlı Web Adresi (GitHub Pages):** [https://batuhanklcky.github.io/abandoned-in-space/](https://batuhanklcky.github.io/abandoned-in-space/)
-🏆 **Yarışma Kategorisi:** [NASA Space Apps Challenge 2026 — NASA's Discarded Equipment Storytelling](https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources)
 
 ---
 
-## 🌟 v4.6 Öne Çıkan Özellikler & Yol Haritası Entegrasyonu
+## 🌟 Öne Çıkan Özellikler & Platform Mimarisi
 
 1. **🪐 4 Farklı Gök Cismi & Dış Güneş Sistemi Görevleri (25 Tarihi Görev)**:
    - **Ay (The Moon - 10 Görev)**: Surveyor 3, Apollo 11, Apollo 12, Apollo 13 S-IVB, Apollo 14, Apollo 15 (LRV), Apollo 16, Apollo 17, Lunar Prospector ve LCROSS Centaur.
@@ -27,10 +26,11 @@
 
 ---
 
-## 📋 NASA Space Apps Challenge 2026 — Global Ödül Uygunluk & Resmi Başvuru Beyanları
+## 📚 Bilimsel Veri Kaynakları & Akademik Referanslar (NASA & ESA Data Sources)
 
-### 1. NASA & Space Agency Partner Data (Hangi NASA Verisini Nasıl Kullandık?)
-Global ödüllere uygunluk kapsamında projemizde doğrudan [NASA Space Apps Challenge — NASA's Discarded Equipment Storytelling Resources](https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources) sayfasındaki resmi NASA ve ortak uzay ajansı (ESA) veri kaynakları kullanılmıştır:
+Projede yer alan tüm koordinatlar, görev tarihleri ve teçhizat envanterleri doğrudan NASA ve ESA'nın kamuya açık bilimsel veri katalogları ve akademik tarih serileriyle doğrulanmıştır:
+
+### 1. Resmi Kataloglar ve Akademik Monografiler
 - **NASA Catalogue of Manmade Material on the Moon (2012, NASA HQ / History Program Office):** Ay yüzeyindeki 70'ten fazla iniş ve çarpışma noktasındaki ~190 tonluk insan yapımı teçhizatın kütle, koordinat ve parça envanteri (`js/data.js` içerisindeki `ARTIFACTS` dizisi) bu katalogdan çıkarılmıştır.
 - **NASA History Series Akademik Monografileri (`SP-2024-4559`, `SP-2026-4239`, `SP-2022-4235`, `SP-2021-4705`):**
   - *SP-2024-4559 (Governing the Moon: A History — Stephen S. Buono):* Artemis Accords Bölüm 9 kapsamında uzay kalıntılarının "Dünya Dışı Kültür Mirası" statüsü.
@@ -41,29 +41,10 @@ Global ödüllere uygunluk kapsamında projemizde doğrudan [NASA Space Apps Cha
 - **NASA Open Data Portal (`data.nasa.gov`) — Mars Perseverance MEDA & Curiosity REMS:** İniş epoch zamanından itibaren geçen gerçek astronomik Mars Günü (`Sol = 88,775.244 s`), hava sıcaklığı, basınç ve rüzgar telemetrisi canlı olarak hesaplanmaktadır.
 - **ESA / NASA Rosetta-Philae & Cassini-Huygens Ortak Veri Arşivleri:** Satürn'ün uydusu Titan (`10.25°G, 192.32°B`) ve 67P/Churyumov-Gerasimenko kuyruklu yıldızı (Abydos bölgesi) iniş verileri kullanılmıştır.
 
-### 2. References (Kullanılan Tüm Veri, Kod, Görsel ve Araçların Listesi)
-- **Resmi Veri Setleri & Kataloglar:**
-  1. NASA Space Apps Challenge 2026 Resource Hub: `https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/?tab=resources`
-  2. NASA (2012). *Catalogue of Manmade Material on the Moon*. (`https://www.nasa.gov/wp-content/uploads/2015/01/582183main_LRO_2012_ poster_back.pdf`)
-  3. Buono, S. S. (2024). *Governing the Moon: A History* (NASA SP-2024-4559).
-  4. Brown, D. W. (2026). *NASA's Discovery Program: Competitive Planetary Exploration in the 21st Century* (NASA SP-2026-4239).
-  5. Conway, E. M., Yeomans, D. K., & Rosenburg, M. A. (2022). *A History of Near-Earth Objects Research* (NASA SP-2022-4235).
-  6. Billings, L. (Ed.). (2021). *50 Years of Solar System Exploration: Historical Perspectives* (NASA SP-2021-4705).
-  7. NASA Planetary Data System (PDS) Geosciences Node: `https://pds-geosciences.wustl.edu/`
-  8. NASA Image and Video Library (`images.nasa.gov`) & Open Data Portal (`data.nasa.gov`).
-  9. Lunar Reconnaissance Orbiter Camera (LROC) QuickMap (`https://quickmap.lroc.asu.edu/`) & MRO HiRISE (`https://www.uahirise.org/`).
-- **Görseller & Doku Haritaları:**
-  - Küre haritaları: Kamu malı (Public Domain) NASA LRO CGI Moon Kit ve NASA Viking/MGS Mars küresel mozaikleri (`three-globe` CDN üzerinden).
-  - Tüm uzay aracı kaplamaları (Kapton altın folyo, güneş panelleri, CNC Isogrid iç kabin duvarları, DSKY tuşları ve astronot çizme izleri) HTML5 `Canvas2D` ile matematiksel olarak üretilmiştir (**Resmi NASA logosu kesinlikle kullanılmamıştır**).
+### 2. Görseller & Yazılım Mimarisi
+- **Küre Haritaları & Kaplamalar:** Kamu malı (Public Domain) NASA LRO CGI Moon Kit ve NASA Viking/MGS Mars küresel mozaikleri (`three-globe` CDN üzerinden). Tüm uzay aracı kaplamaları (Kapton altın folyo, güneş panelleri, CNC Isogrid iç kabin duvarları, DSKY tuşları ve astronot çizme izleri) HTML5 `Canvas2D` ile matematiksel olarak üretilmiştir.
 - **Yazılım Kütüphaneleri & Web Standartları:**
   - `Three.js (r128)` & `THREE.OrbitControls`, `WebXR Device API (navigator.xr)`, `Web Audio API` (2525 Hz Quindar ton sentezleyici), `Web Speech API`, `Google Fonts (Space Grotesk, Inter, JetBrains Mono)`.
-
-### 3. Use of Super Intelligence (Yapay Zekâ Kullanım Beyanı, Filigran ve Kurallara Uygunluk)
-- **Yapay Zekâ Araçlarının Kullanımı:** Evet, yazılım geliştirme sürecinde kodlama asistanı olarak **Google DeepMind Antigravity (AI Pair-Programming Assistant)** kullanılmıştır.
-- **Fikrin Özgünlüğü (İnsan Tarafından Kurgulanmıştır):** Projenin ana fikri (*uzayda terk edilen 205 tonluk ekipmanın 5 perdelik interaktif bir uzay arkeolojisi müzesine dönüştürülmesi ve 1:1 WebXR modunda merdivenle uzay araçlarının içine girilerek kontrol panellerinin incelenmesi*) **tamamen geliştirici (insan) tarafından** tasarlanmış; yapay zekâya fikir buldurulmamıştır.
-- **Görünür Filigran (`Visible Watermark`):** Yapay zekâ destekli algoritmalarla üretilen tüm 3D WebGL sahnelerinde (`#canvas-container` ve `#simulation-modal`) ve prosedürel `Canvas2D` kabin ekranlarında **görünür filigran (`⚙️ AI-DESTEKLİ PROSEDÜREL WEBGL / THREE.JS SİMÜLASYONU • NASA LOGOSU İÇERMEZ`)** yer almaktadır.
-- **Kod ve Verilerde Açıklama (`Code & Data Attribution`):** `js/data.js`, `js/simulation.js`, `js/scene.js` ve `js/textures.js` dosyalarının başlıklarında ve ilgili fonksiyonlarında yapay zekâ destekli prosedürel üretim ve NASA kaynak eşleştirmeleri açıkça belgelenmiştir.
-- **NASA Logosu Kuralına Tam Uyum:** Yarışma kuralları gereği üretilen hiçbir 3D modelde, arayüzde veya prosedürel görselde **resmi NASA logosu ("Meatball" veya "Worm") kesinlikle kullanılmamıştır**.
 
 ---
 

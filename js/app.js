@@ -1,7 +1,7 @@
 /**
- * Application Orchestrator & UI Controller (v4.1 — NASA 5 Judging Criteria & Sequential Storytelling Edition)
+ * Application Orchestrator & UI Controller (Sequential Storytelling Edition)
  * Manages State, 5-Chapter Guided Story Tour, Language Switcher (TR/EN),
- * Live Mars Weather & Rover Telemetry (MEDA / REMS), 1:1 WebXR Surface Walk, and Jury Pitch Mode
+ * Live Mars Weather & Rover Telemetry (MEDA / REMS), 1:1 WebXR Surface Walk, and Interactive Exploration
  */
 
 const STORY_CHAPTERS = [

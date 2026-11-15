@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=6.5">
+  <link rel="stylesheet" href="css/style.css?v=6.6">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -276,6 +276,7 @@
             <span id="drawer-mission">APOLLO 11</span>
             <span>•</span>
             <span id="drawer-date" style="color:var(--text-muted);">July 20, 1969</span>
+            <span class="landing-badge status-landed" id="drawer-landing-status">BAŞARILI YUMUŞAK İNİŞ</span>
           </div>
           <h2 class="artifact-title" id="drawer-title">Apollo 11 'Eagle' Lunar Module Descent Stage</h2>
         </div>
@@ -381,6 +382,14 @@
         <div class="items-list-container">
           <div class="section-heading" data-i18n="specs_label">TECHNICAL SPECS & TELEMETRY</div>
           <div class="stats-grid">
+            <div class="stat-item full-width-stat">
+              <div class="stat-title" data-i18n="spec_craft_title">SPACECRAFT & LAUNCH VEHICLE ARCHITECTURE</div>
+              <div class="stat-val" id="spec-craft">Saturn V / Apollo Lunar Module Descent Stage</div>
+            </div>
+            <div class="stat-item full-width-stat">
+              <div class="stat-title" data-i18n="spec_status_title">SURFACE LANDING OUTCOME & VR EVA ACCESS</div>
+              <div class="stat-val" id="spec-status">SUCCESSFUL SOFT LANDING (VR EVA ACTIVE)</div>
+            </div>
             <div class="stat-item">
               <div class="stat-title" data-i18n="spec_mass_title">PRESERVED MASS</div>
               <div class="stat-val" id="spec-mass">2,034 kg</div>
@@ -672,12 +681,22 @@
     </div>
   </div>
 
+  <!-- Global Aerospace Toast Alert -->
+  <div id="hud-alert-toast" class="hud-alert-toast">
+    <div class="toast-icon" id="toast-icon">⛔</div>
+    <div class="toast-content">
+      <div class="toast-title" id="toast-title">VR ERİŞİMİ ENGELLENDİ</div>
+      <div class="toast-desc" id="toast-desc">Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda VR yüzey moduna izin verilir.</div>
+    </div>
+    <button class="toast-close" id="btn-close-toast">✕</button>
+  </div>
+
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=6.5"></script>
-  <script src="js/textures.js?v=6.5"></script>
-  <script src="js/audio.js?v=6.5"></script>
-  <script src="js/scene.js?v=6.5"></script>
-  <script src="js/simulation.js?v=6.5"></script>
-  <script src="js/app.js?v=6.5"></script>
+  <script src="js/data.js?v=6.6"></script>
+  <script src="js/textures.js?v=6.6"></script>
+  <script src="js/audio.js?v=6.6"></script>
+  <script src="js/scene.js?v=6.6"></script>
+  <script src="js/simulation.js?v=6.6"></script>
+  <script src="js/app.js?v=6.6"></script>
 </body>
 </html>

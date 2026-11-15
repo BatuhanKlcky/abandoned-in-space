@@ -238,17 +238,33 @@ class AbandonedInSpaceApp {
     if (topSimBtn) topSimBtn.addEventListener('click', triggerSimulation);
     if (drawerSimBtn) drawerSimBtn.addEventListener('click', triggerSimulation);
 
-    // 1:1 Surface Walk & WebXR Controls
+    // 1:1 Surface Walk & WebXR Controls (Strict Landing vs Crash Permission Enforcement)
     const topWalkBtn = document.getElementById('btn-top-walk');
     const drawerWalkBtn = document.getElementById('btn-drawer-walk');
     const triggerSurfaceWalk = () => {
       const art = this.sceneManager.selectedArtifact || (this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
+      if (!art) return;
+      const isTr = this.currentLang === 'tr';
+      if (art.vrAllowed === false) {
+        if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(240, 0.14);
+        const title = isTr ? '⛔ VR YÜZEY MODU ENGELLENDİ' : '⛔ VR SURFACE EVA DISABLED';
+        const desc = isTr
+          ? (art.vrDisallowReason_tr || 'Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda 1:1 astronot yürüyüşüne izin verilir.')
+          : (art.vrDisallowReason_en || 'This site is a crash/impact area. 1:1 surface EVA is only permitted at sites with successful soft landings.');
+        this.showToast(title, desc, 'error');
+        return;
+      }
       if (window.SpaceSimulation) {
         window.SpaceSimulation.startSurfaceWalk(art);
       }
     };
     if (topWalkBtn) topWalkBtn.addEventListener('click', triggerSurfaceWalk);
     if (drawerWalkBtn) drawerWalkBtn.addEventListener('click', triggerSurfaceWalk);
+
+    const toastClose = document.getElementById('btn-close-toast');
+    if (toastClose) {
+      toastClose.addEventListener('click', () => this.hideToast());
+    }
 
     // Live Mars Rover Tabs & Goto Button
     document.querySelectorAll('.rover-tab-btn').forEach(btn => {
@@ -600,6 +616,7 @@ class AbandonedInSpaceApp {
     }
 
     this.sceneManager.focusOnArtifact(artifact);
+    this.updateWalkButtonsState(artifact);
     this.openDrawer(artifact);
     this.renderArtifactsList();
   }
@@ -666,6 +683,16 @@ class AbandonedInSpaceApp {
     document.getElementById('drawer-date').innerText = isTr ? artifact.date : artifact.date_en;
     document.getElementById('drawer-title').innerText = isTr ? artifact.name_tr : artifact.name_en;
 
+    const statusBadge = document.getElementById('drawer-landing-status');
+    if (statusBadge) {
+      const isLanded = artifact.landingStatus === 'landed';
+      statusBadge.className = `landing-badge ${isLanded ? 'status-landed' : 'status-crashed'}`;
+      statusBadge.innerText = isTr ? (isLanded ? `✅ ${artifact.landingStatus_tr}` : `💥 ${artifact.landingStatus_tr}`)
+                                   : (isLanded ? `✅ ${artifact.landingStatus_en}` : `💥 ${artifact.landingStatus_en}`);
+    }
+
+    this.updateWalkButtonsState(artifact);
+
     document.getElementById('drawer-quote').innerText = `"${isTr ? artifact.quote_tr : artifact.quote_en}"`;
     document.getElementById('drawer-quote-author').innerText = `— ${artifact.quoteAuthor}`;
 
@@ -685,6 +712,17 @@ class AbandonedInSpaceApp {
     });
 
     const specs = isTr ? artifact.technicalSpecs : (artifact.technicalSpecs_en || artifact.technicalSpecs);
+    const specCraft = document.getElementById('spec-craft');
+    if (specCraft) {
+      specCraft.innerText = isTr ? artifact.craftType_tr : artifact.craftType_en;
+    }
+    const specStatus = document.getElementById('spec-status');
+    if (specStatus) {
+      const isLanded = artifact.landingStatus === 'landed';
+      specStatus.innerText = isTr
+        ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ (1:1 VR YÜRÜYÜŞ AKTİF)` : `KAZA / ÇARPIŞMA SAHASI (1:1 VR ENGELLENDİ)`)
+        : (isLanded ? `SUCCESSFUL SOFT LANDING (1:1 VR EVA ACTIVE)` : `CRASH / IMPACT SITE (1:1 VR DISABLED)`);
+    }
     document.getElementById('spec-mass').innerText = specs.massLeftKg;
     document.getElementById('spec-power').innerText = specs.powerSource;
     document.getElementById('spec-duration').innerText = specs.activeDuration;
@@ -895,7 +933,11 @@ class AbandonedInSpaceApp {
 
     const isTr = this.currentLang === 'tr';
     document.getElementById('tooltip-title').innerText = isTr ? artifact.name_tr : artifact.name_en;
-    document.getElementById('tooltip-meta').innerText = `${artifact.mission} • ${isTr ? artifact.locationName : (artifact.locationName_en || artifact.locationName)}`;
+    const isLanded = artifact.landingStatus === 'landed';
+    const statusPill = isLanded
+      ? (isTr ? '✅ İNİŞ' : '✅ LANDED')
+      : (isTr ? '💥 KAZA/ÇARPIŞMA' : '💥 CRASH/IMPACT');
+    document.getElementById('tooltip-meta').innerText = `${artifact.mission} • ${statusPill} • ${isTr ? artifact.locationName : (artifact.locationName_en || artifact.locationName)}`;
 
     tooltip.style.left = `${clientX}px`;
     tooltip.style.top = `${clientY}px`;
@@ -1116,6 +1158,9 @@ const TRANSLATIONS = {
     condition_label: "BUGÜNKÜ DURUMU (YILLAR SONRA)",
     discarded_label: "TERK EDİLEN TEÇHİZAT LİSTESİ",
     specs_label: "TEKNİK TELEMETRİ BİLGİSİ",
+    spec_craft_title: "UZAY ARACI VE FIRLATMA ROKETİ MİMARİSİ",
+    spec_status_title: "YÜZEY İNİŞ DURUMU VE VR ERİŞİMİ",
+    toast_vr_blocked_title: "⛔ VR YÜZEY MODU ENGELLENDİ",
     spec_mass_title: "KORUNAN KÜTLE",
     spec_power_title: "GÜÇ KAYNAĞI",
     spec_duration_title: "AKTİF GÖREV ÖMRÜ",
@@ -1220,6 +1265,9 @@ const TRANSLATIONS = {
     condition_label: "CURRENT CONDITION (DECADES LATER)",
     discarded_label: "DISCARDED EQUIPMENT CHECKLIST",
     specs_label: "TECHNICAL SPECS & TELEMETRY",
+    spec_craft_title: "SPACECRAFT & LAUNCH VEHICLE ARCHITECTURE",
+    spec_status_title: "SURFACE LANDING OUTCOME & VR EVA ACCESS",
+    toast_vr_blocked_title: "⛔ VR SURFACE EVA DISABLED",
     spec_mass_title: "PRESERVED MASS",
     spec_power_title: "POWER SOURCE",
     spec_duration_title: "ACTIVE MISSION DURATION",

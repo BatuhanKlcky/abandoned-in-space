@@ -184,6 +184,10 @@ class MissionSimulationTheater {
     const walkBtn = document.getElementById('btn-sim-walk');
     if (walkBtn) {
       walkBtn.addEventListener('click', () => {
+        if (this.currentArtifact && this.currentArtifact.vrAllowed === false) {
+          this.triggerVRDisallowAlert();
+          return;
+        }
         this.setCameraMode(this.cameraMode === 'walk' ? 'cinematic' : 'walk');
       });
     }
@@ -215,7 +219,13 @@ class MissionSimulationTheater {
 
     const xrBtn = document.getElementById('btn-sim-webxr');
     if (xrBtn) {
-      xrBtn.addEventListener('click', () => this.enterWebXR());
+      xrBtn.addEventListener('click', () => {
+        if (this.currentArtifact && this.currentArtifact.vrAllowed === false) {
+          this.triggerVRDisallowAlert();
+          return;
+        }
+        this.enterWebXR();
+      });
     }
 
     // Big always-visible "Enter Meta Quest 3S VR" button (stays visible even in clean game UI mode)
@@ -224,6 +234,10 @@ class MissionSimulationTheater {
       questBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (this.currentArtifact && this.currentArtifact.vrAllowed === false) {
+          this.triggerVRDisallowAlert();
+          return;
+        }
         this.enterWebXR();
       });
       questBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -699,7 +713,30 @@ class MissionSimulationTheater {
     }
   }
 
+  triggerVRDisallowAlert() {
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    const art = this.currentArtifact;
+    const title = isTr ? '⛔ VR MODU ENGELLENDİ (KAZA SAHASI)' : '⛔ VR MODE DISABLED (CRASH SITE)';
+    const desc = art ? (isTr ? art.vrDisallowReason_tr : art.vrDisallowReason_en)
+                     : (isTr ? 'Bu araç yüzeye yumuşak iniş yapamamış bir çarpışma/kaza enkazıdır. VR yüzey yürüyüşü engellenmiştir.'
+                             : 'This craft is an impact/crash wreck with no soft landing. VR surface EVA is disabled.');
+    if (window.app && window.app.showToast) {
+      window.app.showToast(title, desc, 'error');
+    }
+    if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(220, 0.16);
+    this.updateVRGameMiniPill(title);
+  }
+
   setCameraMode(mode) {
+    if (mode === 'walk') {
+      if (this.currentArtifact && this.currentArtifact.vrAllowed === false) {
+        this.triggerVRDisallowAlert();
+        this.cameraMode = 'cinematic';
+        const camSelect = document.getElementById('sim-cam-select');
+        if (camSelect) camSelect.value = 'cinematic';
+        return;
+      }
+    }
     this.cameraMode = mode;
     const camSelect = document.getElementById('sim-cam-select');
     if (camSelect && camSelect.value !== mode) camSelect.value = mode;
@@ -1080,6 +1117,13 @@ class MissionSimulationTheater {
   }
 
   startSurfaceWalk(artifact) {
+    if (artifact && artifact.vrAllowed === false) {
+      this.currentArtifact = artifact;
+      this.triggerVRDisallowAlert();
+      this.cameraMode = 'cinematic';
+      this.startSimulation(artifact);
+      return;
+    }
     this.cameraMode = 'walk';
     this.startSimulation(artifact);
     this.setCameraMode('walk');
@@ -1177,6 +1221,49 @@ class MissionSimulationTheater {
     this.craneCrashed = false;
     this.impactTriggered = false;
 
+    // Check VR / Walk permission for this artifact
+    const walkOpt = document.querySelector('#sim-cam-select option[value="walk"]');
+    const walkBtn = document.getElementById('btn-sim-walk');
+    const xrBtn = document.getElementById('btn-sim-webxr');
+    const questBtn = document.getElementById('btn-enter-quest-vr');
+
+    if (artifact.vrAllowed === false) {
+      if (this.cameraMode === 'walk') {
+        this.cameraMode = 'cinematic';
+      }
+      if (walkOpt) {
+        walkOpt.disabled = true;
+        walkOpt.style.display = 'none';
+      }
+      if (walkBtn) {
+        walkBtn.style.display = 'none';
+        walkBtn.disabled = true;
+      }
+      if (xrBtn) {
+        xrBtn.style.display = 'none';
+        xrBtn.disabled = true;
+      }
+      if (questBtn) {
+        questBtn.style.display = 'none';
+      }
+    } else {
+      if (walkOpt) {
+        walkOpt.disabled = false;
+        walkOpt.style.display = '';
+      }
+      if (walkBtn) {
+        walkBtn.style.display = '';
+        walkBtn.disabled = false;
+      }
+      if (xrBtn) {
+        xrBtn.style.display = '';
+        xrBtn.disabled = false;
+      }
+      if (questBtn) {
+        questBtn.style.display = '';
+      }
+    }
+
     const camSelect = document.getElementById('sim-cam-select');
     if (camSelect) camSelect.value = this.cameraMode;
 
@@ -1192,28 +1279,34 @@ class MissionSimulationTheater {
 
     if (titleEl) titleEl.innerText = isTr ? artifact.name_tr : artifact.name_en;
     if (badgeEl) {
-      if (artifact.category === 'impact') {
-        badgeEl.innerText = isTr ? "💥 KİNETİK ÇARPIŞMA CANLANDIRMASI" : "💥 KINETIC IMPACT REENACTMENT";
+      if (artifact.vrAllowed === false) {
+        if (artifact.category === 'impact') {
+          badgeEl.innerText = isTr ? "💥 KİNETİK ÇARPIŞMA CANLANDIRMASI (VR KAPALI)" : "💥 KINETIC IMPACT REENACTMENT (VR DISABLED)";
+        } else if (artifact.id === 'curiosity-skycrane') {
+          badgeEl.innerText = isTr ? "💥 SKY CRANE ROKET KAZASI (VR KAPALI)" : "💥 SKY CRANE ROCKET IMPACT SCAR (VR DISABLED)";
+        } else if (artifact.id === 'perseverance-backshell-chute') {
+          badgeEl.innerText = isTr ? "💥 PARAŞÜT & GÖVDE ÇARPIŞMA ENKAZI (VR KAPALI)" : "💥 BACKSHELL & CHUTE IMPACT DEBRIS (VR DISABLED)";
+        } else if (artifact.id === 'galileo-probe') {
+          badgeEl.innerText = isTr ? "🔥 JÜPİTER ATMOSFERİK İMHA (KATI YÜZEY YOK - VR KAPALI)" : "🔥 JUPITER ATMOSPHERIC ENTRY (NO SURFACE - VR DISABLED)";
+        } else {
+          badgeEl.innerText = isTr ? "💥 KAZA / ÇARPIŞMA SAHASI (VR KAPALI)" : "💥 CRASH / IMPACT REENACTMENT (VR DISABLED)";
+        }
         badgeEl.style.borderColor = "#ef4444";
         badgeEl.style.color = "#f87171";
       } else if (artifact.category === 'helicopter') {
-        badgeEl.innerText = isTr ? "🚁 AERODİNAMİK UÇUŞ CANLANDIRMASI" : "🚁 AERODYNAMIC FLIGHT REENACTMENT";
+        badgeEl.innerText = isTr ? "🚁 OTONOM MARS HELİKOPTERİ UÇUŞU & VR AKTİF" : "🚁 AUTONOMOUS MARS ROTORCRAFT & VR ACTIVE";
         badgeEl.style.borderColor = "#00f0ff";
         badgeEl.style.color = "#00f0ff";
-      } else if (artifact.id === 'curiosity-skycrane') {
-        badgeEl.innerText = isTr ? "🚀 GÖKYÜZÜ VİNCİ İNİŞ & KAZA CANLANDIRMASI" : "🚀 SKY CRANE DESCENT & FLYAWAY";
-        badgeEl.style.borderColor = "#ffb300";
-        badgeEl.style.color = "#fde68a";
       } else if (artifact.body === 'venus') {
-        badgeEl.innerText = isTr ? "🔥 VENÜS 92 ATM BASINÇLI İNİŞ CANLANDIRMASI" : "🔥 VENUS 92 ATM PRESSURE DESCENT";
+        badgeEl.innerText = isTr ? "🔥 VENÜS 92 ATM BASINÇLI İNİŞ & VR AKTİF" : "🔥 VENUS 92 ATM PRESSURE DESCENT & VR ACTIVE";
         badgeEl.style.borderColor = "#f59e0b";
         badgeEl.style.color = "#fcd34d";
       } else if (artifact.body === 'outer') {
-        badgeEl.innerText = isTr ? "🪐 DIŞ GÜNEŞ SİSTEMİ İNİŞ CANLANDIRMASI" : "🪐 OUTER SYSTEM TOUCHDOWN REENACTMENT";
+        badgeEl.innerText = isTr ? "🪐 DIŞ GÜNEŞ SİSTEMİ İNİŞ & VR AKTİF" : "🪐 OUTER SOLAR SYSTEM TOUCHDOWN & VR ACTIVE";
         badgeEl.style.borderColor = "#38bdf8";
         badgeEl.style.color = "#7dd3fc";
       } else {
-        badgeEl.innerText = isTr ? "🛰️ YÜZEYE İNİŞ & 1:1 WEBXR SAHNESİ" : "🛰️ TOUCHDOWN & 1:1 WEBXR SCENE";
+        badgeEl.innerText = isTr ? "🛰️ BAŞARILI YUMUŞAK İNİŞ & 1:1 VR YÜRÜYÜŞ" : "🛰️ SUCCESSFUL SOFT LANDING & 1:1 VR EVA";
         badgeEl.style.borderColor = "#10b981";
         badgeEl.style.color = "#34d399";
       }
@@ -2867,42 +2960,95 @@ class MissionSimulationTheater {
     const kaptonBump = window.ProceduralTextures ? window.ProceduralTextures.generateKaptonFoilBump() : null;
 
     if (artifact.category === 'impact') {
-      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xededed, metalness: 0.45, roughness: 0.35 });
-      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1f232b, roughness: 0.7 });
-      const steelMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85, roughness: 0.25 });
+      if (artifact.id === 'lunar-prospector') {
+        // High-Precision Lunar Prospector (Spin-Stabilized Drum & 3 Deployable Science Booms)
+        const darkSolar = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, metalness: 0.85, roughness: 0.15 });
+        const goldFoil = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2, bumpMap: kaptonBump, bumpScale: 0.04 });
+        const boomMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+        const sensorMat = new THREE.MeshStandardMaterial({ color: 0xdbeafe, metalness: 0.9, roughness: 0.2 });
 
-      const hull = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 16, 32), whiteMat);
-      hull.castShadow = true;
-      hull.receiveShadow = true;
-      this.spacecraft.add(hull);
+        const drum = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 3.2, 24), darkSolar);
+        drum.castShadow = true;
+        this.spacecraft.add(drum);
 
-      const stripe = new THREE.Mesh(new THREE.CylinderGeometry(3.32, 3.32, 4.2, 32), darkMat);
-      stripe.position.y = 2.5;
-      stripe.castShadow = true;
-      this.spacecraft.add(stripe);
+        const topCap = new THREE.Mesh(new THREE.CylinderGeometry(2.42, 2.42, 0.2, 24), goldFoil);
+        topCap.position.y = 1.6;
+        this.spacecraft.add(topCap);
 
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(3.3, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.4), whiteMat);
-      dome.position.y = 8.0;
-      this.spacecraft.add(dome);
+        const bottomCap = new THREE.Mesh(new THREE.CylinderGeometry(2.42, 2.42, 0.2, 24), goldFoil);
+        bottomCap.position.y = -1.6;
+        this.spacecraft.add(bottomCap);
 
-      const nozzle = new THREE.Mesh(new THREE.ConeGeometry(2.3, 3.2, 24, 1, true), steelMat);
-      nozzle.position.y = -9.2;
-      nozzle.rotation.x = Math.PI;
-      nozzle.castShadow = true;
-      this.spacecraft.add(nozzle);
+        for (let bi = 0; bi < 3; bi++) {
+          const bAngle = (bi * Math.PI * 2) / 3;
+          const boomGroup = new THREE.Group();
+          boomGroup.rotation.y = bAngle;
 
-      const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.0), steelMat);
-      duct.position.set(1.6, -9.0, 0);
-      this.spacecraft.add(duct);
+          const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 7.2), boomMat);
+          rod.rotation.z = Math.PI / 2;
+          rod.position.x = 3.6 + 2.0;
+          boomGroup.add(rod);
 
-      for (let pi = 0; pi < 2; pi++) {
-        const pod = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 0.9), darkMat);
-        pod.position.set(pi === 0 ? 3.4 : -3.4, -4.0, 0);
-        this.spacecraft.add(pod);
+          const canister = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.2, 16), sensorMat);
+          canister.rotation.z = Math.PI / 2;
+          canister.position.x = 7.2 + 2.0;
+          boomGroup.add(canister);
+
+          this.spacecraft.add(boomGroup);
+        }
+
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2), boomMat);
+        mast.position.y = 2.7;
+        const antDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16), goldFoil);
+        antDisc.position.y = 3.8;
+        this.spacecraft.add(mast, antDisc);
+
+        const shoeCapsule = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.6, 12), new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.95, roughness: 0.1 }));
+        shoeCapsule.position.set(0.8, 1.8, 0.8);
+        this.spacecraft.add(shoeCapsule);
+
+        this.spacecraft.rotation.set(0.3, 0.4, 0.8);
+        this.spacecraft.position.set(-75, 100, 0);
+
+      } else {
+        // Saturn V S-IVB booster (apollo-13-s4b) and Atlas V Centaur (lcross-centaur)
+        const whiteMat = new THREE.MeshStandardMaterial({ color: 0xededed, metalness: 0.45, roughness: 0.35 });
+        const darkMat = new THREE.MeshStandardMaterial({ color: 0x1f232b, roughness: 0.7 });
+        const steelMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85, roughness: 0.25 });
+
+        const hull = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 16, 32), whiteMat);
+        hull.castShadow = true;
+        hull.receiveShadow = true;
+        this.spacecraft.add(hull);
+
+        const stripe = new THREE.Mesh(new THREE.CylinderGeometry(3.32, 3.32, 4.2, 32), darkMat);
+        stripe.position.y = 2.5;
+        stripe.castShadow = true;
+        this.spacecraft.add(stripe);
+
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(3.3, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.4), whiteMat);
+        dome.position.y = 8.0;
+        this.spacecraft.add(dome);
+
+        const nozzle = new THREE.Mesh(new THREE.ConeGeometry(2.3, 3.2, 24, 1, true), steelMat);
+        nozzle.position.y = -9.2;
+        nozzle.rotation.x = Math.PI;
+        nozzle.castShadow = true;
+        this.spacecraft.add(nozzle);
+
+        const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.0), steelMat);
+        duct.position.set(1.6, -9.0, 0);
+        this.spacecraft.add(duct);
+
+        for (let pi = 0; pi < 2; pi++) {
+          const pod = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 0.9), darkMat);
+          pod.position.set(pi === 0 ? 3.4 : -3.4, -4.0, 0);
+          this.spacecraft.add(pod);
+        }
+
+        this.spacecraft.rotation.z = Math.PI * 0.38;
+        this.spacecraft.position.set(-75, 100, 0);
       }
-
-      this.spacecraft.rotation.z = Math.PI * 0.38;
-      this.spacecraft.position.set(-75, 100, 0);
 
     } else if (artifact.category === 'helicopter') {
       const goldFoil = new THREE.MeshStandardMaterial({ color: 0xffb703, metalness: 0.9, roughness: 0.18, bumpMap: kaptonBump, bumpScale: 0.04 });
@@ -3499,7 +3645,6 @@ class MissionSimulationTheater {
     this.scene.add(this.spacecraft);
 
     // Build 1:1 Climbable Boarding Ladder & Detailed Walk-In Spacecraft Interior: ONLY FOR CREWED APOLLO LUNAR MODULES!
-    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
     if (isApolloLM) {
       this.buildWalkableLadderAndInterior(artifact);
     } else {

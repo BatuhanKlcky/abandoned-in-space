@@ -368,36 +368,41 @@ class SpaceSceneManager {
     const bodyAccent = colors.accent;
 
     activeArtifacts.forEach(artifact => {
+      const isCrashed = artifact.landingStatus === 'crashed' || artifact.vrAllowed === false;
+      const pinColor = isCrashed ? 0xef4444 : bodyColor;
+      const pinAccent = isCrashed ? 0xf87171 : bodyAccent;
+      const ringColor = isCrashed ? 0xf97316 : bodyColor;
+
       const pos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, this.sphereRadius);
       const normal = pos.clone().normalize();
 
       const pinGroup = new THREE.Group();
       pinGroup.position.copy(pos);
-      pinGroup.userData = { artifact };
+      pinGroup.userData = { artifact, isCrashed };
 
       const stemHeight = 4.5;
       const stemGeo = new THREE.CylinderGeometry(0.2, 0.2, stemHeight, 8);
-      const stemMat = new THREE.MeshBasicMaterial({ color: bodyAccent, transparent: true, opacity: 0.85 });
+      const stemMat = new THREE.MeshBasicMaterial({ color: pinAccent, transparent: true, opacity: isCrashed ? 0.95 : 0.85 });
       const stemMesh = new THREE.Mesh(stemGeo, stemMat);
       stemMesh.position.y = stemHeight / 2;
       stemMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
 
-      const orbRadius = 1.35;
+      const orbRadius = isCrashed ? 1.48 : 1.35;
       const orbGeo = new THREE.SphereGeometry(orbRadius, 16, 16);
-      const orbMat = new THREE.MeshBasicMaterial({ color: bodyColor });
+      const orbMat = new THREE.MeshBasicMaterial({ color: pinColor });
       const orbMesh = new THREE.Mesh(orbGeo, orbMat);
       orbMesh.position.copy(normal.clone().multiplyScalar(stemHeight));
 
-      const ringGeo = new THREE.RingGeometry(1.2, 2.2, 32);
+      const ringGeo = new THREE.RingGeometry(1.2, isCrashed ? 2.5 : 2.2, 32);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: bodyColor,
+        color: ringColor,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.75,
+        opacity: isCrashed ? 0.9 : 0.75,
       });
       const ringMesh = new THREE.Mesh(ringGeo, ringMat);
       ringMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-      ringMesh.userData = { isPulseRing: true, baseScale: 1.0, phase: Math.random() * Math.PI * 2 };
+      ringMesh.userData = { isPulseRing: true, isCrashed, baseScale: 1.0, phase: Math.random() * Math.PI * 2 };
 
       const hitGeo = new THREE.SphereGeometry(3.8, 8, 8);
       const hitMat = new THREE.MeshBasicMaterial({ visible: false });
@@ -416,7 +421,8 @@ class SpaceSceneManager {
         orbMesh,
         ringMesh,
         artifact,
-        worldPos: pos
+        worldPos: pos,
+        isCrashed
       });
     });
   }
@@ -1543,9 +1549,10 @@ class SpaceSceneManager {
     this.pins.forEach(p => {
       p.group.children.forEach(child => {
         if (child.userData && child.userData.isPulseRing) {
-          const s = 1.0 + 0.45 * Math.sin(time + child.userData.phase);
+          const speedMul = child.userData.isCrashed ? 1.6 : 1.0;
+          const s = 1.0 + (child.userData.isCrashed ? 0.55 : 0.45) * Math.sin(time * speedMul + child.userData.phase);
           child.scale.set(s, s, s);
-          child.material.opacity = 0.8 - (s - 1.0) * 0.9;
+          child.material.opacity = child.userData.isCrashed ? (0.95 - (s - 1.0) * 0.8) : (0.8 - (s - 1.0) * 0.9);
         }
       });
     });

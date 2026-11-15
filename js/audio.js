@@ -255,15 +255,21 @@ class SpaceAudioEngine {
         // Cancel any pending speech
         this.synth.cancel();
 
+        const isTr = (window.app && window.app.currentLang === 'tr') || /[ğüşıöçĞÜŞİÖÇ]/.test(cleanSpeech);
         const utterance = new SpeechSynthesisUtterance(cleanSpeech);
         utterance.rate = 0.95;  // Deliberate NASA flight pace
         utterance.pitch = 0.95; // Radio communications pitch
-        utterance.lang = 'en-US';
+        utterance.lang = isTr ? 'tr-TR' : 'en-US';
 
-        // Select an English voice if available
+        // Select a natural voice matching active language
         const voices = this.synth.getVoices();
-        const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('David') || v.name.includes('George') || v.name.includes('Natural') || v.name.includes('Male'))) || voices.find(v => v.lang.startsWith('en'));
-        if (enVoice) utterance.voice = enVoice;
+        if (isTr) {
+          const trVoice = voices.find(v => v.lang.startsWith('tr') && (v.name.includes('Ahmet') || v.name.includes('Tolga') || v.name.includes('Emre') || v.name.includes('Natural') || v.name.includes('Male'))) || voices.find(v => v.lang.startsWith('tr'));
+          if (trVoice) utterance.voice = trVoice;
+        } else {
+          const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('David') || v.name.includes('George') || v.name.includes('Natural') || v.name.includes('Male'))) || voices.find(v => v.lang.startsWith('en'));
+          if (enVoice) utterance.voice = enVoice;
+        }
 
         utterance.onend = () => {
           this.isTransmitting = false;

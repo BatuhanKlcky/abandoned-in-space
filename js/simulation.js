@@ -90,6 +90,13 @@ class MissionSimulationTheater {
     if (this.overlay) {
       this.overlay.classList.toggle('vr-game-clean-ui', this.vrCleanUI);
     }
+    const cleanUiBtn = document.getElementById('btn-walk-clean-ui');
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    if (cleanUiBtn) {
+      cleanUiBtn.innerText = this.vrCleanUI
+        ? (isTr ? '🎮 Arayüzü Göster / Normal Mod (H)' : '🎮 Show UI / Normal Mode (H)')
+        : (isTr ? '🎮 Arayüzü Gizle / Oyun Modu (H)' : '🎮 Hide UI / Game Mode (H)');
+    }
     this.updateVRGameMiniPill();
     setTimeout(() => this.onResize(), 30);
   }
@@ -837,6 +844,7 @@ class MissionSimulationTheater {
 
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = true;
       if (walkHud) walkHud.classList.remove('hidden');
+      this.updateSimulationLanguage();
       this.updateQuestVRButton();
       if (walkBtn) walkBtn.classList.add('active');
       if (this.controls) this.controls.enabled = false;
@@ -989,78 +997,88 @@ class MissionSimulationTheater {
   }
 
   // In-world floating controls help board for Meta Quest 3S (toggle with Y)
+  updateVRHelpPanelContent() {
+    if (!this.vrHelpCanvas) {
+      this.vrHelpCanvas = document.createElement('canvas');
+      this.vrHelpCanvas.width = 1024;
+      this.vrHelpCanvas.height = 700;
+    }
+    const canvas = this.vrHelpCanvas;
+    const ctx = canvas.getContext('2d');
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    ctx.fillStyle = 'rgba(4, 11, 24, 0.94)';
+    ctx.fillRect(0, 0, 1024, 700);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(6, 6, 1012, 688);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 38px monospace';
+    ctx.fillText(isTr ? '🎮 META QUEST 3S KONTROLLERİ' : '🎮 META QUEST 3S CONTROLS', 40, 64);
+    const rows = isTr ? [
+      ['SOL ÇUBUK', 'Bakış yönüne yürü (analog hız)'],
+      ['SOL ÇUBUK BAS', 'Koş (basılı tut)'],
+      ['SAĞ ÇUBUK ◀ ▶', '30° adım dönüş (mide bulantısız)'],
+      ['SAĞ ÇUBUK BAS', 'EVA feneri aç / kapat'],
+      ['TETİK (her iki el)', 'Lazerle buton/kapı/numune • Zemine ışınlan'],
+      ['GRIP + KOL SALLA', 'Kollarınla yürü (gerçek yürüyüş hissi)'],
+      ['GERÇEK YÜRÜME', 'Odada yürü — çarpışmalı oda ölçeği'],
+      ['ELLE DOKUN', 'Butona eldiveninle fiziksel dokun'],
+      ['A', 'Zıpla (kabin içinde: kapıyı aç/kapat)'],
+      ['B', 'Hava kilidi kapısı • LRV aracına bin/in'],
+      ['X', 'EVA feneri'],
+      ['Y', 'Bu yardım panelini aç / kapat']
+    ] : [
+      ['LEFT STICK', 'Walk toward gaze (analog speed)'],
+      ['LEFT STICK CLICK', 'Sprint (hold)'],
+      ['RIGHT STICK ◀ ▶', '30° snap turn (comfort)'],
+      ['RIGHT STICK CLICK', 'Toggle EVA torch'],
+      ['TRIGGER (either)', 'Laser buttons/doors/samples • Teleport'],
+      ['GRIP + SWING ARMS', 'Arm-swing locomotion'],
+      ['REAL WALKING', 'Room-scale walking with collision'],
+      ['HAND TOUCH', 'Physically press buttons with glove'],
+      ['A', 'Jump (in cabin: open/close door)'],
+      ['B', 'Airlock door • Mount/dismount LRV'],
+      ['X', 'EVA torch'],
+      ['Y', 'Show / hide this help board']
+    ];
+    rows.forEach((r, i) => {
+      const y = 112 + i * 38;
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText(r[0], 40, y);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '24px monospace';
+      ctx.fillText(r[1], 400, y);
+    });
+
+    // Bottom Red Exit Bar
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(36, 592, 952, 74);
+    ctx.strokeStyle = '#f87171';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(36, 592, 952, 74);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(
+      isTr
+        ? '🚪 [TETİKLE TIKLA VEYA DOKUN] VR MODUNDAN ÇIK & ANA EKRANA DÖN'
+        : '🚪 [CLICK TRIGGER OR TOUCH] EXIT VR & RETURN TO MAIN VIEW',
+      52,
+      640
+    );
+
+    if (this.vrHelpTexture) {
+      this.vrHelpTexture.needsUpdate = true;
+    }
+  }
+
   showVRHelpPanel(visible) {
+    this.updateVRHelpPanelContent();
     if (!this.vrHelpPanel) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 700;
-      const ctx = canvas.getContext('2d');
-      const isTr = window.app ? window.app.currentLang === 'tr' : false;
-      ctx.fillStyle = 'rgba(4, 11, 24, 0.94)';
-      ctx.fillRect(0, 0, 1024, 700);
-      ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(6, 6, 1012, 688);
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 38px monospace';
-      ctx.fillText(isTr ? '🎮 META QUEST 3S KONTROLLERİ' : '🎮 META QUEST 3S CONTROLS', 40, 64);
-      const rows = isTr ? [
-        ['SOL ÇUBUK', 'Bakış yönüne yürü (analog hız)'],
-        ['SOL ÇUBUK BAS', 'Koş (basılı tut)'],
-        ['SAĞ ÇUBUK ◀ ▶', '30° adım dönüş (mide bulantısız)'],
-        ['SAĞ ÇUBUK BAS', 'EVA feneri aç / kapat'],
-        ['TETİK (her iki el)', 'Lazerle buton/kapı/numune • Zemine ışınlan'],
-        ['GRIP + KOL SALLA', 'Kollarınla yürü (gerçek yürüyüş hissi)'],
-        ['GERÇEK YÜRÜME', 'Odada yürü — çarpışmalı oda ölçeği'],
-        ['ELLE DOKUN', 'Butona eldiveninle fiziksel dokun'],
-        ['A', 'Zıpla (kabin içinde: kapıyı aç/kapat)'],
-        ['B', 'Hava kilidi kapısı • LRV aracına bin/in'],
-        ['X', 'EVA feneri'],
-        ['Y', 'Bu yardım panelini aç / kapat']
-      ] : [
-        ['LEFT STICK', 'Walk toward gaze (analog speed)'],
-        ['LEFT STICK CLICK', 'Sprint (hold)'],
-        ['RIGHT STICK ◀ ▶', '30° snap turn (comfort)'],
-        ['RIGHT STICK CLICK', 'Toggle EVA torch'],
-        ['TRIGGER (either)', 'Laser buttons/doors/samples • Teleport'],
-        ['GRIP + SWING ARMS', 'Arm-swing locomotion'],
-        ['REAL WALKING', 'Room-scale walking with collision'],
-        ['HAND TOUCH', 'Physically press buttons with glove'],
-        ['A', 'Jump (in cabin: open/close door)'],
-        ['B', 'Airlock door • Mount/dismount LRV'],
-        ['X', 'EVA torch'],
-        ['Y', 'Show / hide this help board']
-      ];
-      rows.forEach((r, i) => {
-        const y = 112 + i * 38;
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 24px monospace';
-        ctx.fillText(r[0], 40, y);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '24px monospace';
-        ctx.fillText(r[1], 400, y);
-      });
-
-      // Bottom Red Exit Bar
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(36, 592, 952, 74);
-      ctx.strokeStyle = '#f87171';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(36, 592, 952, 74);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 28px monospace';
-      ctx.fillText(
-        isTr
-          ? '🚪 [TETİKLE TIKLA VEYA DOKUN] VR MODUNDAN ÇIK & ANA EKRANA DÖN'
-          : '🚪 [CLICK TRIGGER OR TOUCH] EXIT VR & RETURN TO MAIN VIEW',
-        52,
-        640
-      );
-
-      const tex = new THREE.CanvasTexture(canvas);
+      this.vrHelpTexture = new THREE.CanvasTexture(this.vrHelpCanvas);
       this.vrHelpPanel = new THREE.Mesh(
         new THREE.PlaneGeometry(1.15, 0.78),
-        new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false })
+        new THREE.MeshBasicMaterial({ map: this.vrHelpTexture, transparent: true, side: THREE.DoubleSide, depthTest: false })
       );
       this.vrHelpPanel.renderOrder = 999;
       this.vrHelpPanel.visible = false;
@@ -2887,10 +2905,13 @@ class MissionSimulationTheater {
         label_en: '🇹🇷 [CLICK / E / VR TRIGGER] SALUTE TURKISH FLAG & PLAY RADIO',
         onClick: () => {
           this.playSwitchClickSound(720);
-          if (window.SpaceAudio && this.currentArtifact) {
-            window.SpaceAudio.playRadioTransmission(this.currentArtifact.audioSnippet || this.currentArtifact.quote_en || '');
-          }
           const isTr = window.app ? window.app.currentLang === 'tr' : false;
+          if (window.SpaceAudio && this.currentArtifact) {
+            const speech = isTr
+              ? (this.currentArtifact.quote_tr || this.currentArtifact.audioSnippet || 'İstikbal göklerdedir!')
+              : (this.currentArtifact.quote_en || this.currentArtifact.audioSnippet || '');
+            window.SpaceAudio.playRadioTransmission(speech);
+          }
           this.updateVRGameMiniPill(isTr ? '🇹🇷 Şanlı Türk Bayrağı Selamlandı!' : '🇹🇷 Turkish Flag Saluted!');
         }
       };
@@ -4165,6 +4186,8 @@ class MissionSimulationTheater {
       lightMode: 0
     };
 
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+
     ctx.fillStyle = cs.masterAlarm ? '#1f070b' : '#030914';
     ctx.fillRect(0, 0, 1024, 512);
 
@@ -4187,8 +4210,10 @@ class MissionSimulationTheater {
 
     ctx.fillStyle = cs.masterAlarm ? '#fca5a5' : '#10b981';
     ctx.font = 'bold 23px monospace';
-    const name = artifact ? (artifact.name_en || artifact.id).toUpperCase() : 'NASA SPACECRAFT';
-    const statusBanner = cs.masterAlarm ? '⚠️ MASTER ALARM / STAGE ABORT ARMED' : `NASA INTERNAL AVIONICS & TELEMETRY BUS // ${name}`;
+    const craftName = artifact ? (isTr ? (artifact.name_tr || artifact.name_en || artifact.id) : (artifact.name_en || artifact.id)).toUpperCase() : (isTr ? 'NASA UZAY ARACI' : 'NASA SPACECRAFT');
+    const statusBanner = cs.masterAlarm
+      ? (isTr ? '⚠️ ANA ALARM / KADEME İPTALİ KURULDU' : '⚠️ MASTER ALARM / STAGE ABORT ARMED')
+      : (isTr ? `NASA DAHİLİ AVİYONİK VE TELEMETRİ VERİ YOLU // ${craftName}` : `NASA INTERNAL AVIONICS & TELEMETRY BUS // ${craftName}`);
     ctx.fillText(statusBanner, 34, 51);
 
     // Left Radar / Descent & Thrust Waveform Plot
@@ -4212,14 +4237,19 @@ class MissionSimulationTheater {
     ctx.strokeRect(34, 310, 440, 125);
     ctx.fillStyle = '#38bdf8';
     ctx.font = 'bold 19px monospace';
-    ctx.fillText(`AGC PROGRAM: P${cs.prog} | DPS THROTTLE: ${cs.throttlePct}%`, 50, 348);
+    ctx.fillText(isTr ? `AGC PROGRAMI: P${cs.prog} | DPS İTME: %${cs.throttlePct}` : `AGC PROGRAM: P${cs.prog} | DPS THROTTLE: ${cs.throttlePct}%`, 50, 348);
     ctx.fillStyle = '#a7f3d0';
-    ctx.fillText(`RCS THRUSTER QUADS: ${cs.rcsArmed ? 'ARMED (4/4)' : 'ISOLATED'}`, 50, 382);
+    ctx.fillText(isTr ? `RCS İTİCİ BLOKLARI: ${cs.rcsArmed ? 'AKTİF (4/4)' : 'YALITILDI'}` : `RCS THRUSTER QUADS: ${cs.rcsArmed ? 'ARMED (4/4)' : 'ISOLATED'}`, 50, 382);
     ctx.fillStyle = '#fde68a';
-    ctx.fillText(`GLYCOL COOLING LOOP: ${cs.glycolPump ? 'PUMP A+B ACTIVE' : 'STANDBY'}`, 50, 416);
+    ctx.fillText(isTr ? `GLİKOL SOĞUTMA DÖNGÜSÜ: ${cs.glycolPump ? 'POMPA A+B AKTİF' : 'BEKLEMEDE'}` : `GLYCOL COOLING LOOP: ${cs.glycolPump ? 'PUMP A+B ACTIVE' : 'STANDBY'}`, 50, 416);
 
     // Right Internal Subsystem Bars (ECS O2, He TANK, RTG/FUEL, BUS VOLT)
-    const metrics = [
+    const metrics = isTr ? [
+      { label: 'KABİN / GÖVDE BASINCI', val: '4.8 PSI (33.1 kPa)', pct: 0.88, col: '#10b981' },
+      { label: 'İNİŞ / KALKIŞ İTME GÜCÜ', val: `%${cs.throttlePct} (${Math.round(cs.throttlePct * 45.0)} N)`, pct: Math.max(0.08, cs.throttlePct / 100), col: '#f59e0b' },
+      { label: 'ISI KALKANI / RTG ÇEKİRDEĞİ', val: cs.glycolPump ? '294.2 K (NOMİNAL)' : '318.6 K (ISINIYOR)', pct: cs.glycolPump ? 0.72 : 0.91, col: '#00f0ff' },
+      { label: 'YÜKSEK KAZANÇLI S-BANT TELEMETRİ', val: cs.sBandLocked ? 'KİLİTLENDİ (DSN GOLDSTONE)' : 'OMNİ ANTEN YEDEĞİ', pct: cs.sBandLocked ? 0.96 : 0.45, col: '#10b981' }
+    ] : [
       { label: 'CABIN / HULL PRESSURE', val: '4.8 PSI (33.1 kPa)', pct: 0.88, col: '#10b981' },
       { label: 'DESCENT / ASCENT THRUST', val: `${cs.throttlePct}% (${Math.round(cs.throttlePct * 45.0)} N)`, pct: Math.max(0.08, cs.throttlePct / 100), col: '#f59e0b' },
       { label: 'THERMAL SHIELD / RTG CORE', val: cs.glycolPump ? '294.2 K (NOMINAL)' : '318.6 K (WARMING)', pct: cs.glycolPump ? 0.72 : 0.91, col: '#00f0ff' },
@@ -4237,9 +4267,13 @@ class MissionSimulationTheater {
     });
 
     // Bottom Schematic Readout
+    const coordsStr = artifact ? (artifact.technicalSpecs ? artifact.technicalSpecs.coordinatesReadable : (artifact.coords ? `${artifact.coords.lat}°, ${artifact.coords.lng}°` : '0.674N, 23.473E')) : '0.674N, 23.473E';
+    const massStr = artifact ? (artifact.technicalSpecs ? artifact.technicalSpecs.massLeftKg : '15,103 kg') : '15,103 kg';
     ctx.fillStyle = '#fde68a';
     ctx.font = 'bold 15px monospace';
-    ctx.fillText(`COORDS: ${artifact ? artifact.coords : '0.674N, 23.473E'} | MASS: ${artifact ? artifact.mass : '15,103 kg'} | CLICK ANY 3D BUTTON OR SWITCH`, 34, 468);
+    ctx.fillText(isTr
+      ? `KOORDİNAT: ${coordsStr} | KÜTLE: ${massStr} | HERHANGİ BİR 3D TUŞA VEYA VALFE TIKLAYIN`
+      : `COORDS: ${coordsStr} | MASS: ${massStr} | CLICK ANY 3D BUTTON OR SWITCH`, 34, 468);
 
     if (!this.telemetryTexture) {
       this.telemetryTexture = new THREE.CanvasTexture(canvas);
@@ -6794,7 +6828,7 @@ class MissionSimulationTheater {
         ? (isTr ? '🚪 1. İç Kapıyı Aç / Kapat (E)' : '🚪 Toggle Airlock Doors (E)')
         : (isTr ? '🚪 Kabine Gir (E)' : '🚪 Enter Cabin (E)');
     }
-    const btnWalkView = document.getElementById('btn-walk-view');
+    const btnWalkView = document.getElementById('btn-walk-view-toggle') || document.getElementById('btn-walk-view');
     if (btnWalkView) {
       btnWalkView.innerText = this.walkViewMode === 'fp'
         ? (isTr ? '👁️ Görünüm: 1. Şahıs (Astronot Elleri)' : '👁️ View: 1st Person (EVA Hands)')
@@ -6806,6 +6840,35 @@ class MissionSimulationTheater {
         ? (isTr ? '💡 EVA Feneri: AÇIK' : '💡 EVA Torch: ON')
         : (isTr ? '💡 EVA Feneri: KAPALI' : '💡 EVA Torch: OFF');
     }
+    const btnCleanUi = document.getElementById('btn-walk-clean-ui');
+    if (btnCleanUi) {
+      btnCleanUi.innerText = this.vrCleanUI
+        ? (isTr ? '🎮 Arayüzü Göster / Normal Mod (H)' : '🎮 Show UI / Normal Mode (H)')
+        : (isTr ? '🎮 Arayüzü Gizle / Oyun Modu (H)' : '🎮 Hide UI / Game Mode (H)');
+    }
+
+    // Update initial Walk HUD Status if not yet updated by loop
+    const statusEl = document.getElementById('walk-xr-status');
+    if (statusEl && (!this.walkState || !this.walkState.isLooking)) {
+      if (this.walkState && this.walkState.isInsideCabin) {
+        statusEl.innerText = isTr
+          ? '🚀 HAVADA ALÇALMA AKTİF (KOKPİT İÇİ) • Yüzeye inişten sonra arkadaki kapağa yürüyün, mandalı tıklayın veya [E] tuşuna basın'
+          : '🚀 AIRBORNE DESCENT ACTIVE (IN CABIN) • After touchdown walk to door, click latch or press E to exit';
+      } else {
+        statusEl.innerText = isTr
+          ? '🥽 1:1 ASTRONOT YÜZEY YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • E: Etkileşim • V: 1./3. Şahıs • F: Fener)'
+          : '🥽 1:1 ASTRONAUT SURFACE WALK ACTIVE (WASD: Walk • SPACE: Jump • E: Interact • V: View • F: Torch)';
+      }
+    }
+    const distEl = document.getElementById('walk-hud-dist');
+    if (distEl && this.walkState && this.walkState.isInsideCabin) {
+      distEl.innerText = isTr ? 'KONUM: KOKPİT İÇİ (HAVADA ALÇALMA)' : 'LOCATION: INSIDE COCKPIT (AIRBORNE DESCENT)';
+    }
+
+    // Refresh all 3D VR displays and panels
+    this.refreshCabinDisplays();
+    this.updateVRWristCanvas();
+    this.updateVRHelpPanelContent();
     this.updateVRGameMiniPill();
     this.updateQuestVRButton();
   }

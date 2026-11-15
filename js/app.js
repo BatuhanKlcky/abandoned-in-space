@@ -859,6 +859,93 @@ class AbandonedInSpaceApp {
     if (dataEl) dataEl.innerText = verMeta.dataset;
     if (herEl) herEl.innerText = verMeta.heritage;
 
+    // Populate NASA Heritage Protection Status & Archaeological Exclusion Zone Radar
+    const hData = (typeof getHeritageProtectionData === 'function')
+      ? getHeritageProtectionData(artifact.id)
+      : (typeof HERITAGE_RADAR_DATA !== 'undefined' ? (HERITAGE_RADAR_DATA[artifact.id] || {}) : {});
+
+    const tierBadge = document.getElementById('heritage-tier-badge');
+    if (tierBadge && hData.tier) {
+      tierBadge.className = `heritage-tier-badge tier-${hData.tier}-badge`;
+      tierBadge.innerText = isTr ? hData.tier_tr : hData.tier_en;
+    }
+
+    const walkBufferEl = document.getElementById('heritage-walk-buffer');
+    if (walkBufferEl) walkBufferEl.innerText = isTr ? hData.walkBuffer_tr : hData.walkBuffer_en;
+
+    const walkDescEl = document.getElementById('heritage-walk-desc');
+    if (walkDescEl) {
+      if (artifact.body === 'moon') {
+        walkDescEl.innerText = isTr
+          ? (artifact.landingStatus === 'landed' ? "Ay ayak izleri ve tarihi donanım dokunulmazlığı" : "Sismik krater inceleme ve kalıntı perimetresi")
+          : (artifact.landingStatus === 'landed' ? "Pristine footprint paths & hardware sanctuary" : "Seismic crater rim & debris perimeter");
+      } else if (artifact.body === 'mars') {
+        walkDescEl.innerText = isTr
+          ? (artifact.landingStatus === 'landed' ? "Gezgin şasisi ve regolit izi koruması" : "Atmosferik kaza saçılım alanı inceleme perimetresi")
+          : (artifact.landingStatus === 'landed' ? "Rover chassis & regolith track preservation" : "Crash debris scatter field standoff");
+      } else {
+        walkDescEl.innerText = isTr
+          ? "Dış Güneş Sistemi tarihi iniş sahası tamponu"
+          : "Outer Solar System pristine touchdown buffer";
+      }
+    }
+
+    const plumeBufferEl = document.getElementById('heritage-plume-buffer');
+    if (plumeBufferEl) plumeBufferEl.innerText = isTr ? hData.plumeBuffer_tr : hData.plumeBuffer_en;
+
+    const plumeDescEl = document.getElementById('heritage-plume-desc');
+    if (plumeDescEl) {
+      if (hData.plumeBufferMeters && hData.plumeBufferMeters > 0) {
+        plumeDescEl.innerText = isTr
+          ? "İniş motoru süpersonik regolit kumlama (sandblast) engeli"
+          : "Descent engine hypervelocity regolith sandblasting exclusion";
+      } else {
+        plumeDescEl.innerText = isTr
+          ? "Atmosferik frenleme ve termal buharlaşma sahası"
+          : "Atmospheric entry & thermal disintegration zone";
+      }
+    }
+
+    const treatyEl = document.getElementById('heritage-treaty');
+    if (treatyEl) treatyEl.innerText = isTr ? hData.treaty_tr : hData.treaty_en;
+
+    const rationaleEl = document.getElementById('heritage-rationale-text');
+    if (rationaleEl) rationaleEl.innerText = isTr ? hData.rationale_tr : hData.rationale_en;
+
+    // Dynamically adjust SVG radar rings and readouts
+    const walkZoneCircle = document.getElementById('radar-zone-walk');
+    if (walkZoneCircle) {
+      const wMeters = hData.walkBufferMeters || 50;
+      const rWalk = wMeters <= 0 ? 0 : Math.max(24, Math.min(68, Math.round(24 + (wMeters / 250) * 44)));
+      walkZoneCircle.setAttribute('r', rWalk);
+      walkZoneCircle.style.display = (wMeters <= 0) ? 'none' : '';
+    }
+
+    const plumeZoneCircle = document.getElementById('radar-zone-plume');
+    if (plumeZoneCircle) {
+      const pMeters = hData.plumeBufferMeters || 1000;
+      const rPlume = pMeters <= 0 ? 0 : Math.max(50, Math.min(92, Math.round(48 + (pMeters / 2000) * 44)));
+      plumeZoneCircle.setAttribute('r', rPlume);
+      plumeZoneCircle.style.display = (pMeters <= 0) ? 'none' : '';
+    }
+
+    const radarBodyEl = document.getElementById('radar-hud-body');
+    if (radarBodyEl) {
+      const locStr = (isTr ? artifact.locationName : artifact.locationName_en) || artifact.locationName || '';
+      radarBodyEl.innerText = `${artifact.body.toUpperCase()} • ${locStr.slice(0, 24)}`;
+    }
+
+    const radarCoordsEl = document.getElementById('radar-hud-coords');
+    if (radarCoordsEl) {
+      const coordsStr = (specs && specs.coordinatesReadable) ? specs.coordinatesReadable : `${artifact.coords.lat.toFixed(2)}°, ${artifact.coords.lng.toFixed(2)}°`;
+      radarCoordsEl.innerText = coordsStr;
+    }
+
+    // Update 3D scene heritage boundary rings if available
+    if (this.sceneManager && typeof this.sceneManager.updateHeritageExclusionRings === 'function') {
+      this.sceneManager.updateHeritageExclusionRings(artifact);
+    }
+
     const relicCard = document.getElementById('secret-relic-card');
     if (relicCard) {
       if (artifact.secretRelic) {
@@ -1693,7 +1780,12 @@ const TRANSLATIONS = {
     lb_catalog_label: "KATALOG NO:",
     lb_instrument_label: "ENSTRÜMAN:",
     quest_flat_title: "🥽 META QUEST KUMANDA MODU AKTİF",
-    quest_flat_desc: "Analog: Gezegeni Döndür & Yakınlaş • Tetik / [A]: Kalıntı Seç & İncele • [B]: Kapat"
+    quest_flat_desc: "Analog: Gezegeni Döndür & Yakınlaş • Tetik / [A]: Kalıntı Seç & İncele • [B]: Kapat",
+    heritage_card_title: "NASA KORUMA STATÜSÜ VE ARKEOLOJİK TAMPON BÖLGE RADARI",
+    h_metric_walk: "YÜRÜYÜŞ TAMPON SINIRI (EVA)",
+    h_metric_plume: "ROKET JETİ KUMLAMA SINIRI",
+    h_metric_treaty: "ULUSLARARASI HUKUKİ VE TEKNİK DAYANAK",
+    h_rationale_title: "ARKEOLOJİK VE BİLİMSEL KORUMA GEREKÇESİ"
   },
   en: {
     app_subtitle: "Historical Space Artifacts & Storytelling Map Across the Moon, Mars, Venus & Outer System",
@@ -1819,7 +1911,12 @@ const TRANSLATIONS = {
     lb_catalog_label: "CATALOG ID:",
     lb_instrument_label: "INSTRUMENT:",
     quest_flat_title: "🥽 META QUEST CONTROLLER ACTIVE",
-    quest_flat_desc: "Thumbstick: Orbit & Zoom • Trigger / [A]: Select & Inspect Relic • [B]: Back"
+    quest_flat_desc: "Thumbstick: Orbit & Zoom • Trigger / [A]: Select & Inspect Relic • [B]: Back",
+    heritage_card_title: "NASA HERITAGE PROTECTION STATUS & EXCLUSION ZONE RADAR",
+    h_metric_walk: "EVA WALK STANDOFF BUFFER",
+    h_metric_plume: "ROCKET PLUME SANDBLAST STANDOFF",
+    h_metric_treaty: "INTERNATIONAL LEGAL & TECHNICAL BASIS",
+    h_rationale_title: "SCIENTIFIC & ARCHAEOLOGICAL RATIONALE"
   }
 };
 

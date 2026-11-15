@@ -475,6 +475,113 @@
           </div>
         </div>
 
+        <!-- NASA Heritage Protection Status & Archaeological Exclusion Zone Radar (Artemis Accords Section 9 / NASA SP-2024-4559) -->
+        <div class="heritage-radar-card" id="drawer-heritage-card">
+          <div class="heritage-card-header">
+            <div class="heritage-header-title-group">
+              <span class="heritage-icon">🏛️</span>
+              <span class="heritage-title" data-i18n="heritage_card_title">NASA KORUMA STATÜSÜ VE ARKEOLOJİK TAMPON BÖLGE RADARI</span>
+            </div>
+            <span class="heritage-tier-badge tier-1-badge" id="heritage-tier-badge">🏛️ TIER I: DOKUNULMAZ TARİHİ ANIT</span>
+          </div>
+
+          <div class="heritage-radar-body">
+            <!-- Circular Telemetry Radar Widget -->
+            <div class="heritage-radar-scope">
+              <svg class="radar-svg" viewBox="0 0 200 200" id="heritage-radar-svg" aria-label="Archaeological Exclusion Radar">
+                <defs>
+                  <radialGradient id="radarSweepGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="rgba(0, 240, 255, 0.45)"/>
+                    <stop offset="70%" stop-color="rgba(0, 240, 255, 0.08)"/>
+                    <stop offset="100%" stop-color="rgba(0, 240, 255, 0)"/>
+                  </radialGradient>
+                  <linearGradient id="plumeZoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(245, 158, 11, 0.22)"/>
+                    <stop offset="100%" stop-color="rgba(239, 68, 68, 0.08)"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Polar Grid Rings -->
+                <circle class="radar-grid-ring" cx="100" cy="100" r="92"></circle>
+                <circle class="radar-grid-ring" cx="100" cy="100" r="62"></circle>
+                <circle class="radar-grid-ring" cx="100" cy="100" r="32"></circle>
+                
+                <!-- Crosshairs -->
+                <line class="radar-crosshair" x1="100" y1="8" x2="100" y2="192"></line>
+                <line class="radar-crosshair" x1="8" y1="100" x2="192" y2="100"></line>
+                
+                <!-- Angle Ticks -->
+                <line class="radar-tick" x1="100" y1="4" x2="100" y2="12"></line>
+                <line class="radar-tick" x1="100" y1="188" x2="100" y2="196"></line>
+                <line class="radar-tick" x1="4" y1="100" x2="12" y2="100"></line>
+                <line class="radar-tick" x1="188" y1="100" x2="196" y2="100"></line>
+
+                <!-- Rocket Plume Sandblast Standoff Zone -->
+                <circle class="radar-zone-plume" id="radar-zone-plume" cx="100" cy="100" r="92"></circle>
+                
+                <!-- Astronaut EVA Walk Buffer Zone -->
+                <circle class="radar-zone-walk" id="radar-zone-walk" cx="100" cy="100" r="48"></circle>
+
+                <!-- Hardware Sanctuary Core -->
+                <circle class="radar-zone-core" id="radar-zone-core" cx="100" cy="100" r="16"></circle>
+
+                <!-- Sweeping Radar Beam Group -->
+                <g class="radar-sweeper-group">
+                  <path class="radar-sweep-wedge" d="M 100 100 L 100 8 A 92 92 0 0 1 165 35 Z" fill="url(#radarSweepGrad)"></path>
+                  <line class="radar-sweep-line" x1="100" y1="100" x2="165" y2="35"></line>
+                </g>
+
+                <!-- Center Craft Blip -->
+                <circle class="radar-craft-blip" id="radar-craft-blip" cx="100" cy="100" r="4"></circle>
+                <circle class="radar-blip-pulse" cx="100" cy="100" r="8"></circle>
+              </svg>
+
+              <!-- Radar HUD Readout Badges -->
+              <div class="radar-hud-readout">
+                <span class="radar-hud-sub" id="radar-hud-body">MOON / TRANQUILITY BASE</span>
+                <span class="radar-hud-coords" id="radar-hud-coords">0°40' N, 23°28' E</span>
+              </div>
+            </div>
+
+            <!-- Standoff Distances Telemetry Grid -->
+            <div class="heritage-metrics-grid">
+              <div class="heritage-metric-box">
+                <div class="h-metric-header">
+                  <span class="h-metric-dot dot-walk"></span>
+                  <span class="h-metric-label" data-i18n="h_metric_walk">YÜRÜYÜŞ TAMPON SINIRI (EVA)</span>
+                </div>
+                <div class="h-metric-val" id="heritage-walk-buffer">75 m</div>
+                <div class="h-metric-desc" id="heritage-walk-desc">Ay ayak izleri ve tarihi donanım koruması</div>
+              </div>
+
+              <div class="heritage-metric-box">
+                <div class="h-metric-header">
+                  <span class="h-metric-dot dot-plume"></span>
+                  <span class="h-metric-label" data-i18n="h_metric_plume">ROKET JETİ KUMLAMA SINIRI</span>
+                </div>
+                <div class="h-metric-val" id="heritage-plume-buffer">2.000 m (2.0 km)</div>
+                <div class="h-metric-desc" id="heritage-plume-desc">İniş motoru toz kumlama (sandblast) engeli</div>
+              </div>
+
+              <div class="heritage-metric-box full-width-metric">
+                <div class="h-metric-header">
+                  <span class="h-metric-dot dot-treaty"></span>
+                  <span class="h-metric-label" data-i18n="h_metric_treaty">ULUSLARARASI HUKUKİ VE TEKNİK DAYANAK</span>
+                </div>
+                <div class="h-metric-val h-treaty-val" id="heritage-treaty">Artemis Accords Sec. 9 & NASA SP-2024-4559 (One Small Step Act)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scientific & Archaeological Rationale Callout Box -->
+          <div class="heritage-rationale-box">
+            <div class="h-rationale-title" data-i18n="h_rationale_title">ARKEOLOJİK VE BİLİMSEL KORUMA GEREKÇESİ</div>
+            <p class="h-rationale-text" id="heritage-rationale-text">
+              Apollo 12'nin Surveyor 3'ün 160 metre yakınına inişinde motor jetinin kaldırdığı regolit taneciklerinin Surveyor 3 yüzeyini zımparalaması sonucu NASA, tüm tarihi miras siteleri etrafında zorunlu 2 km roket motoru ve 75 metre yaya tampon bölgesi belirlemiştir.
+            </p>
+          </div>
+        </div>
+
         <!-- Audio Transmission Broadcast Box with Animated Equalizer -->
         <div class="audio-broadcast-box">
           <div class="audio-info">

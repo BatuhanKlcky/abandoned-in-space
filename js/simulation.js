@@ -3829,6 +3829,9 @@ class MissionSimulationTheater {
       this.interactables = this.surfaceInteractables ? [...this.surfaceInteractables] : [];
     }
 
+    // Build Artemis Accords Archaeological Heritage Boundary Perimeter (Walk Standoff)
+    this.buildHeritageWalkBoundary(artifact);
+
     // Disable frustum culling & backface culling across the entire 3D scene so no rocket/lander part ever disappears at any camera angle!
     this.scene.traverse((obj) => {
       if (obj.isMesh || obj.isLine || obj.isPoints) {
@@ -3851,6 +3854,96 @@ class MissionSimulationTheater {
     if (this.controls && this.spacecraft) {
       this.controls.target.copy(this.spacecraft.position);
     }
+  }
+
+  /**
+   * Build 1:1 scale Artemis Accords Archaeological Heritage Boundary on planetary surface
+   */
+  buildHeritageWalkBoundary(artifact) {
+    if (!artifact || !this.scene) return;
+
+    if (this.heritageBoundaryGroup) {
+      this.scene.remove(this.heritageBoundaryGroup);
+      this.heritageBoundaryGroup = null;
+    }
+
+    const hData = (typeof getHeritageProtectionData === 'function')
+      ? getHeritageProtectionData(artifact.id)
+      : (typeof HERITAGE_RADAR_DATA !== 'undefined' ? (HERITAGE_RADAR_DATA[artifact.id] || {}) : {});
+
+    const walkBufferMeters = hData.walkBufferMeters || 75;
+    if (walkBufferMeters <= 0) return;
+
+    this.heritageBoundaryGroup = new THREE.Group();
+    const segments = 128;
+    const ringRadius = walkBufferMeters;
+
+    let bColor = 0x00f0ff;
+    if (hData.tier === 1) bColor = 0xf59e0b;
+    else if (hData.tier === 2) bColor = 0x10b981;
+    else if (hData.tier === 3) bColor = 0xef4444;
+
+    const positions = [];
+    const colors = [];
+    const colObj = new THREE.Color(bColor);
+
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2;
+      const rx = Math.sin(theta) * ringRadius;
+      const rz = Math.cos(theta) * ringRadius;
+      const ry = this.getTerrainHeight(rx, rz) + 0.14;
+      positions.push(rx, ry, rz);
+      colors.push(colObj.r, colObj.g, colObj.b);
+    }
+
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    lineGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const lineMat = new THREE.LineBasicMaterial({
+      color: bColor,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
+    const lineMesh = new THREE.Line(lineGeo, lineMat);
+    this.heritageBoundaryGroup.add(lineMesh);
+
+    // 8 Holographic Perimeter Beacon Pylons along the boundary circle (every 45 deg)
+    for (let b = 0; b < 8; b++) {
+      const bTheta = (b / 8) * Math.PI * 2;
+      const bx = Math.sin(bTheta) * ringRadius;
+      const bz = Math.cos(bTheta) * ringRadius;
+      const by = this.getTerrainHeight(bx, bz);
+
+      const pylonGroup = new THREE.Group();
+      pylonGroup.position.set(bx, by, bz);
+
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.16, 1.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 })
+      );
+      post.position.y = 0.7;
+      pylonGroup.add(post);
+
+      const orb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 16, 16),
+        new THREE.MeshBasicMaterial({ color: bColor, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending })
+      );
+      orb.position.y = 1.45;
+      pylonGroup.add(orb);
+
+      const beam = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.18, 12.0, 12),
+        new THREE.MeshBasicMaterial({ color: bColor, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false })
+      );
+      beam.position.y = 7.45;
+      pylonGroup.add(beam);
+
+      this.heritageBoundaryGroup.add(pylonGroup);
+    }
+
+    this.scene.add(this.heritageBoundaryGroup);
   }
 
   // ===========================================================================
@@ -5839,6 +5932,15 @@ class MissionSimulationTheater {
       this.controls.update();
     }
 
+    if (this.heritageBoundaryGroup) {
+      const bOsc = Math.sin(this.simTime * 2.5);
+      this.heritageBoundaryGroup.traverse(child => {
+        if (child.isMesh && child.geometry && child.geometry.type === 'SphereGeometry') {
+          child.scale.setScalar(1.0 + bOsc * 0.16);
+        }
+      });
+    }
+
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -6823,9 +6925,21 @@ class MissionSimulationTheater {
           ? '🪜 EVA MERDİVENİ AKTİF (Yüzeye doğru yürüyün veya [E] tuşuna basarak doğrudan zemine inin)'
           : '🪜 ON EVA BOARDING LADDER (Walk down toward the surface or press [E] to step onto the ground)';
       } else {
-        statusEl.innerText = isTr
-          ? '🥽 1:1 ASTRONOT YÜZEY YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • Merdivene Yürü / E: Kabine Gir • V: 1./3. Şahıs • F: Fener)'
-          : '🥽 1:1 ASTRONAUT SURFACE WALK ACTIVE (WASD: Walk • SPACE: Jump • Walk to Ladder / E: Enter Cabin • V: View • F: Torch)';
+        const hData = (typeof getHeritageProtectionData === 'function' && this.currentArtifact)
+          ? getHeritageProtectionData(this.currentArtifact.id)
+          : null;
+        const walkBuf = (hData && hData.walkBufferMeters) ? hData.walkBufferMeters : 75;
+        const diff = Math.abs(dist - walkBuf);
+
+        if (diff <= 8) {
+          statusEl.innerText = isTr
+            ? `⚠️ ARTEMIS ACCORDS BÖLÜM 9 KORUMA HATTI (${walkBuf}m): Tarihi uzay mirası ve ayak izleri dokunulmazlık sınırındasınız!`
+            : `⚠️ ARTEMIS ACCORDS SEC. 9 PERIMETER (${walkBuf}m): You are at the historic extraterrestrial sanctuary standoff boundary!`;
+        } else {
+          statusEl.innerText = isTr
+            ? '🥽 1:1 ASTRONOT YÜZEY YÜRÜYÜŞÜ AKTİF (WASD: Yürü • SPACE: Sıçra • Merdivene Yürü / E: Kabine Gir • V: 1./3. Şahıs • F: Fener)'
+            : '🥽 1:1 ASTRONAUT SURFACE WALK ACTIVE (WASD: Walk • SPACE: Jump • Walk to Ladder / E: Enter Cabin • V: View • F: Torch)';
+        }
       }
     }
     if (distEl) {
@@ -6836,7 +6950,21 @@ class MissionSimulationTheater {
       } else if (ws.isOnLadder) {
         distEl.innerText = isTr ? `KONUM: 🪜 EVA MERDİVENİ (+${(ws.y - groundY0).toFixed(1)}m)` : `LOCATION: 🪜 EVA LADDER (+${(ws.y - groundY0).toFixed(1)}m)`;
       } else {
-        distEl.innerText = isTr ? `ARACA MESAFE: ${dist} m (1:1 Ölçek)` : `DISTANCE TO CRAFT: ${dist} m (1:1 Scale)`;
+        const hData = (typeof getHeritageProtectionData === 'function' && this.currentArtifact)
+          ? getHeritageProtectionData(this.currentArtifact.id)
+          : null;
+        const walkBuf = (hData && hData.walkBufferMeters) ? hData.walkBufferMeters : 75;
+        const diff = Math.abs(dist - walkBuf);
+
+        if (diff <= 8) {
+          distEl.innerText = isTr
+            ? `⚠️ TAMPON SINIRI: ${dist} m / ${walkBuf} m (Artemis Accords Md. 9)`
+            : `⚠️ STANDOFF BOUNDARY: ${dist} m / ${walkBuf} m (Artemis Accords Sec. 9)`;
+        } else {
+          distEl.innerText = isTr
+            ? `ARACA MESAFE: ${dist} m (1:1 Ölçek | Tampon: ${walkBuf}m)`
+            : `DISTANCE TO CRAFT: ${dist} m (1:1 Scale | Buffer: ${walkBuf}m)`;
+        }
       }
     }
     if (gravEl) {

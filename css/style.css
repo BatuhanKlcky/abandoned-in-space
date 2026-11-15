@@ -2871,6 +2871,343 @@ body {
 }
 
 /* ==========================================================================
+   NASA HERITAGE PROTECTION STATUS & ARCHAEOLOGICAL EXCLUSION ZONE RADAR
+   Artemis Accords Section 9 / NASA SP-2024-4559 Telemetry Display
+   ========================================================================== */
+.heritage-radar-card {
+  background: linear-gradient(135deg, rgba(8, 14, 26, 0.94) 0%, rgba(15, 23, 42, 0.88) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 25px rgba(0, 240, 255, 0.03);
+}
+
+.heritage-radar-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f59e0b, var(--cyan-primary), #10b981, transparent);
+  opacity: 0.8;
+}
+
+.heritage-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.heritage-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heritage-icon {
+  font-size: 14px;
+}
+
+.heritage-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  letter-spacing: 0.5px;
+}
+
+.heritage-tier-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.tier-1-badge {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.tier-2-badge {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid #10b981;
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.tier-3-badge {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid #ef4444;
+  color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.heritage-radar-body {
+  display: grid;
+  grid-template-columns: 145px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .heritage-radar-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.heritage-radar-scope {
+  position: relative;
+  width: 100%;
+  max-width: 145px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, rgba(6, 10, 18, 0.95) 70%);
+  border-radius: 50%;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.12), 0 0 12px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.radar-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.radar-grid-ring {
+  fill: none;
+  stroke: rgba(0, 240, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.radar-crosshair {
+  stroke: rgba(0, 240, 255, 0.22);
+  stroke-width: 0.8;
+}
+
+.radar-tick {
+  stroke: rgba(0, 240, 255, 0.55);
+  stroke-width: 1.5;
+}
+
+.radar-zone-plume {
+  fill: url(#plumeZoneGrad);
+  stroke: rgba(245, 158, 11, 0.6);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  transition: r 0.4s ease;
+}
+
+.radar-zone-walk {
+  fill: rgba(0, 240, 255, 0.12);
+  stroke: var(--cyan-primary);
+  stroke-width: 1.4;
+  transition: r 0.4s ease;
+}
+
+.radar-zone-core {
+  fill: rgba(255, 255, 255, 0.2);
+  stroke: #ffffff;
+  stroke-width: 1.2;
+}
+
+.radar-sweeper-group {
+  transform-origin: 100px 100px;
+  animation: radarSweepScan 4s linear infinite;
+}
+
+@keyframes radarSweepScan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-wedge {
+  opacity: 0.85;
+}
+
+.radar-sweep-line {
+  stroke: rgba(0, 240, 255, 0.9);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.radar-craft-blip {
+  fill: #00f0ff;
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+.radar-blip-pulse {
+  fill: none;
+  stroke: rgba(0, 240, 255, 0.85);
+  stroke-width: 1.2;
+  transform-origin: 100px 100px;
+  animation: radarBlipPulse 2.4s ease-out infinite;
+}
+
+@keyframes radarBlipPulse {
+  0% {
+    r: 4px;
+    opacity: 1;
+  }
+  100% {
+    r: 16px;
+    opacity: 0;
+  }
+}
+
+.radar-hud-readout {
+  position: absolute;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
+  background: rgba(4, 7, 14, 0.75);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.radar-hud-sub {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: var(--cyan-primary);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.radar-hud-coords {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: var(--text-dim);
+}
+
+.heritage-metrics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heritage-metric-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heritage-metric-box.full-width-metric {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.h-metric-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.h-metric-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-walk {
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+.dot-plume {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.dot-treaty {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.h-metric-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-dim);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.h-metric-val {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.h-metric-desc {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.h-treaty-val {
+  font-size: 10px;
+  color: #a7f3d0;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.heritage-rationale-box {
+  background: rgba(15, 23, 42, 0.55);
+  border-left: 3px solid var(--cyan-primary);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
+}
+
+.h-rationale-title {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.h-rationale-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
    V4.2 PRECISION ANTI-OVERLAP LAYOUT & ASTRONAUT WALK HUD POLISH
    Guarantees zero overlapping buttons, cards, drawers, or banners at all resolutions
    ========================================================================== */

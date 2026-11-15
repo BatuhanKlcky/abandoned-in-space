@@ -68,6 +68,10 @@ class SpaceSceneManager {
     // Pins Group
     this.pinsGroup = new THREE.Group();
     this.planetGroup.add(this.pinsGroup);
+
+    // Artemis Accords Archaeological Heritage Boundary Rings Group
+    this.heritageRingGroup = new THREE.Group();
+    this.planetGroup.add(this.heritageRingGroup);
   }
 
   initStarfield() {
@@ -289,6 +293,7 @@ class SpaceSceneManager {
   switchBody(bodyName) {
     if (this.currentBody === bodyName) return;
     this.currentBody = bodyName;
+    this.updateHeritageExclusionRings(null);
 
     if (window.SpaceAudio) window.SpaceAudio.playWarpTransition();
 
@@ -481,6 +486,82 @@ class SpaceSceneManager {
     });
 
     this.updateMiniModel(artifact.modelType, artifact);
+    this.updateHeritageExclusionRings(artifact);
+  }
+
+  /**
+   * Render holographic concentric Artemis Accords Heritage Exclusion Rings on the planetary sphere surface
+   */
+  updateHeritageExclusionRings(artifact) {
+    if (!this.heritageRingGroup) return;
+
+    while (this.heritageRingGroup.children.length > 0) {
+      const child = this.heritageRingGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      this.heritageRingGroup.remove(child);
+    }
+
+    if (!artifact || artifact.body !== this.currentBody || !artifact.coords) return;
+
+    const hData = (typeof getHeritageProtectionData === 'function')
+      ? getHeritageProtectionData(artifact.id)
+      : (typeof HERITAGE_RADAR_DATA !== 'undefined' ? (HERITAGE_RADAR_DATA[artifact.id] || {}) : {});
+
+    const surfaceRadius = this.sphereRadius + 0.18;
+    const pos = this.latLngToVector3(artifact.coords.lat, artifact.coords.lng, surfaceRadius);
+    const normal = pos.clone().normalize();
+
+    let mainColor = 0x00f0ff;
+    let outerColor = 0xf59e0b;
+    if (hData.tier === 1) {
+      mainColor = 0xf59e0b; // Historic Gold Sanctuary
+      outerColor = 0x00f0ff; // Cyan Plume Boundary
+    } else if (hData.tier === 2) {
+      mainColor = 0x10b981; // Emerald Robotic Landmark
+      outerColor = 0x38bdf8; // Sky Blue Standoff
+    } else if (hData.tier === 3) {
+      mainColor = 0xef4444; // Crimson Kinetic Impact
+      outerColor = 0xf97316; // Orange Debris Zone
+    }
+
+    // 1. Walk Exclusion Zone Ring (Inner holographic standoff perimeter)
+    const walkMeters = hData.walkBufferMeters || 75;
+    if (walkMeters > 0) {
+      const walkR = Math.max(1.8, Math.min(3.8, 1.8 + (walkMeters / 250) * 2.0));
+      const walkRingGeo = new THREE.RingGeometry(walkR - 0.1, walkR + 0.1, 64);
+      const walkRingMat = new THREE.MeshBasicMaterial({
+        color: mainColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+      const walkRingMesh = new THREE.Mesh(walkRingGeo, walkRingMat);
+      walkRingMesh.position.copy(pos);
+      walkRingMesh.lookAt(pos.clone().add(normal));
+      walkRingMesh.userData = { isHeritageRing: true, baseOpacity: 0.85, pulseSpeed: 2.4, phase: 0 };
+      this.heritageRingGroup.add(walkRingMesh);
+    }
+
+    // 2. Rocket Plume Sandblast Standoff Ring (Outer perimeter)
+    const plumeMeters = hData.plumeBufferMeters || 1000;
+    if (plumeMeters > 0) {
+      const plumeR = Math.max(4.0, Math.min(7.5, 4.0 + (plumeMeters / 2000) * 3.5));
+      const plumeRingGeo = new THREE.RingGeometry(plumeR - 0.08, plumeR + 0.08, 72);
+      const plumeRingMat = new THREE.MeshBasicMaterial({
+        color: outerColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending
+      });
+      const plumeRingMesh = new THREE.Mesh(plumeRingGeo, plumeRingMat);
+      plumeRingMesh.position.copy(pos);
+      plumeRingMesh.lookAt(pos.clone().add(normal));
+      plumeRingMesh.userData = { isHeritageRing: true, baseOpacity: 0.55, pulseSpeed: 1.5, phase: Math.PI / 2 };
+      this.heritageRingGroup.add(plumeRingMesh);
+    }
   }
 
   flyCameraTo(targetCamPos, targetLookAt, duration = 1200, onComplete = null) {
@@ -1701,6 +1782,15 @@ class SpaceSceneManager {
         }
       });
     });
+
+    if (this.heritageRingGroup) {
+      this.heritageRingGroup.children.forEach(ring => {
+        if (ring.userData && ring.userData.isHeritageRing) {
+          const osc = Math.sin(time * ring.userData.pulseSpeed + ring.userData.phase);
+          ring.material.opacity = Math.max(0.2, ring.userData.baseOpacity + osc * 0.25);
+        }
+      });
+    }
 
     if (this.miniControls) {
       this.miniControls.update();

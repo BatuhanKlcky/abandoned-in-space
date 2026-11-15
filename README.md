@@ -29,7 +29,20 @@ An interactive 3D solar system cartography, extraterrestrial archaeological arch
 
 ---
 
-### 3. 🥽 1:1 Scale Astronaut Surface Walk & Walk-In Spacecraft Cabin (WebXR VR/AR)
+### 3. 🏛️ NASA Heritage Protection Status & Archaeological Exclusion Zone Radar (Artemis Accords Section 9 / NASA SP-2024-4559)
+- **Extraterrestrial Archaeological Classification (Tiers I–III):**
+  - `🏛️ Tier I: Historic Sanctuary (Dokunulmaz Tarihi Anıt)`: Primary human landing sanctuaries (Apollo 11 Tranquility Base, Apollo 12, 14, 15, 16, 17, and Viking 1 Thomas Mutch Memorial). Protected by mandatory pedestrian and thruster plume standoff buffers.
+  - `🛰️ Tier II: Robotic Heritage Landmark & Scientific Reference (Robotik Miras)`: Historic robotic landers and rovers (Surveyor 3, Mars Pathfinder & Sojourner, Spirit, Opportunity, Phoenix, InSight, Ingenuity, Venera 7/13, Cassini-Huygens, Rosetta Philae, NEAR Shoemaker). Serves as long-term cosmic weathering benchmarks.
+  - `💥 Tier III: Kinetic Impact Discard & Subsurface Crater (Kinetik Çarpışma ve Enkaz Sahası)`: Deliberate impact points and jettisoned descent stages (Saturn V S-IVB seismic calibration craters, LCROSS Centaur volatile excavation, Curiosity Sky Crane, Perseverance backshell/parachute, Galileo probe).
+- **Interactive Telemetry Radar Scope:** Real-time concentric HUD radar scanner displaying:
+  - *Astronaut EVA Walk Standoff Buffer* (50m–225m) protecting pristine human footprint trails, discarded PLSS life-support backpacks, and lunar rover tracks.
+  - *Rocket Plume Sandblasting Standoff Buffer* (1,000m–2,000m / 2.0 km) preventing high-velocity regolith sandblasting established after the landmark Apollo 12 / Surveyor 3 incident.
+  - *International Legal Treaty Basis* cited from Artemis Accords Section 9 and the *One Small Step to Protect Human Heritage in Space Act* (NASA SP-2024-4559).
+  - *Holographic 3D Surface Projection:* Concentric boundary perimeter rings and glowing beacon pylons projected on both the 3D celestial sphere and the 1:1 ground terrain with real-time HUD proximity warnings.
+
+---
+
+### 4. 🥽 1:1 Scale Astronaut Surface Walk & Walk-In Spacecraft Cabin (WebXR VR/AR)
 - **Immersive 1.75m Astronaut Eye-Level Walk:** Compatible with **Meta Quest 3 / 3S / Pro**, **Apple Vision Pro** (`navigator.xr` WebXR Device API), and desktop/mobile browsers (WASD keyboard / mouse look / touch joystick).
 - **Smooth Continuous Deck Climbing & Tangent Collision:** Astronauts can freely jump (low-gravity leap) onto spacecraft decks, lander stages, and rover chassis (`y = 1.45m` to `3.25m`), walk across solar panels and upper decks without freezing, and smoothly step back down onto planetary regolith with full sliding collision.
 - **Detailed Walk-In Cabin Interiors (Apollo Crewed Missions):**
@@ -39,7 +52,7 @@ An interactive 3D solar system cartography, extraterrestrial archaeological arch
 
 ---
 
-### 4. 📡 Live Mars Weather & Rover Telemetry (NASA MEDA / REMS)
+### 5. 📡 Live Mars Weather & Rover Telemetry (NASA MEDA / REMS)
 - Real-time astronomical Sol (Martian day) calculation derived from landing epochs for **Perseverance (Jezero Crater — MEDA)** and **Curiosity (Gale Crater — REMS)**.
 - Displays live diurnal temperature ranges, ambient atmospheric pressure (`Pa`), wind speed/direction, and cumulative odometer distance.
 

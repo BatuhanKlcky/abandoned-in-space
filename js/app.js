@@ -230,6 +230,8 @@ class AbandonedInSpaceApp {
     const drawerSimBtn = document.getElementById('btn-drawer-sim');
     const triggerSimulation = () => {
       const art = this.sceneManager.selectedArtifact || (this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(880, 0.05);
+      this.closeDrawer();
       if (window.SpaceSimulation) {
         window.SpaceSimulation.cameraMode = 'cinematic';
         window.SpaceSimulation.startSimulation(art);
@@ -254,6 +256,8 @@ class AbandonedInSpaceApp {
         this.showToast(title, desc, 'error');
         return;
       }
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1050, 0.06);
+      this.closeDrawer();
       if (window.SpaceSimulation) {
         window.SpaceSimulation.startSurfaceWalk(art);
       }
@@ -468,17 +472,17 @@ class AbandonedInSpaceApp {
     fetch('https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json')
       .then(res => res.ok ? res.json() : null)
       .then(json => {
-        if (json && json.soles && json.soles.length > 0 && typeof LIVE_ROVER_TELEMETRY !== 'undefined') {
+        if (json && json.soles && json.soles.length > 0 && typeof LIVE_ROVER_TELEMETRY !== 'undefined' && LIVE_ROVER_TELEMETRY.curiosity) {
           const latest = json.soles[0];
           if (latest.max_temp && latest.min_temp) {
-            LIVE_ROVER_TELEMETRY.curiosity.weather.maxTempC = parseInt(latest.max_temp, 10) || -14;
-            LIVE_ROVER_TELEMETRY.curiosity.weather.minTempC = parseInt(latest.min_temp, 10) || -79;
+            LIVE_ROVER_TELEMETRY.curiosity.tempMaxC = parseInt(latest.max_temp, 10) || -14;
+            LIVE_ROVER_TELEMETRY.curiosity.tempMinC = parseInt(latest.min_temp, 10) || -79;
           }
           if (latest.pressure) {
-            LIVE_ROVER_TELEMETRY.curiosity.weather.pressurePa = parseFloat(latest.pressure) || 818.4;
+            LIVE_ROVER_TELEMETRY.curiosity.pressurePa = parseFloat(latest.pressure) || 818.4;
           }
           if (latest.sol) {
-            LIVE_ROVER_TELEMETRY.curiosity.sol = parseInt(latest.sol, 10) || LIVE_ROVER_TELEMETRY.curiosity.sol;
+            LIVE_ROVER_TELEMETRY.curiosity.sol = parseInt(latest.sol, 10) || 4350;
           }
           this.updateLiveMarsCard();
         }
@@ -497,7 +501,8 @@ class AbandonedInSpaceApp {
       ? Date.parse('2021-02-18T20:55:00Z')
       : Date.parse('2012-08-06T05:17:00Z');
     const marsSolMs = 88775.244 * 1000;
-    const computedSol = Math.max(r.sol, Math.floor((Date.now() - landingEpochMs) / marsSolMs));
+    const baseSol = r.sol || 1350;
+    const computedSol = Math.max(baseSol, Math.floor((Date.now() - landingEpochMs) / marsSolMs));
 
     const solEl = document.getElementById('live-rover-sol');
     const locEl = document.getElementById('live-rover-loc');
@@ -507,12 +512,21 @@ class AbandonedInSpaceApp {
     const odoEl = document.getElementById('live-odometer');
     const badgeEl = document.getElementById('live-api-badge');
 
+    const lat = (r.coords && typeof r.coords.lat === 'number') ? r.coords.lat : (typeof r.lat === 'number' ? r.lat : 0);
+    const lon = (r.coords && typeof r.coords.lng === 'number') ? r.coords.lng : (typeof r.lon === 'number' ? r.lon : 0);
+    const maxT = r.tempMaxC !== undefined ? r.tempMaxC : (r.weather ? r.weather.maxTempC : -15);
+    const minT = r.tempMinC !== undefined ? r.tempMinC : (r.weather ? r.weather.minTempC : -75);
+    const windSpd = r.windSpeedMs !== undefined ? r.windSpeedMs : (r.weather ? r.weather.windSpeedMs : 6.0);
+    const windDirection = isTr ? (r.windDir_tr || 'GD') : (r.windDir_en || 'SE');
+    const pres = r.pressurePa !== undefined ? r.pressurePa : (r.weather ? r.weather.pressurePa : 750);
+    const odo = r.odometerKm !== undefined ? r.odometerKm : 31.4;
+
     if (solEl) solEl.innerText = `SOL ${computedSol}`;
-    if (locEl) locEl.innerText = `${isTr ? r.location_tr : r.location_en} • ${r.lat.toFixed(2)}°, ${r.lon.toFixed(2)}°`;
-    if (tempEl) tempEl.innerText = `${r.weather.maxTempC}°C / ${r.weather.minTempC}°C`;
-    if (windEl) windEl.innerText = `${r.weather.windSpeedMs} m/s (${r.weather.windDir})`;
-    if (pressEl) pressEl.innerText = `${r.weather.pressurePa} Pa`;
-    if (odoEl) odoEl.innerText = `${r.odometerKm} km`;
+    if (locEl) locEl.innerText = `${isTr ? r.location_tr : r.location_en} • ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+    if (tempEl) tempEl.innerText = `${maxT}°C / ${minT}°C`;
+    if (windEl) windEl.innerText = `${windSpd} m/s (${windDirection})`;
+    if (pressEl) pressEl.innerText = `${pres} Pa`;
+    if (odoEl) odoEl.innerText = `${odo} km`;
     if (badgeEl) badgeEl.innerText = this.activeRover === 'perseverance' ? (isTr ? 'MEDA SENSÖRÜ' : 'MEDA SENSOR') : (isTr ? 'REMS SENSÖRÜ' : 'REMS SENSOR');
   }
 
@@ -819,6 +833,82 @@ class AbandonedInSpaceApp {
     if (drawer) drawer.classList.remove('open');
   }
 
+  showToast(title, desc, type = 'error') {
+    const toast = document.getElementById('hud-alert-toast');
+    const titleEl = document.getElementById('toast-title');
+    const descEl = document.getElementById('toast-desc');
+    const iconEl = document.getElementById('toast-icon');
+    if (!toast) return;
+
+    if (titleEl) titleEl.innerText = title;
+    if (descEl) descEl.innerText = desc;
+    if (iconEl) {
+      iconEl.innerText = type === 'error' ? '⛔' : (type === 'warn' ? '⚠️' : 'ℹ️');
+    }
+
+    toast.classList.add('show');
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      this.hideToast();
+    }, 6500);
+  }
+
+  hideToast() {
+    const toast = document.getElementById('hud-alert-toast');
+    if (toast) toast.classList.remove('show');
+    if (this._toastTimer) {
+      clearTimeout(this._toastTimer);
+      this._toastTimer = null;
+    }
+  }
+
+  updateWalkButtonsState(artifact) {
+    if (!artifact) return;
+    const isTr = this.currentLang === 'tr';
+    const vrAllowed = artifact.vrAllowed !== false;
+
+    const topWalkBtn = document.getElementById('btn-top-walk');
+    const drawerWalkBtn = document.getElementById('btn-drawer-walk');
+
+    if (topWalkBtn) {
+      topWalkBtn.classList.toggle('btn-vr-disabled', !vrAllowed);
+      topWalkBtn.setAttribute('title', vrAllowed
+        ? (isTr ? '1:1 Ölçekte Yüzeyde Yürü & WebXR VR/AR Başlat' : '1:1 Scale Astronaut Surface Walk & WebXR VR/AR')
+        : (isTr ? '⛔ Kaza/Çarpışma Sahası (1:1 VR Yürüyüş Engellendi)' : '⛔ Crash/Impact Site (1:1 VR EVA Disabled)')
+      );
+    }
+
+    if (drawerWalkBtn) {
+      drawerWalkBtn.classList.toggle('btn-vr-disabled', !vrAllowed);
+      const icon = drawerWalkBtn.querySelector('.sim-play-icon');
+      const mainText = drawerWalkBtn.querySelector('.sim-btn-main');
+      const subText = drawerWalkBtn.querySelector('.sim-btn-sub');
+
+      if (icon) {
+        icon.innerText = vrAllowed ? '🥽' : '⛔';
+      }
+
+      if (mainText) {
+        mainText.innerText = vrAllowed
+          ? (isTr ? "1:1 ÖLÇEKTE YANINDA YÜRÜ (WebXR)" : "WALK BESIDE AT 1:1 SCALE (WebXR)")
+          : (isTr ? "⛔ VR YÜZEY MODU KİLİTLİ (KAZA SAHASI)" : "⛔ VR SURFACE EVA DISABLED (CRASH SITE)");
+      }
+
+      if (subText) {
+        subText.innerText = vrAllowed
+          ? (isTr ? "Aracın yanında 1.75m astronot göz hizasında yürü (VR / WASD)" : "Walk at 1.75m astronaut eye-level beside the craft (VR / WASD)")
+          : (isTr ? (artifact.vrDisallowReason_tr || "Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda 1:1 astronot yürüyüşüne izin verilir.")
+                  : (artifact.vrDisallowReason_en || "This site is a crash/impact area. 1:1 surface EVA is only permitted at sites with successful soft landings."));
+      }
+
+      drawerWalkBtn.setAttribute('title', vrAllowed
+        ? (isTr ? 'Meta Quest / Vision Pro WebXR veya Masaüstü 1:1 Yüzey Yürüyüşü' : 'Meta Quest / Vision Pro WebXR or Desktop 1:1 Surface Walk')
+        : (isTr ? '⛔ Kaza / çarpışma sahası: Yalnızca 3D kinetik çarpma sahnesi izlenebilir, 1:1 VR yürüyüş engellenmiştir.'
+                : '⛔ Crash / impact site: Only 3D kinetic reenactment can be watched; 1:1 VR EVA is disabled.')
+      );
+    }
+  }
+
   navigateAdjacentArtifact(delta) {
     const filtered = this.getFilteredArtifacts();
     if (filtered.length <= 1) return;
@@ -1037,7 +1127,7 @@ class AbandonedInSpaceApp {
 
     // Update Simulation Camera Select Options
     const camSelect = document.getElementById('sim-cam-select');
-    if (camSelect) {
+    if (camSelect && camSelect.options) {
       Array.from(camSelect.options).forEach(opt => {
         const k = opt.getAttribute('data-i18n');
         if (k && TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][k]) {
@@ -1073,6 +1163,8 @@ class AbandonedInSpaceApp {
       this.updateTourStep();
     } else if (this.sceneManager && this.sceneManager.selectedArtifact) {
       this.openDrawer(this.sceneManager.selectedArtifact);
+    } else {
+      this.updateWalkButtonsState(this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
     }
   }
 

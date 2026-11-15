@@ -13,7 +13,7 @@ const STORY_CHAPTERS = [
     title_en: "ACT I: HUMANITY'S FIRST TOUCH ON ANOTHER WORLD (1967–1970)",
     desc_tr: "Hikâyemiz Soğuk Savaş'ın zirvesinde başlıyor: Surveyor 3 ve Apollo 11 ile Ay'a ilk kez dokunduk; Apollo 12 ile Surveyor 3'ün yanına inip Dünya dışı ilk arkeolojik incelemeyi yaptık. Bu makineler çöplük değil, insanlığın evrendeki ilk ayak izleridir.",
     desc_en: "Our story begins at the height of the Space Race: touching the Moon with Surveyor 3 and Apollo 11, then landing Apollo 12 right beside Surveyor 3 for the first extraterrestrial archaeological study.",
-    artifactIds: ['surveyor-3', 'apollo-11', 'apollo-12', 'venera-7']
+    artifactIds: ['apollo-11', 'apollo-12-surveyor', 'venera-7']
   },
   {
     id: 1,
@@ -23,7 +23,7 @@ const STORY_CHAPTERS = [
     title_en: "ACT II: SACRIFICED FOR SCIENCE & SEISMIC IMPACTS (1970–1999)",
     desc_tr: "Geride bırakılan her parça görevini bitirmedi: Apollo 13'ün S-IVB roket kademesi Ay'ın iç çekirdeğini haritalamak için sismik çekiç olarak çarptırıldı, Lunar Prospector su buzu aramak için kutup kraterine daldı, Galileo ise Jüpiter atmosferinde buharlaşarak son verisini gönderdi.",
     desc_en: "Abandoned hardware kept serving science: Apollo 13's S-IVB stage was crashed as a seismic hammer to map the lunar interior, Lunar Prospector plunged into a polar crater with Eugene Shoemaker's ashes, and Galileo vaporized inside Jupiter.",
-    artifactIds: ['apollo-13-sivb', 'apollo-14', 'apollo-15', 'apollo-16', 'apollo-17', 'lunar-prospector', 'lcross-centaur', 'galileo-probe']
+    artifactIds: ['apollo-13-s4b', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus', 'lunar-prospector', 'lcross-centaur', 'galileo-probe']
   },
   {
     id: 2,
@@ -33,7 +33,7 @@ const STORY_CHAPTERS = [
     title_en: "ACT III: LONELY ROVERS ON THE RED PLANET (1976–2018)",
     desc_tr: "Mars'taki robotlarımız bizim mekanik uzantılarımız oldu: 90 gün ömür biçilen Opportunity, 15 yıl boyunca 45 km yol kat ettikten sonra küresel toz fırtınasında 'Bataryam bitiyor ve hava kararıyor' diyerek Perseverance Vadisi'nde sonsuz uykuya daldı.",
     desc_en: "Designed for 90 sols, Opportunity roved Mars for 15 years and 45 km before sending its final poetic telemetry in a planet-encircling dust storm: 'My battery is low and it's getting dark.'",
-    artifactIds: ['viking-1', 'mars-pathfinder', 'spirit-rover', 'opportunity-rover', 'phoenix-lander', 'insight-lander']
+    artifactIds: ['viking-1-lander', 'pathfinder-sojourner', 'spirit-rover', 'opportunity-rover', 'phoenix-lander', 'insight-lander']
   },
   {
     id: 3,
@@ -53,7 +53,7 @@ const STORY_CHAPTERS = [
     title_en: "ACT V: FUTURE SPACE ARCHAEOLOGY & THE ARTEMIS ACCORDS (2012–FUTURE)",
     desc_tr: "Başka bir gezegende uçan ilk hava aracı Ingenuity'nin kırık kanadıyla Valinor Tepeleri'ndeki son nöbeti ve NASA SP-2024-4559 (Artemis Accords Bölüm 9) kapsamında bu 200+ tonluk kalıntının 'uzay çöpü' değil, korunması gereken Dünya Dışı Kültür Mirası ilan edilmesi.",
     desc_en: "Ingenuity's final vigil at Valinor Hills after 72 flights, and how NASA SP-2024-4559 & Artemis Accords Section 9 transform 200+ tons of discarded gear from 'debris' into protected Extraterrestrial Cultural Heritage.",
-    artifactIds: ['curiosity-skycrane', 'perseverance-parachute', 'ingenuity-helicopter']
+    artifactIds: ['curiosity-skycrane', 'perseverance-backshell-chute', 'ingenuity-helicopter']
   }
 ];
 
@@ -61,11 +61,13 @@ const STORY_CHAPTERS = [
 class AbandonedInSpaceApp {
   constructor() {
     this.currentBody = 'moon';
-    this.currentLang = 'en';
+    this.currentLang = typeof localStorage !== 'undefined' ? (localStorage.getItem('space_app_lang') || 'en') : 'en';
     this.activeDecade = 'all';
     this.activeCategory = 'all';
     this.searchQuery = '';
     this.activeRover = 'perseverance';
+
+    this.selectedArtifact = (typeof ARTIFACTS !== 'undefined' && ARTIFACTS.length > 0) ? ARTIFACTS[0] : null;
 
     this.isTourActive = false;
     this.tourIndex = 0;
@@ -78,13 +80,16 @@ class AbandonedInSpaceApp {
   init() {
     this.sceneManager = new SpaceSceneManager('canvas-container');
     this.sceneManager.setArtifacts(ARTIFACTS);
+    if (this.selectedArtifact) {
+      this.sceneManager.selectedArtifact = this.selectedArtifact;
+    }
 
     window.onArtifactHover = (artifact, x, y) => this.showTooltip(artifact, x, y);
     window.onArtifactLeave = () => this.hideTooltip();
     window.onArtifactSelect = (artifact) => this.selectArtifact(artifact);
 
     this.bindControls();
-    this.applyLanguage('en');
+    this.applyLanguage(this.currentLang);
     this.initLiveMarsTelemetry();
 
     const startAudioOnce = () => {
@@ -284,7 +289,7 @@ class AbandonedInSpaceApp {
     const gotoRoverBtn = document.getElementById('btn-goto-rover');
     if (gotoRoverBtn) {
       gotoRoverBtn.addEventListener('click', () => {
-        const targetId = this.activeRover === 'perseverance' ? 'perseverance-parachute' : 'curiosity-skycrane';
+        const targetId = this.activeRover === 'perseverance' ? 'perseverance-backshell-chute' : 'curiosity-skycrane';
         const targetArt = ARTIFACTS.find(a => a.id === targetId);
         if (targetArt) {
           this.selectArtifact(targetArt);
@@ -625,6 +630,7 @@ class AbandonedInSpaceApp {
 
   selectArtifact(artifact) {
     if (!artifact) return;
+    this.selectedArtifact = artifact;
 
     if (artifact.body !== this.currentBody) {
       this.switchPlanet(artifact.body);
@@ -647,7 +653,10 @@ class AbandonedInSpaceApp {
       if (mBtnMap) mBtnMap.classList.add('active');
     }
 
-    this.sceneManager.focusOnArtifact(artifact);
+    if (this.sceneManager) {
+      this.sceneManager.selectedArtifact = artifact;
+      this.sceneManager.focusOnArtifact(artifact);
+    }
     this.updateWalkButtonsState(artifact);
     this.openDrawer(artifact);
     this.renderArtifactsList();
@@ -669,7 +678,7 @@ class AbandonedInSpaceApp {
         heritage: isTr ? "Artemis Accords Bölüm 9 — Korunan İnsanlık Ay Mirası" : "Artemis Accords Section 9 — Protected Lunar Heritage Site"
       };
     } else if (artifact.body === 'mars') {
-      if (artifact.id === 'mars-pathfinder') {
+      if (artifact.id === 'pathfinder-sojourner' || artifact.id === 'mars-pathfinder') {
         return {
           monograph: "NASA SP-2026-4239 (NASA's Discovery Program — D. W. Brown)",
           dataset: isTr ? "MRO HiRISE & IMP Yüzey Telemetrisi (Ares Vallis)" : "MRO HiRISE & IMP Surface Telemetry (Ares Vallis)",
@@ -703,7 +712,8 @@ class AbandonedInSpaceApp {
     }
   }
 
-  openDrawer(artifact) {
+  renderDrawerContent(artifact) {
+    if (!artifact) return;
     const isTr = this.currentLang === 'tr';
     const drawer = document.getElementById('story-drawer');
     if (!drawer) return;
@@ -728,9 +738,14 @@ class AbandonedInSpaceApp {
     const verStatus = drawer.querySelector('.verification-status');
     if (verStatus) verStatus.innerText = isTr ? '✓ DOĞRULANDI' : '✓ VERIFIED';
 
-    document.getElementById('drawer-mission').innerText = artifact.mission;
-    document.getElementById('drawer-date').innerText = isTr ? artifact.date : artifact.date_en;
-    document.getElementById('drawer-title').innerText = isTr ? artifact.name_tr : artifact.name_en;
+    const missionEl = document.getElementById('drawer-mission');
+    if (missionEl) missionEl.innerText = artifact.mission || '';
+
+    const dateEl = document.getElementById('drawer-date');
+    if (dateEl) dateEl.innerText = isTr ? (artifact.date || artifact.date_en) : (artifact.date_en || artifact.date);
+
+    const titleEl = document.getElementById('drawer-title');
+    if (titleEl) titleEl.innerText = isTr ? (artifact.name_tr || artifact.name_en) : (artifact.name_en || artifact.name_tr);
 
     const statusBadge = document.getElementById('drawer-landing-status');
     if (statusBadge) {
@@ -742,28 +757,41 @@ class AbandonedInSpaceApp {
 
     this.updateWalkButtonsState(artifact);
 
-    document.getElementById('drawer-quote').innerText = `"${isTr ? artifact.quote_tr : artifact.quote_en}"`;
-    document.getElementById('drawer-quote-author').innerText = `— ${artifact.quoteAuthor}`;
+    const quoteEl = document.getElementById('drawer-quote');
+    if (quoteEl) quoteEl.innerText = `"${isTr ? (artifact.quote_tr || artifact.quote_en) : (artifact.quote_en || artifact.quote_tr)}"`;
 
-    document.getElementById('drawer-headline').innerText = isTr ? artifact.headline_tr : artifact.headline_en;
-    document.getElementById('drawer-story').innerText = isTr ? artifact.story_tr : artifact.story_en;
+    const quoteAuthorEl = document.getElementById('drawer-quote-author');
+    if (quoteAuthorEl) quoteAuthorEl.innerText = `— ${artifact.quoteAuthor}`;
 
-    document.getElementById('drawer-why-left').innerText = isTr ? artifact.whyAbandoned_tr : artifact.whyAbandoned_en;
-    document.getElementById('drawer-condition').innerText = isTr ? artifact.currentCondition_tr : artifact.currentCondition_en;
+    const headlineEl = document.getElementById('drawer-headline');
+    if (headlineEl) headlineEl.innerText = isTr ? (artifact.headline_tr || artifact.headline_en) : (artifact.headline_en || artifact.headline_tr);
+
+    const storyEl = document.getElementById('drawer-story');
+    if (storyEl) storyEl.innerText = isTr ? (artifact.story_tr || artifact.story_en) : (artifact.story_en || artifact.story_tr);
+
+    const whyLeftEl = document.getElementById('drawer-why-left');
+    if (whyLeftEl) whyLeftEl.innerText = isTr ? (artifact.whyAbandoned_tr || artifact.whyAbandoned_en) : (artifact.whyAbandoned_en || artifact.whyAbandoned_tr);
+
+    const condEl = document.getElementById('drawer-condition');
+    if (condEl) condEl.innerText = isTr ? (artifact.currentCondition_tr || artifact.currentCondition_en) : (artifact.currentCondition_en || artifact.currentCondition_tr);
 
     const listEl = document.getElementById('drawer-checklist');
-    listEl.innerHTML = '';
-    const items = isTr ? artifact.discardedItems : (artifact.discardedItems_en || artifact.discardedItems);
-    items.forEach(itemStr => {
-      const li = document.createElement('li');
-      li.innerText = itemStr;
-      listEl.appendChild(li);
-    });
+    if (listEl) {
+      listEl.innerHTML = '';
+      const items = isTr ? (artifact.discardedItems || artifact.discardedItems_en) : (artifact.discardedItems_en || artifact.discardedItems);
+      if (Array.isArray(items)) {
+        items.forEach(itemStr => {
+          const li = document.createElement('li');
+          li.innerText = itemStr;
+          listEl.appendChild(li);
+        });
+      }
+    }
 
-    const specs = isTr ? artifact.technicalSpecs : (artifact.technicalSpecs_en || artifact.technicalSpecs);
+    const specs = isTr ? (artifact.technicalSpecs || artifact.technicalSpecs_en) : (artifact.technicalSpecs_en || artifact.technicalSpecs);
     const specCraft = document.getElementById('spec-craft');
     if (specCraft) {
-      specCraft.innerText = isTr ? artifact.craftType_tr : artifact.craftType_en;
+      specCraft.innerText = isTr ? (artifact.craftType_tr || artifact.craftType_en) : (artifact.craftType_en || artifact.craftType_tr);
     }
     const isMobile = (window.innerWidth <= 768) || /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const specStatusTitle = document.querySelector('[data-i18n="spec_status_title"]');
@@ -787,10 +815,16 @@ class AbandonedInSpaceApp {
           : (isLanded ? `SUCCESSFUL SOFT LANDING (1:1 VR EVA ACTIVE)` : `CRASH / IMPACT SITE (1:1 VR DISABLED)`);
       }
     }
-    document.getElementById('spec-mass').innerText = specs.massLeftKg;
-    document.getElementById('spec-power').innerText = specs.powerSource;
-    document.getElementById('spec-duration').innerText = specs.activeDuration;
-    document.getElementById('spec-coords').innerText = specs.coordinatesReadable;
+    if (specs) {
+      const massEl = document.getElementById('spec-mass');
+      if (massEl) massEl.innerText = specs.massLeftKg || '—';
+      const powerEl = document.getElementById('spec-power');
+      if (powerEl) powerEl.innerText = specs.powerSource || '—';
+      const durEl = document.getElementById('spec-duration');
+      if (durEl) durEl.innerText = specs.activeDuration || '—';
+      const coordsEl = document.getElementById('spec-coords');
+      if (coordsEl) coordsEl.innerText = specs.coordinatesReadable || '—';
+    }
 
     // Populate NASA Verification & Scientific Proof Card
     const verMeta = this.getVerificationMetadata(artifact);
@@ -804,9 +838,12 @@ class AbandonedInSpaceApp {
     const relicCard = document.getElementById('secret-relic-card');
     if (relicCard) {
       if (artifact.secretRelic) {
-        document.getElementById('relic-badge').innerText = isTr ? artifact.secretRelic.badge_tr : artifact.secretRelic.badge_en;
-        document.getElementById('relic-title').innerText = isTr ? artifact.secretRelic.title_tr : artifact.secretRelic.title_en;
-        document.getElementById('relic-desc').innerText = isTr ? artifact.secretRelic.desc_tr : artifact.secretRelic.desc_en;
+        const relicBadge = document.getElementById('relic-badge');
+        const relicTitle = document.getElementById('relic-title');
+        const relicDesc = document.getElementById('relic-desc');
+        if (relicBadge) relicBadge.innerText = isTr ? (artifact.secretRelic.badge_tr || artifact.secretRelic.badge_en) : (artifact.secretRelic.badge_en || artifact.secretRelic.badge_tr);
+        if (relicTitle) relicTitle.innerText = isTr ? (artifact.secretRelic.title_tr || artifact.secretRelic.title_en) : (artifact.secretRelic.title_en || artifact.secretRelic.title_tr);
+        if (relicDesc) relicDesc.innerText = isTr ? (artifact.secretRelic.desc_tr || artifact.secretRelic.desc_en) : (artifact.secretRelic.desc_en || artifact.secretRelic.desc_tr);
         relicCard.style.display = 'flex';
       } else {
         relicCard.style.display = 'none';
@@ -842,9 +879,23 @@ class AbandonedInSpaceApp {
       }
     }
 
-    document.getElementById('drawer-audio-text').innerText = artifact.audioSnippet;
+    const audioText = document.getElementById('drawer-audio-text');
+    if (audioText) audioText.innerText = artifact.audioSnippet || '';
+  }
 
-    drawer.classList.add('open');
+  openDrawer(artifact) {
+    if (!artifact) artifact = this.selectedArtifact || (typeof ARTIFACTS !== 'undefined' ? ARTIFACTS[0] : null);
+    if (!artifact) return;
+
+    this.selectedArtifact = artifact;
+    if (this.sceneManager) {
+      this.sceneManager.selectedArtifact = artifact;
+    }
+
+    this.renderDrawerContent(artifact);
+
+    const drawer = document.getElementById('story-drawer');
+    if (drawer) drawer.classList.add('open');
 
     if (this.sceneManager) {
       setTimeout(() => this.sceneManager.resizeMiniViewer(), 60);
@@ -956,6 +1007,23 @@ class AbandonedInSpaceApp {
         : (isTr ? '⛔ Kaza / çarpışma sahası: Yalnızca 3D kinetik çarpma sahnesi izlenebilir, 1:1 VR yürüyüş engellenmiştir.'
                 : '⛔ Crash / impact site: Only 3D kinetic reenactment can be watched; 1:1 VR EVA is disabled.')
       );
+    }
+
+    const drawerSimBtn = document.getElementById('btn-drawer-sim');
+    if (drawerSimBtn) {
+      const isLanded = artifact.landingStatus === 'landed';
+      const simMain = drawerSimBtn.querySelector('.sim-btn-main');
+      const simSub = drawerSimBtn.querySelector('.sim-btn-sub');
+      if (simMain) {
+        simMain.innerText = isLanded
+          ? (isTr ? "İNİŞ SİMÜLASYONUNU İZLE (3D)" : "WATCH DESCENT & LANDING (3D)")
+          : (isTr ? "KİNETİK ÇARPIŞMAYI İZLE (3D)" : "WATCH LANDING / IMPACT (3D)");
+      }
+      if (simSub) {
+        simSub.innerText = isLanded
+          ? (isTr ? "Orijinal fizik, roket itki dumanı ve yumuşak yüzey iniş canlandırması" : "Authentic physics, thruster plumes, and surface touchdown reenactment")
+          : (isTr ? "Orijinal fizik, roket itki dumanı ve sismik çarpışma canlandırması" : "Authentic physics, thruster plumes, and seismic impact reenactment");
+      }
     }
   }
 
@@ -1122,11 +1190,11 @@ class AbandonedInSpaceApp {
         specStatusTitle.innerText = isTr ? "YÜZEY İNİŞ DURUMU" : "SURFACE LANDING OUTCOME";
       }
     }
-    if (this.sceneManager && this.sceneManager.selectedArtifact) {
-      const art = this.sceneManager.selectedArtifact;
+    const currentTargetArt = this.selectedArtifact || (this.sceneManager && this.sceneManager.selectedArtifact) || (typeof ARTIFACTS !== 'undefined' ? ARTIFACTS[0] : null);
+    if (currentTargetArt) {
       const specStatus = document.getElementById('spec-status');
       if (specStatus) {
-        const isLanded = art.landingStatus === 'landed';
+        const isLanded = currentTargetArt.landingStatus === 'landed';
         if (isMobileDevice) {
           specStatus.innerText = isTr
             ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ` : `KAZA / ÇARPIŞMA SAHASI`)
@@ -1268,12 +1336,23 @@ class AbandonedInSpaceApp {
     } catch (_) {}
 
     try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('space_app_lang', this.currentLang);
+      }
+    } catch (_) {}
+
+    try {
+      const activeArt = this.selectedArtifact || (this.sceneManager && this.sceneManager.selectedArtifact) || (typeof ARTIFACTS !== 'undefined' ? ARTIFACTS[0] : null);
+      if (activeArt) {
+        this.selectedArtifact = activeArt;
+        if (this.sceneManager) {
+          this.sceneManager.selectedArtifact = activeArt;
+        }
+        this.renderDrawerContent(activeArt);
+        this.updateWalkButtonsState(activeArt);
+      }
       if (this.isTourActive) {
         this.updateTourStep();
-      } else if (this.sceneManager && this.sceneManager.selectedArtifact) {
-        this.openDrawer(this.sceneManager.selectedArtifact);
-      } else {
-        this.updateWalkButtonsState(this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
       }
     } catch (_) {}
   }

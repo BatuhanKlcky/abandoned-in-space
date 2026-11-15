@@ -690,8 +690,25 @@ class AbandonedInSpaceApp {
     const drawer = document.getElementById('story-drawer');
     if (!drawer) return;
 
+    // Synchronize ALL data-i18n elements inside the drawer immediately
+    drawer.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][key]) {
+        el.innerText = TRANSLATIONS[this.currentLang][key];
+      }
+    });
+
+    const modelCompass = drawer.querySelector('.model-compass-badge');
+    if (modelCompass) modelCompass.innerText = isTr ? 'HOLOGRAFİK PBR CAD' : 'HOLOGRAPHIC PBR CAD';
+    const modelHud = drawer.querySelector('.model-hud-badge');
+    if (modelHud) modelHud.innerText = isTr ? '360° ETKİLEŞİMLİ' : '360° INTERACTIVE';
     const xrayBtn = document.getElementById('btn-mini-wireframe');
-    if (xrayBtn) xrayBtn.classList.remove('active');
+    if (xrayBtn) {
+      xrayBtn.classList.remove('active');
+      xrayBtn.innerText = isTr ? 'CAD TEL KAFES' : 'CAD X-RAY';
+    }
+    const verStatus = drawer.querySelector('.verification-status');
+    if (verStatus) verStatus.innerText = isTr ? '✓ DOĞRULANDI' : '✓ VERIFIED';
 
     document.getElementById('drawer-mission').innerText = artifact.mission;
     document.getElementById('drawer-date').innerText = isTr ? artifact.date : artifact.date_en;
@@ -1109,63 +1126,98 @@ class AbandonedInSpaceApp {
     const miniKeys = document.getElementById('vr-game-mini-keys');
     if (miniKeys) miniKeys.innerText = isTr ? '[H / TAB]: Arayüz • [ESC]: Çıkış' : '[H / TAB]: UI • [ESC]: Exit';
 
-    this.updateBodyTelemetry();
-    this.updateLiveMarsCard();
-    this.renderArtifactsList();
+    try {
+      this.updateBodyTelemetry();
+      this.updateLiveMarsCard();
+      this.renderArtifactsList();
+    } catch (_) {}
 
     // Update Tour Chapter Pills & Default Banner Text
-    document.querySelectorAll('.chapter-pill').forEach((pill, idx) => {
-      if (STORY_CHAPTERS[idx]) {
-        pill.innerText = isTr ? STORY_CHAPTERS[idx].pill_tr : STORY_CHAPTERS[idx].pill_en;
-      }
-    });
-    const defaultCh = STORY_CHAPTERS[0];
-    const chTitleEl = document.getElementById('narrative-chapter-title');
-    const chDescEl = document.getElementById('narrative-chapter-desc');
-    if (chTitleEl && !this.isTourActive) chTitleEl.innerText = isTr ? defaultCh.title_tr : defaultCh.title_en;
-    if (chDescEl && !this.isTourActive) chDescEl.innerText = isTr ? defaultCh.desc_tr : defaultCh.desc_en;
-
-    // Update Simulation Camera Select Options
-    const camSelect = document.getElementById('sim-cam-select');
-    if (camSelect && camSelect.options) {
-      Array.from(camSelect.options).forEach(opt => {
-        const k = opt.getAttribute('data-i18n');
-        if (k && TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][k]) {
-          opt.innerText = TRANSLATIONS[this.currentLang][k];
+    try {
+      document.querySelectorAll('.chapter-pill').forEach((pill, idx) => {
+        if (STORY_CHAPTERS[idx]) {
+          pill.innerText = isTr ? STORY_CHAPTERS[idx].pill_tr : STORY_CHAPTERS[idx].pill_en;
         }
       });
-    }
+      const defaultCh = STORY_CHAPTERS[0];
+      const chTitleEl = document.getElementById('narrative-chapter-title');
+      const chDescEl = document.getElementById('narrative-chapter-desc');
+      if (chTitleEl && !this.isTourActive) chTitleEl.innerText = isTr ? defaultCh.title_tr : defaultCh.title_en;
+      if (chDescEl && !this.isTourActive) chDescEl.innerText = isTr ? defaultCh.desc_tr : defaultCh.desc_en;
+    } catch (_) {}
+
+    // Update Simulation Camera Select Options
+    try {
+      const camSelect = document.getElementById('sim-cam-select');
+      if (camSelect && camSelect.options) {
+        Array.from(camSelect.options).forEach(opt => {
+          const k = opt.getAttribute('data-i18n');
+          if (k && TRANSLATIONS[this.currentLang] && TRANSLATIONS[this.currentLang][k]) {
+            opt.innerText = TRANSLATIONS[this.currentLang][k];
+          }
+        });
+      }
+    } catch (_) {}
 
     // Update Audio Toggle Button text
-    const soundBtn = document.getElementById('btn-sound-toggle');
-    if (soundBtn) {
-      const isMuted = window.SpaceAudio ? window.SpaceAudio.isMuted : false;
-      const textSpan = soundBtn.querySelector('.btn-text-collapsible');
-      if (textSpan) {
-        textSpan.innerText = isMuted
-          ? (isTr ? 'SESSİZ' : 'MUTE')
-          : (isTr ? 'SES' : 'AUDIO');
+    try {
+      const soundBtn = document.getElementById('btn-sound-toggle');
+      if (soundBtn) {
+        const isMuted = window.SpaceAudio ? window.SpaceAudio.isMuted : false;
+        const textSpan = soundBtn.querySelector('.btn-text-collapsible');
+        if (textSpan) {
+          textSpan.innerText = isMuted
+            ? (isTr ? 'SESSİZ' : 'MUTE')
+            : (isTr ? 'SES' : 'AUDIO');
+        }
       }
-    }
+    } catch (_) {}
 
     // Update Rover Button Label
-    const gotoRoverLabel = document.getElementById('goto-rover-label');
-    if (gotoRoverLabel) {
-      gotoRoverLabel.innerText = isTr ? 'Haritada Rover Konumuna Uç' : 'Fly to Active Rover on Map';
-    }
+    try {
+      const gotoRoverLabel = document.getElementById('goto-rover-label');
+      if (gotoRoverLabel) {
+        gotoRoverLabel.innerText = isTr ? 'Haritada Rover Konumuna Uç' : 'Fly to Active Rover on Map';
+      }
+    } catch (_) {}
 
     // Update Simulation Theater if running or open
-    if (window.SpaceSimulation) {
-      window.SpaceSimulation.updateSimulationLanguage();
-    }
+    try {
+      if (window.SpaceSimulation) {
+        window.SpaceSimulation.updateSimulationLanguage();
+      }
+    } catch (_) {}
 
-    if (this.isTourActive) {
-      this.updateTourStep();
-    } else if (this.sceneManager && this.sceneManager.selectedArtifact) {
-      this.openDrawer(this.sceneManager.selectedArtifact);
-    } else {
-      this.updateWalkButtonsState(this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
-    }
+    // Update Video Trailer Modal title
+    try {
+      const trailerTitle = document.getElementById('video-trailer-title');
+      if (trailerTitle) {
+        trailerTitle.innerText = isTr ? 'UZAYDA TERK EDİLENLER — PROJE TANITIM VİDEOSU' : 'ABANDONED IN SPACE — PROJECT TRAILER';
+      }
+    } catch (_) {}
+
+    // Update Toast Alert default template if present
+    try {
+      const toast = document.getElementById('hud-alert-toast');
+      if (toast && !toast.classList.contains('show')) {
+        const toastTitle = document.getElementById('toast-title');
+        const toastDesc = document.getElementById('toast-desc');
+        if (toastTitle) toastTitle.innerText = isTr ? '⛔ VR YÜZEY MODU ENGELLENDİ' : '⛔ VR SURFACE EVA DISABLED';
+        if (toastDesc) toastDesc.innerText = isTr
+          ? 'Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda 1:1 astronot yürüyüşüne izin verilir.'
+          : 'This site is a crash/impact area. 1:1 surface EVA is only permitted at sites with successful soft landings.';
+      }
+    } catch (_) {}
+
+    try {
+      if (this.isTourActive) {
+        this.updateTourStep();
+      } else if (this.sceneManager && this.sceneManager.selectedArtifact) {
+        this.openDrawer(this.sceneManager.selectedArtifact);
+      } else {
+        this.updateWalkButtonsState(this.getFilteredArtifacts()[0] || ARTIFACTS[0]);
+      }
+    } catch (_) {}
   }
 
   toggleLanguage() {
@@ -1253,6 +1305,12 @@ const TRANSLATIONS = {
     spec_craft_title: "UZAY ARACI VE FIRLATMA ROKETİ MİMARİSİ",
     spec_status_title: "YÜZEY İNİŞ DURUMU VE VR ERİŞİMİ",
     toast_vr_blocked_title: "⛔ VR YÜZEY MODU ENGELLENDİ",
+    toast_vr_blocked_desc: "Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda 1:1 astronot yürüyüşüne izin verilir.",
+    model_compass_badge: "HOLOGRAFİK PBR CAD",
+    btn_mini_wireframe: "CAD TEL KAFES",
+    model_hud_badge: "360° ETKİLEŞİMLİ",
+    nasa_archive_pill: "NASA ARŞİVİ",
+    ver_status_verified: "✓ DOĞRULANDI",
     spec_mass_title: "KORUNAN KÜTLE",
     spec_power_title: "GÜÇ KAYNAĞI",
     spec_duration_title: "AKTİF GÖREV ÖMRÜ",
@@ -1360,6 +1418,12 @@ const TRANSLATIONS = {
     spec_craft_title: "SPACECRAFT & LAUNCH VEHICLE ARCHITECTURE",
     spec_status_title: "SURFACE LANDING OUTCOME & VR EVA ACCESS",
     toast_vr_blocked_title: "⛔ VR SURFACE EVA DISABLED",
+    toast_vr_blocked_desc: "This site is a crash/impact area. 1:1 surface EVA is only permitted at sites with successful soft landings.",
+    model_compass_badge: "HOLOGRAPHIC PBR CAD",
+    btn_mini_wireframe: "CAD X-RAY",
+    model_hud_badge: "360° INTERACTIVE",
+    nasa_archive_pill: "NASA ARCHIVE",
+    ver_status_verified: "✓ VERIFIED",
     spec_mass_title: "PRESERVED MASS",
     spec_power_title: "POWER SOURCE",
     spec_duration_title: "ACTIVE MISSION DURATION",

@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=6.7">
+  <link rel="stylesheet" href="css/style.css?v=6.8">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -276,7 +276,7 @@
             <span id="drawer-mission">APOLLO 11</span>
             <span>•</span>
             <span id="drawer-date" style="color:var(--text-muted);">July 20, 1969</span>
-            <span class="landing-badge status-landed" id="drawer-landing-status">BAŞARILI YUMUŞAK İNİŞ</span>
+            <span class="landing-badge status-landed" id="drawer-landing-status">✅ SUCCESSFUL SOFT LANDING</span>
           </div>
           <h2 class="artifact-title" id="drawer-title">Apollo 11 'Eagle' Lunar Module Descent Stage</h2>
         </div>
@@ -308,9 +308,9 @@
         <!-- 3D Holographic Artifact Mini-Viewport -->
         <div class="mini-model-box">
           <canvas id="mini-model-canvas"></canvas>
-          <span class="model-compass-badge">HOLOGRAPHIC PBR CAD</span>
-          <button class="model-xray-btn" id="btn-mini-wireframe" title="Toggle CAD Wireframe (X-Ray) Mode">CAD X-RAY</button>
-          <span class="model-hud-badge">360° INTERACTIVE</span>
+          <span class="model-compass-badge" data-i18n="model_compass_badge">HOLOGRAPHIC PBR CAD</span>
+          <button class="model-xray-btn" id="btn-mini-wireframe" title="Toggle CAD Wireframe (X-Ray) Mode" data-i18n="btn_mini_wireframe">CAD X-RAY</button>
+          <span class="model-hud-badge" data-i18n="model_hud_badge">360° INTERACTIVE</span>
         </div>
 
         <!-- Famous Historic Quote Card -->
@@ -370,7 +370,7 @@
         <div class="items-list-container" id="drawer-photos-section" style="display: none;">
           <div class="section-heading-row">
             <div class="section-heading" data-i18n="nasa_photos_label">📷 AUTHENTIC NASA SATELLITE & SURFACE PHOTOS</div>
-            <span class="pill-badge">NASA ARCHIVE</span>
+            <span class="pill-badge" data-i18n="nasa_archive_pill">NASA ARCHIVE</span>
           </div>
           <p class="photos-subtext" data-i18n="nasa_photos_subtext">Verified archive photography from NASA LROC, HiRISE, Magellan, Cassini & Rosetta (Click to enlarge):</p>
           <div class="nasa-photos-grid" id="drawer-photos-grid">
@@ -413,7 +413,7 @@
         <div class="nasa-verification-box" id="drawer-verification-box">
           <div class="verification-header">
             <span class="verification-badge" data-i18n="nasa_proof_badge">📜 NASA DATA VERIFICATION & SCIENTIFIC VALIDITY PROOF</span>
-            <span class="verification-status">✓ VERIFIED</span>
+            <span class="verification-status" data-i18n="ver_status_verified">✓ VERIFIED</span>
           </div>
           <div class="verification-grid">
             <div class="ver-row">
@@ -685,18 +685,18 @@
   <div id="hud-alert-toast" class="hud-alert-toast">
     <div class="toast-icon" id="toast-icon">⛔</div>
     <div class="toast-content">
-      <div class="toast-title" id="toast-title">VR ERİŞİMİ ENGELLENDİ</div>
-      <div class="toast-desc" id="toast-desc">Bu saha bir kaza/çarpışma alanıdır. Yalnızca yüzeye başarılı iniş yapmış araçlarda VR yüzey moduna izin verilir.</div>
+      <div class="toast-title" id="toast-title" data-i18n="toast_vr_blocked_title">⛔ VR SURFACE EVA DISABLED</div>
+      <div class="toast-desc" id="toast-desc" data-i18n="toast_vr_blocked_desc">This site is a crash/impact area. 1:1 surface EVA is only permitted at sites with successful soft landings.</div>
     </div>
     <button class="toast-close" id="btn-close-toast">✕</button>
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=6.7"></script>
-  <script src="js/textures.js?v=6.7"></script>
-  <script src="js/audio.js?v=6.7"></script>
-  <script src="js/scene.js?v=6.7"></script>
-  <script src="js/simulation.js?v=6.7"></script>
-  <script src="js/app.js?v=6.7"></script>
+  <script src="js/data.js?v=6.8"></script>
+  <script src="js/textures.js?v=6.8"></script>
+  <script src="js/audio.js?v=6.8"></script>
+  <script src="js/scene.js?v=6.8"></script>
+  <script src="js/simulation.js?v=6.8"></script>
+  <script src="js/app.js?v=6.8"></script>
 </body>
 </html>

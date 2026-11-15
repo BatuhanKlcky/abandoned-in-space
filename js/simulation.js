@@ -2599,78 +2599,83 @@ class MissionSimulationTheater {
       }
     }
 
-    // 8 Interactive Collectable Geological Sample Boulders around the Landing Site!
-    const sampleCoords = [
-      { x: -6.8, z: 10.5, mineral_tr: 'İlmenit Bazalt Numunesi #1', mineral_en: 'Ilmenite Basalt Sample #1' },
-      { x:  7.4, z: 11.2, mineral_tr: 'Anortozit Breş Numunesi #2', mineral_en: 'Anorthosite Breccia Sample #2' },
-      { x: -14.2, z: -8.5, mineral_tr: 'Olivin Krater Numunesi #3', mineral_en: 'Olivine Crater Sample #3' },
-      { x:  15.8, z:  4.2, mineral_tr: 'Piroksen Regolit Numunesi #4', mineral_en: 'Pyroxene Regolith Sample #4' },
-      { x: -18.5, z: -15.2, mineral_tr: 'Krater Çukuru Cam Kürecikleri #5', mineral_en: 'Crater Glass Spherules #5' },
-      { x:  21.0, z:  16.8, mineral_tr: 'Volkanik Cüruf & Bazalt #6', mineral_en: 'Vesicular Basalt Core #6' },
-      { x:   1.5, z: -16.5, mineral_tr: 'DerinManto Kayaç Parçası #7', mineral_en: 'Deep Mantle Clast #7' },
-      { x: -11.5, z:  16.0, mineral_tr: 'Kutup Buzul / Mineral Numunesi #8', mineral_en: 'Crystalline Mineral Sample #8' }
-    ];
-    sampleCoords.forEach((scfg, sIdx) => {
-      const sGroup = new THREE.Group();
-      const sy = this.getTerrainHeight(scfg.x, scfg.z);
-      sGroup.position.set(scfg.x, sy + 0.24, scfg.z);
+    // Apollo Lunar Crewed Missions (Apollo 11, 12, 14, 15, 16, 17)
+    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
 
-      const sRockMat = rockMat.clone();
-      const sRock = new THREE.Mesh(rockGeo, sRockMat);
-      sRock.scale.set(0.62, 0.48, 0.62);
-      sRock.castShadow = true;
-      sRock.receiveShadow = true;
-      sGroup.add(sRock);
+    // 8 Interactive Collectable Geological Sample Boulders: ONLY FOR APOLLO CREWED MOONWALKS!
+    if (isApolloLM) {
+      const sampleCoords = [
+        { x: -6.8, z: 10.5, mineral_tr: 'İlmenit Bazalt Numunesi #1', mineral_en: 'Ilmenite Basalt Sample #1' },
+        { x:  7.4, z: 11.2, mineral_tr: 'Anortozit Breş Numunesi #2', mineral_en: 'Anorthosite Breccia Sample #2' },
+        { x: -14.2, z: -8.5, mineral_tr: 'Olivin Krater Numunesi #3', mineral_en: 'Olivine Crater Sample #3' },
+        { x:  15.8, z:  4.2, mineral_tr: 'Piroksen Regolit Numunesi #4', mineral_en: 'Pyroxene Regolith Sample #4' },
+        { x: -18.5, z: -15.2, mineral_tr: 'Krater Çukuru Cam Kürecikleri #5', mineral_en: 'Crater Glass Spherules #5' },
+        { x:  21.0, z:  16.8, mineral_tr: 'Volkanik Cüruf & Bazalt #6', mineral_en: 'Vesicular Basalt Core #6' },
+        { x:   1.5, z: -16.5, mineral_tr: 'Derin Manto Kayaç Parçası #7', mineral_en: 'Deep Mantle Clast #7' },
+        { x: -11.5, z:  16.0, mineral_tr: 'Kutup Buzul / Mineral Numunesi #8', mineral_en: 'Crystalline Mineral Sample #8' }
+      ];
+      sampleCoords.forEach((scfg, sIdx) => {
+        const sGroup = new THREE.Group();
+        const sy = this.getTerrainHeight(scfg.x, scfg.z);
+        sGroup.position.set(scfg.x, sy + 0.24, scfg.z);
 
-      // Glowing Crystalline Mineral Vein & Holo Marker Ring on Sample Rock
-      const crystalMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-      const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), crystalMat);
-      crystal.position.set(0, 0.34, 0);
-      sGroup.add(crystal);
+        const sRockMat = rockMat.clone();
+        const sRock = new THREE.Mesh(rockGeo, sRockMat);
+        sRock.scale.set(0.62, 0.48, 0.62);
+        sRock.castShadow = true;
+        sRock.receiveShadow = true;
+        sGroup.add(sRock);
 
-      const ringMarker = new THREE.Mesh(
-        new THREE.RingGeometry(0.55, 0.68, 24),
-        new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.72 })
-      );
-      ringMarker.rotation.x = -Math.PI / 2;
-      ringMarker.position.y = -0.20;
-      sGroup.add(ringMarker);
+        // Glowing Crystalline Mineral Vein & Holo Marker Ring on Sample Rock
+        const crystalMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), crystalMat);
+        crystal.position.set(0, 0.34, 0);
+        sGroup.add(crystal);
 
-      let collected = false;
-      const sampleAction = {
-        label_tr: `💎 [SOL TIK / E / VR DOKUN] JEOLOJİK NUMUNE TOPLA: ${scfg.mineral_tr}`,
-        label_en: `💎 [CLICK / E / VR TOUCH] COLLECT GEOLOGICAL SAMPLE: ${scfg.mineral_en}`,
-        onClick: () => {
-          if (collected) return;
-          collected = true;
-          this.walkState.collectedSamples = Math.min(this.walkState.totalSamples, (this.walkState.collectedSamples || 0) + 1);
-          this.playSwitchClickSound(880);
-          if (window.SpaceAudio) window.SpaceAudio.playSampleScanChirp();
-          this.pulseXRHaptics(0.85, 70);
-          setTimeout(() => this.playSwitchClickSound(1180), 90);
-          this.spawnBootDust(scfg.x, scfg.z, 12);
-          crystal.visible = false;
-          ringMarker.material.color.setHex(0x64748b);
-          ringMarker.material.opacity = 0.2;
-          sRock.scale.set(0.32, 0.22, 0.32);
-          const isTr = window.app ? window.app.currentLang === 'tr' : false;
-          sampleAction.label_tr = `✅ NUMUNE TOPLANDI (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_tr}`;
-          sampleAction.label_en = `✅ SAMPLE COLLECTED (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_en}`;
-          if (this.walkState.collectedSamples >= this.walkState.totalSamples) {
-            this.updateVRGameMiniPill(isTr ? '🏆 8/8 TÜM JEOLOJİK NUMUNELER TOPLANDI!' : '🏆 8/8 ALL LUNAR SAMPLES COLLECTED!');
-          } else {
-            this.updateVRGameMiniPill(isTr ? `${scfg.mineral_tr} Toplandı! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})` : `${scfg.mineral_en} Collected! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})`);
+        const ringMarker = new THREE.Mesh(
+          new THREE.RingGeometry(0.55, 0.68, 24),
+          new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.72 })
+        );
+        ringMarker.rotation.x = -Math.PI / 2;
+        ringMarker.position.y = -0.20;
+        sGroup.add(ringMarker);
+
+        let collected = false;
+        const sampleAction = {
+          label_tr: `💎 [SOL TIK / E / VR DOKUN] JEOLOJİK NUMUNE TOPLA: ${scfg.mineral_tr}`,
+          label_en: `💎 [CLICK / E / VR TOUCH] COLLECT GEOLOGICAL SAMPLE: ${scfg.mineral_en}`,
+          onClick: () => {
+            if (collected) return;
+            collected = true;
+            this.walkState.collectedSamples = Math.min(this.walkState.totalSamples, (this.walkState.collectedSamples || 0) + 1);
+            this.playSwitchClickSound(880);
+            if (window.SpaceAudio) window.SpaceAudio.playSampleScanChirp();
+            this.pulseXRHaptics(0.85, 70);
+            setTimeout(() => this.playSwitchClickSound(1180), 90);
+            this.spawnBootDust(scfg.x, scfg.z, 12);
+            crystal.visible = false;
+            ringMarker.material.color.setHex(0x64748b);
+            ringMarker.material.opacity = 0.2;
+            sRock.scale.set(0.32, 0.22, 0.32);
+            const isTr = window.app ? window.app.currentLang === 'tr' : false;
+            sampleAction.label_tr = `✅ NUMUNE TOPLANDI (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_tr}`;
+            sampleAction.label_en = `✅ SAMPLE COLLECTED (${this.walkState.collectedSamples}/${this.walkState.totalSamples}): ${scfg.mineral_en}`;
+            if (this.walkState.collectedSamples >= this.walkState.totalSamples) {
+              this.updateVRGameMiniPill(isTr ? '🏆 8/8 TÜM JEOLOJİK NUMUNELER TOPLANDI!' : '🏆 8/8 ALL LUNAR SAMPLES COLLECTED!');
+            } else {
+              this.updateVRGameMiniPill(isTr ? `${scfg.mineral_tr} Toplandı! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})` : `${scfg.mineral_en} Collected! (${this.walkState.collectedSamples}/${this.walkState.totalSamples})`);
+            }
           }
-        }
-      };
-      sRock.userData.interactive = sampleAction;
-      crystal.userData.interactive = sampleAction;
-      this.surfaceInteractables.push(sRock, crystal);
-      this.scene.add(sGroup);
-    });
+        };
+        sRock.userData.interactive = sampleAction;
+        crystal.userData.interactive = sampleAction;
+        this.surfaceInteractables.push(sRock, crystal);
+        this.scene.add(sGroup);
+      });
+    }
 
-    // Authentic Lunar / Planetary Landing Site Interactive Props (Flag, ALSEP Laser, LRV Moon Buggy)
-    if (artifact.category !== 'impact') {
+    // Authentic Lunar Surface Equipment: ONLY ON CREWED APOLLO LUNAR MISSIONS!
+    if (isApolloLM) {
       // Interactive Mission Flag on regolith
       const flagGroup = new THREE.Group();
       flagGroup.position.set(9.2, this.getTerrainHeight(9.2, 6.2), 6.2);
@@ -2731,72 +2736,69 @@ class MissionSimulationTheater {
       this.scene.add(flagGroup);
 
       // ALSEP Scientific Instrument Station & 532nm Earth Laser: ONLY ON MOON CREWED MISSIONS!
-      const isLunarManned = isMoon && (artifact.category === 'lander' || artifact.category === 'rover');
-      if (isLunarManned) {
-        const alsepY = this.getExactSurfaceHeight(-10.5, 8.5);
-        const alsepBox = new THREE.Mesh(
-          new THREE.BoxGeometry(1.1, 0.8, 1.1),
-          new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.2 })
-        );
-        alsepBox.position.set(-10.5, alsepY + 0.4, 8.5);
-        alsepBox.castShadow = true;
-        this.scene.add(alsepBox);
+      const alsepY = this.getExactSurfaceHeight(-10.5, 8.5);
+      const alsepBox = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1, 0.8, 1.1),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.2 })
+      );
+      alsepBox.position.set(-10.5, alsepY + 0.4, 8.5);
+      alsepBox.castShadow = true;
+      this.scene.add(alsepBox);
 
-        // 372m Earth-Ranging Green Laser Beam (532nm) aimed directly from ALSEP to Earth in the sky!
-        const pAlsep = new THREE.Vector3(-10.5, alsepY + 0.4, 8.5);
-        const pEarth = new THREE.Vector3(-180, 95, -310);
-        const beamDist = pAlsep.distanceTo(pEarth);
-        const beamDir = new THREE.Vector3().subVectors(pEarth, pAlsep).normalize();
-        const beamMid = new THREE.Vector3().addVectors(pAlsep, pEarth).multiplyScalar(0.5);
+      // 372m Earth-Ranging Green Laser Beam (532nm) aimed directly from ALSEP to Earth in the sky!
+      const pAlsep = new THREE.Vector3(-10.5, alsepY + 0.4, 8.5);
+      const pEarth = new THREE.Vector3(-180, 95, -310);
+      const beamDist = pAlsep.distanceTo(pEarth);
+      const beamDir = new THREE.Vector3().subVectors(pEarth, pAlsep).normalize();
+      const beamMid = new THREE.Vector3().addVectors(pAlsep, pEarth).multiplyScalar(0.5);
 
-        const laserBeamGeo = new THREE.CylinderGeometry(0.09, 0.42, beamDist, 16);
-        const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.88 });
-        const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
-        alsepLaserBeam.position.copy(beamMid);
-        alsepLaserBeam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamDir);
-        alsepLaserBeam.visible = false;
-        this.scene.add(alsepLaserBeam);
+      const laserBeamGeo = new THREE.CylinderGeometry(0.09, 0.42, beamDist, 16);
+      const laserBeamMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.88 });
+      const alsepLaserBeam = new THREE.Mesh(laserBeamGeo, laserBeamMat);
+      alsepLaserBeam.position.copy(beamMid);
+      alsepLaserBeam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamDir);
+      alsepLaserBeam.visible = false;
+      this.scene.add(alsepLaserBeam);
 
-        // Green target retroreflector pulse ring at Earth
-        const earthTargetRing = new THREE.Mesh(
-          new THREE.RingGeometry(2.5, 4.6, 28),
-          new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
-        );
-        earthTargetRing.position.set(-180, 95, -310);
-        earthTargetRing.lookAt(pAlsep);
-        earthTargetRing.visible = false;
-        this.scene.add(earthTargetRing);
+      // Green target retroreflector pulse ring at Earth
+      const earthTargetRing = new THREE.Mesh(
+        new THREE.RingGeometry(2.5, 4.6, 28),
+        new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+      );
+      earthTargetRing.position.set(-180, 95, -310);
+      earthTargetRing.lookAt(pAlsep);
+      earthTargetRing.visible = false;
+      this.scene.add(earthTargetRing);
 
-        alsepBox.userData.interactive = {
-          label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR 532nm)',
-          label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP LUNAR LASER RETROREFLECTOR (532nm LRRR)',
-          onClick: () => {
-            alsepLaserBeam.visible = !alsepLaserBeam.visible;
-            earthTargetRing.visible = alsepLaserBeam.visible;
-            this.playSwitchClickSound(alsepLaserBeam.visible ? 1120 : 540);
-            if (alsepLaserBeam.visible && window.SpaceAudio) {
-              window.SpaceAudio.playTelemetryPing(1480, 0.15);
-            }
-            const isTr = window.app ? window.app.currentLang === 'tr' : false;
-            this.updateVRGameMiniPill(
-              alsepLaserBeam.visible
-                ? (isTr
-                    ? '📡 ALSEP LRRR LAZERİ: 384,402 km (Işık Gidiş-Dönüş: 2.56s • Yılda +3.8cm)'
-                    : '📡 ALSEP LRRR LASER: 384,402 km (Light RTT: 2.56s • Drift: +3.8cm/yr)')
-                : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
-            );
+      alsepBox.userData.interactive = {
+        label_tr: '📡 [SOL TIK / E / VR TETİK] ALSEP DÜNYA LAZER YANSITICISINI ATEŞLE (LRRR 532nm)',
+        label_en: '📡 [CLICK / E / VR TRIGGER] FIRE ALSEP LUNAR LASER RETROREFLECTOR (532nm LRRR)',
+        onClick: () => {
+          alsepLaserBeam.visible = !alsepLaserBeam.visible;
+          earthTargetRing.visible = alsepLaserBeam.visible;
+          this.playSwitchClickSound(alsepLaserBeam.visible ? 1120 : 540);
+          if (alsepLaserBeam.visible && window.SpaceAudio) {
+            window.SpaceAudio.playTelemetryPing(1480, 0.15);
           }
-        };
-        this.surfaceInteractables.push(alsepBox);
+          const isTr = window.app ? window.app.currentLang === 'tr' : false;
+          this.updateVRGameMiniPill(
+            alsepLaserBeam.visible
+              ? (isTr
+                  ? '📡 ALSEP LRRR LAZERİ: 384,402 km (Işık Gidiş-Dönüş: 2.56s • Yılda +3.8cm)'
+                  : '📡 ALSEP LRRR LASER: 384,402 km (Light RTT: 2.56s • Drift: +3.8cm/yr)')
+              : (isTr ? 'ALSEP Lazer Beklemede' : 'ALSEP Laser Standby')
+          );
+        }
+      };
+      this.surfaceInteractables.push(alsepBox);
 
-        const rtgCask = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.28, 0.28, 0.75, 12),
-          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
-        );
-        rtgCask.position.set(-12.2, alsepY + 0.38, 8.5);
-        rtgCask.castShadow = true;
-        this.scene.add(rtgCask);
-      }
+      const rtgCask = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.28, 0.75, 12),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
+      );
+      rtgCask.position.set(-12.2, alsepY + 0.38, 8.5);
+      rtgCask.castShadow = true;
+      this.scene.add(rtgCask);
 
       // =======================================================================
       // REALISTIC VEHICLE & SURFACE EQUIPMENT PER HISTORICAL LOCATION
@@ -2819,15 +2821,20 @@ class MissionSimulationTheater {
       if (artifact.id === 'apollo-12-surveyor') {
         this.buildSurveyorProbeProp(18.5, -12.5);
       }
+    } else {
+      this.lrvPropGroup = null;
+      this.lrvWheels = [];
     }
 
     // Build First-Person & Third-Person Astronaut Rigs
     this.buildAstronautRigs();
 
-    // Pre-spawn an initial EVA footprint trail leading from the spacecraft ladder to the astronaut's boots
-    for (let s = 0; s < 10; s++) {
-      const trailZ = 7.6 + s * 0.62;
-      this.spawnFootprint(0, trailZ, 0, s % 2 === 0);
+    // Pre-spawn an initial EVA footprint trail: ONLY ON CREWED APOLLO MISSIONS!
+    if (isApolloLM) {
+      for (let s = 0; s < 10; s++) {
+        const trailZ = 7.6 + s * 0.62;
+        this.spawnFootprint(0, trailZ, 0, s % 2 === 0);
+      }
     }
 
     // Balanced Physically-Based Planetary Sunlight & Crisp Relief Shadows (Zero Overexposure!)
@@ -3015,6 +3022,29 @@ class MissionSimulationTheater {
       }
       this.spacecraft.add(this.tetherGroup);
       this.spacecraft.position.set(0, 1.5, 0);
+
+    } else if (artifact.id === 'pioneer-venus-day') {
+      // NASA PIONEER VENUS DAY PROBE (SPHERICAL TITANIUM PRESSURE VESSEL)
+      const tiMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.88, roughness: 0.25 });
+      const heatMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.75, metalness: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.22, bumpMap: kaptonBump, bumpScale: 0.04 });
+
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(1.65, 32, 32), tiMat);
+      sphere.position.y = 1.65;
+      sphere.castShadow = true;
+      this.spacecraft.add(sphere);
+
+      const noseCone = new THREE.Mesh(new THREE.ConeGeometry(1.4, 0.9, 28, 1, true), heatMat);
+      noseCone.position.y = 0.5;
+      noseCone.rotation.x = Math.PI;
+      this.spacecraft.add(noseCone);
+
+      const antennaRing = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.08, 12, 28), goldMat);
+      antennaRing.position.y = 3.2;
+      antennaRing.rotation.x = Math.PI / 2;
+      this.spacecraft.add(antennaRing);
+
+      this.spacecraft.position.set(0, 0, 0);
 
     } else if (isVenus) {
       const tiMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.28 });
@@ -5645,8 +5675,18 @@ class MissionSimulationTheater {
 
     } else {
       const isApolloCrewedLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
-      const isGroundSurfaceLander = ['spirit-rover', 'opportunity-rover', 'insight-lander', 'pathfinder-sojourner', 'viking-1-lander', 'phoenix-lander', 'perseverance-backshell-chute', 'rosetta-philae', 'near-shoemaker-eros', 'galileo-probe'].includes(artifact.id);
-      const targetRestY = isGroundSurfaceLander ? 0.0 : 3.2;
+      let targetRestY = 0.0;
+      if (isApolloCrewedLM) {
+        targetRestY = 3.2;
+      } else if (artifact.id === 'pioneer-venus-day') {
+        targetRestY = 0.0;
+      } else if (artifact.body === 'venus') {
+        targetRestY = 2.85;
+      } else if (artifact.id === 'cassini-huygens') {
+        targetRestY = 2.1;
+      } else {
+        targetRestY = 0.0;
+      }
 
       if (t < 5.8) {
         const currentY = targetRestY + descentOffset;

@@ -62,11 +62,11 @@
         </button>
       </div>
 
-      <!-- Header Action Buttons (Desktop) -->
+      <!-- Header Action Buttons (Desktop & Mobile Quick Actions) -->
       <div class="header-actions">
         <button class="hud-btn btn-trailer-promo" id="btn-trailer-toggle" title="Watch Project Showcase Video (Full HD 1080p Trailer)">
           <span>🎬</span>
-          <span data-i18n="btn_trailer">PROMO VIDEO</span>
+          <span class="btn-text-collapsible" data-i18n="btn_trailer">PROMO VIDEO</span>
         </button>
         <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Launch 3D Descent / Kinetic Impact Reenactment">
           <span>🎬</span>
@@ -213,6 +213,18 @@
         <div class="search-wrapper">
           <span class="search-icon">🔍</span>
           <input type="text" class="search-input" id="search-input" placeholder="Search relics or missions..." data-i18n-placeholder="search_placeholder">
+        </div>
+
+        <!-- Mobile Scrollable Decade Filter Chips -->
+        <div class="decade-filter-row-mobile" id="decade-filter-mobile">
+          <button class="pill-btn decade-pill active" data-decade="all" data-i18n="decade_all">ALL</button>
+          <button class="pill-btn decade-pill" data-decade="1960" data-i18n="decade_1960">1960s</button>
+          <button class="pill-btn decade-pill" data-decade="1970" data-i18n="decade_1970">1970s</button>
+          <button class="pill-btn decade-pill" data-decade="1980" data-i18n="decade_1980">1980s</button>
+          <button class="pill-btn decade-pill" data-decade="1990" data-i18n="decade_1990">1990s</button>
+          <button class="pill-btn decade-pill" data-decade="2000" data-i18n="decade_2000">2000s</button>
+          <button class="pill-btn decade-pill" data-decade="2010" data-i18n="decade_2010">2010s</button>
+          <button class="pill-btn decade-pill" data-decade="2020" data-i18n="decade_2020">2020s</button>
         </div>
 
         <div class="artifacts-list" id="artifacts-list-container">
@@ -692,11 +704,11 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/data.js?v=6.8"></script>
-  <script src="js/textures.js?v=6.8"></script>
-  <script src="js/audio.js?v=6.8"></script>
-  <script src="js/scene.js?v=6.8"></script>
-  <script src="js/simulation.js?v=6.8"></script>
-  <script src="js/app.js?v=6.8"></script>
+  <script src="js/data.js?v=6.9"></script>
+  <script src="js/textures.js?v=6.9"></script>
+  <script src="js/audio.js?v=6.9"></script>
+  <script src="js/scene.js?v=6.9"></script>
+  <script src="js/simulation.js?v=6.9"></script>
+  <script src="js/app.js?v=6.9"></script>
 </body>
 </html>

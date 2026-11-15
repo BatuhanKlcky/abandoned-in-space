@@ -52,6 +52,15 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: 1;
+  touch-action: none;
+}
+
+#canvas-container canvas {
+  touch-action: none;
+}
+
+#sim-canvas {
+  touch-action: none;
 }
 
 /* Telemetry CRT Scanline Grid Overlay (Subtle) */
@@ -1799,55 +1808,136 @@ body {
    RESPONSIVE MOBILE STYLES (< 768px)
    ========================================================================== */
 @media (max-width: 768px) {
+  /* Header Bar Mobile Ergonomics */
   .header-bar {
-    padding: 10px 14px;
+    padding: 8px 12px;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+    min-height: auto;
   }
 
   .brand-section {
     gap: 8px;
+    flex-shrink: 0;
   }
 
   .team-logo-badge {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
   }
 
   .title-group h1 {
-    font-size: 13px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
   }
 
   .title-group p {
-    display: none;
+    display: none !important;
   }
 
+  /* Show compact header quick action icons on mobile (Trailer, Sound, Reset, Lang) */
   .header-actions {
-    display: none !important; /* Managed via mobile bottom navigation */
-  }
-
-  .planet-toggle-container {
+    display: flex !important;
+    align-items: center;
+    gap: 5px;
     margin-left: auto;
   }
 
-  .planet-btn {
-    padding: 5px 12px;
-    font-size: 11px;
+  /* Hide desktop-only or redundant action buttons from mobile header */
+  #btn-top-sim,
+  #btn-top-walk,
+  #btn-sources-toggle,
+  #btn-tour-toggle {
+    display: none !important;
   }
 
-  /* Left dock becomes a collapsible overlay drawer */
+  /* Compact icon pill buttons on mobile header */
+  .header-actions .hud-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    min-height: 32px;
+    border-radius: 6px;
+  }
+
+  .header-actions .btn-text-collapsible {
+    display: none !important;
+  }
+
+  /* Celestial Body Switcher on Mobile: Full-width scrollable row with smooth touch scrolling */
+  .planet-toggle-container {
+    width: 100%;
+    order: 3;
+    margin: 2px 0 0 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    gap: 6px;
+    padding: 2px 2px 4px 2px;
+    scrollbar-width: none;
+  }
+  .planet-toggle-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .planet-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 11px;
+    min-height: 34px;
+    border-radius: 16px;
+  }
+
+  /* STRICTLY HIDE ALL VR / WEBXR / 1:1 WALK MODES ON MOBILE DEVICES */
+  #btn-top-walk,
+  .btn-webxr-walk,
+  #btn-drawer-walk,
+  .big-walk-action-btn,
+  #btn-sim-walk,
+  .walk-toggle-btn,
+  #btn-sim-webxr,
+  .webxr-btn,
+  #btn-enter-quest-vr,
+  .quest-vr-enter-btn,
+  #walk-hud-overlay,
+  .walk-hud-overlay,
+  .walk-dpad-container,
+  #vr-game-mini-pill,
+  .vr-game-mini-hud,
+  .walk-visor-banner,
+  #sim-cam-select option[value="walk"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Make 3D Simulation Reenactment button full-width and prominent in Story Drawer on Mobile */
+  #btn-drawer-sim,
+  .big-sim-action-btn,
+  .drawer-sim-actions-row .sim-primary-btn {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    padding: 12px 14px;
+  }
+
+  /* Left dock becomes a collapsible mobile bottom sheet */
   .left-dock {
     position: fixed;
     top: auto;
     bottom: 60px;
-    left: 10px;
-    right: 10px;
-    width: calc(100vw - 20px);
-    max-height: 65vh;
-    z-index: 800;
+    left: 8px;
+    right: 8px;
+    width: calc(100vw - 16px);
+    max-height: 72vh;
+    z-index: 850;
     transform: translateY(125%);
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
+    border-radius: 12px;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 240, 255, 0.2);
+    overflow: hidden;
   }
 
   .left-dock.mobile-visible {
@@ -1856,15 +1946,60 @@ body {
   }
 
   .mobile-close-list-btn {
-    display: block !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    border-radius: 6px;
   }
 
-  /* Show mobile bottom nav bar */
+  /* Avoid iOS auto-zoom by enforcing 16px on inputs */
+  .search-input {
+    font-size: 16px !important;
+  }
+
+  /* Mobile horizontal scrollable decade filter chips */
+  .decade-filter-row-mobile {
+    display: flex !important;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 2px 8px;
+    scrollbar-width: none;
+  }
+  .decade-filter-row-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  .decade-filter-row-mobile .decade-pill {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .artifacts-list {
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Show mobile bottom navigation dock with safe-area support */
   .mobile-nav-bar {
     display: flex !important;
+    padding: 6px 8px max(8px, env(safe-area-inset-bottom, 8px));
+    min-height: 54px;
+    z-index: 900;
   }
 
-  /* Story drawer adapts to bottom sheet or full screen */
+  .mobile-nav-btn {
+    min-width: 50px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Story drawer adapts to clean mobile sheet */
   .story-drawer {
     width: 100vw;
     max-width: 100vw;
@@ -1875,14 +2010,28 @@ body {
     z-index: 1200;
   }
 
+  .drawer-header {
+    padding: 12px 14px;
+  }
+
+  .drawer-title {
+    font-size: 15px;
+  }
+
   .drawer-content {
     padding: 14px;
-    gap: 14px;
+    gap: 12px;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 32px));
   }
 
   .mini-model-box {
-    height: 150px;
+    height: 175px;
+    min-height: 175px;
+  }
+
+  .drawer-footer {
+    padding: 10px 14px max(10px, env(safe-area-inset-bottom, 10px));
   }
 
   .bottom-dock {
@@ -1893,30 +2042,135 @@ body {
     display: none !important;
   }
 
+  /* Guided story tour banner on mobile */
   .tour-banner {
-    top: 55px;
-    width: 92%;
-    padding: 6px 12px;
-    gap: 8px;
+    top: 96px;
+    width: 94%;
+    padding: 8px 12px;
+    gap: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 700;
+  }
+
+  .tour-top-row {
+    gap: 6px;
+  }
+
+  .tour-badge {
+    font-size: 10px;
   }
 
   .tour-progress {
     font-size: 10px;
   }
 
-  /* Simulation on mobile */
-  .sim-top-bar {
-    padding: 10px 14px;
+  #narrative-chapter-title {
+    font-size: 11px;
   }
+
+  #narrative-chapter-desc {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .tour-nav-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  /* Simulation modal on mobile */
+  .sim-top-bar {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: rgba(6, 10, 20, 0.95);
+  }
+
   .sim-title {
     font-size: 13px;
   }
-  .hud-gauge {
-    min-width: 90px;
-    padding: 6px 8px;
+
+  .sim-top-controls {
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-left: auto;
   }
+
+  #sim-cam-select {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  #btn-close-sim {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  #btn-replay-sim {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .sim-hud-overlay {
+    bottom: 12px;
+    width: 95%;
+    gap: 6px;
+  }
+
+  .hud-gauge-row {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .hud-gauge {
+    min-width: 80px;
+    flex: 1 1 28%;
+    padding: 4px 6px;
+  }
+
   .gauge-val {
     font-size: 11px;
+  }
+
+  .hud-phase-bar {
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+
+  /* Aerospace HUD Alert Toast on mobile positioned right above bottom nav */
+  .hud-alert-toast {
+    top: auto;
+    bottom: 74px;
+    transform: translateX(-50%) translateY(140%);
+    width: 92%;
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+
+  .hud-alert-toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Modals on mobile */
+  .modal-content {
+    width: 95vw;
+    max-height: 88vh;
+    padding: 14px;
+  }
+
+  .modal-header h2 {
+    font-size: 13px;
+  }
+
+  .video-modal-content {
+    width: 98vw !important;
+    max-height: 94vh !important;
+  }
+
+  .video-modal-body {
+    padding: 10px 12px 14px;
   }
 }
 
@@ -2943,12 +3197,9 @@ body {
 
 @media (max-width: 768px) {
   .quest-vr-enter-btn {
-    top: auto;
-    bottom: 18px;
-    right: 50%;
-    transform: translateX(50%);
-    font-size: 13px;
-    padding: 12px 16px;
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 }
 

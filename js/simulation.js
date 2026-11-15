@@ -728,6 +728,13 @@ class MissionSimulationTheater {
   }
 
   setCameraMode(mode) {
+    const isMobileDevice = (typeof window !== 'undefined') && (
+      (window.innerWidth <= 768) || 
+      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+    if (isMobileDevice && mode === 'walk') {
+      mode = 'cinematic';
+    }
     if (mode === 'walk') {
       if (this.currentArtifact && this.currentArtifact.vrAllowed === false) {
         this.triggerVRDisallowAlert();
@@ -1117,6 +1124,16 @@ class MissionSimulationTheater {
   }
 
   startSurfaceWalk(artifact) {
+    const isMobileDevice = (typeof window !== 'undefined') && (
+      (window.innerWidth <= 768) || 
+      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+    if (isMobileDevice) {
+      // Mobile fallback: Never enter VR mode on mobile; launch standard 3D simulation
+      this.cameraMode = 'cinematic';
+      this.startSimulation(artifact);
+      return;
+    }
     if (artifact && artifact.vrAllowed === false) {
       this.currentArtifact = artifact;
       this.triggerVRDisallowAlert();
@@ -1277,9 +1294,36 @@ class MissionSimulationTheater {
     const badgeEl = document.getElementById('sim-badge');
     const isTr = window.app ? window.app.currentLang === 'tr' : false;
 
+    const isMobileDevice = (typeof window !== 'undefined') && (
+      (window.innerWidth <= 768) || 
+      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+
     if (titleEl) titleEl.innerText = isTr ? artifact.name_tr : artifact.name_en;
     if (badgeEl) {
-      if (artifact.vrAllowed === false) {
+      if (isMobileDevice) {
+        if (artifact.vrAllowed === false) {
+          badgeEl.innerText = isTr ? "💥 KİNETİK ÇARPIŞMA CANLANDIRMASI" : "💥 KINETIC IMPACT REENACTMENT";
+          badgeEl.style.borderColor = "#ef4444";
+          badgeEl.style.color = "#f87171";
+        } else if (artifact.category === 'helicopter') {
+          badgeEl.innerText = isTr ? "🚁 OTONOM MARS HELİKOPTERİ UÇUŞU" : "🚁 AUTONOMOUS MARS ROTORCRAFT";
+          badgeEl.style.borderColor = "#00f0ff";
+          badgeEl.style.color = "#00f0ff";
+        } else if (artifact.body === 'venus') {
+          badgeEl.innerText = isTr ? "🔥 VENÜS 92 ATM BASINÇLI İNİŞ" : "🔥 VENUS 92 ATM PRESSURE DESCENT";
+          badgeEl.style.borderColor = "#f59e0b";
+          badgeEl.style.color = "#fcd34d";
+        } else if (artifact.body === 'outer') {
+          badgeEl.innerText = isTr ? "🪐 DIŞ GÜNEŞ SİSTEMİ İNİŞİ" : "🪐 OUTER SOLAR SYSTEM TOUCHDOWN";
+          badgeEl.style.borderColor = "#38bdf8";
+          badgeEl.style.color = "#7dd3fc";
+        } else {
+          badgeEl.innerText = isTr ? "🛰️ BAŞARILI YUMUŞAK İNİŞ SİMÜLASYONU" : "🛰️ SOFT LANDING 3D REENACTMENT";
+          badgeEl.style.borderColor = "#10b981";
+          badgeEl.style.color = "#34d399";
+        }
+      } else if (artifact.vrAllowed === false) {
         if (artifact.category === 'impact') {
           badgeEl.innerText = isTr ? "💥 KİNETİK ÇARPIŞMA CANLANDIRMASI (VR KAPALI)" : "💥 KINETIC IMPACT REENACTMENT (VR DISABLED)";
         } else if (artifact.id === 'curiosity-skycrane') {
@@ -1310,6 +1354,23 @@ class MissionSimulationTheater {
         badgeEl.style.borderColor = "#10b981";
         badgeEl.style.color = "#34d399";
       }
+    }
+
+    if (isMobileDevice) {
+      if (this.cameraMode === 'walk') this.cameraMode = 'cinematic';
+      const walkOpt = document.querySelector('#sim-cam-select option[value="walk"]');
+      if (walkOpt) {
+        walkOpt.style.display = 'none';
+        walkOpt.disabled = true;
+      }
+      const walkBtn = document.getElementById('btn-sim-walk');
+      if (walkBtn) walkBtn.style.display = 'none';
+      const xrBtn = document.getElementById('btn-sim-webxr');
+      if (xrBtn) xrBtn.style.display = 'none';
+      const questBtn = document.getElementById('btn-enter-quest-vr');
+      if (questBtn) questBtn.style.display = 'none';
+      const walkOverlay = document.getElementById('walk-hud-overlay');
+      if (walkOverlay) walkOverlay.classList.add('hidden');
     }
 
     if (window.SpaceAudio) {

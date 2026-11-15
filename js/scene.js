@@ -1462,8 +1462,8 @@ class SpaceSceneManager {
     this.container.addEventListener('click', (e) => {
       const dx = e.clientX - pointerDownPos.x;
       const dy = e.clientY - pointerDownPos.y;
-      // If user was dragging to orbit the camera, ignore click event on drag release
-      if (Math.hypot(dx, dy) > 6) return;
+      // If user was dragging to orbit the camera, ignore click event on drag release (tolerance 12px for touch fingers)
+      if (Math.hypot(dx, dy) > 12) return;
       this.onClick(e);
     });
   }

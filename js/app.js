@@ -430,12 +430,13 @@ class AbandonedInSpaceApp {
       });
     }
 
-    // Decade Filters
+    // Decade Filters (Desktop Bottom Dock + Mobile Relics Sheet)
     document.querySelectorAll('.decade-pill').forEach(pill => {
       pill.addEventListener('click', (e) => {
+        const decade = e.currentTarget.getAttribute('data-decade');
         document.querySelectorAll('.decade-pill').forEach(p => p.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        this.activeDecade = e.currentTarget.getAttribute('data-decade');
+        document.querySelectorAll(`.decade-pill[data-decade="${decade}"]`).forEach(p => p.classList.add('active'));
+        this.activeDecade = decade;
         this.renderArtifactsList();
         this.filterScenePins();
         window.SpaceAudio.playTelemetryPing(1200, 0.04);
@@ -629,6 +630,23 @@ class AbandonedInSpaceApp {
       this.switchPlanet(artifact.body);
     }
 
+    // On mobile, close left dock bottom sheet and return active state to Map
+    const leftDock = document.getElementById('left-dock');
+    if (leftDock && leftDock.classList.contains('mobile-visible')) {
+      leftDock.classList.remove('mobile-visible');
+    }
+    const mBtnMap = document.getElementById('m-btn-map');
+    const mBtnRelics = document.getElementById('m-btn-relics');
+    const mBtnTelemetry = document.getElementById('m-btn-telemetry');
+    if (mBtnRelics && mBtnRelics.classList.contains('active')) {
+      mBtnRelics.classList.remove('active');
+      if (mBtnMap) mBtnMap.classList.add('active');
+    }
+    if (mBtnTelemetry && mBtnTelemetry.classList.contains('active')) {
+      mBtnTelemetry.classList.remove('active');
+      if (mBtnMap) mBtnMap.classList.add('active');
+    }
+
     this.sceneManager.focusOnArtifact(artifact);
     this.updateWalkButtonsState(artifact);
     this.openDrawer(artifact);
@@ -747,12 +765,27 @@ class AbandonedInSpaceApp {
     if (specCraft) {
       specCraft.innerText = isTr ? artifact.craftType_tr : artifact.craftType_en;
     }
+    const isMobile = (window.innerWidth <= 768) || /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const specStatusTitle = document.querySelector('[data-i18n="spec_status_title"]');
+    if (specStatusTitle) {
+      if (isMobile) {
+        specStatusTitle.innerText = isTr ? "YÜZEY İNİŞ DURUMU" : "SURFACE LANDING OUTCOME";
+      } else {
+        specStatusTitle.innerText = isTr ? "YÜZEY İNİŞ VE VR EVA ERİŞİMİ" : "SURFACE LANDING OUTCOME & VR EVA ACCESS";
+      }
+    }
     const specStatus = document.getElementById('spec-status');
     if (specStatus) {
       const isLanded = artifact.landingStatus === 'landed';
-      specStatus.innerText = isTr
-        ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ (1:1 VR YÜRÜYÜŞ AKTİF)` : `KAZA / ÇARPIŞMA SAHASI (1:1 VR ENGELLENDİ)`)
-        : (isLanded ? `SUCCESSFUL SOFT LANDING (1:1 VR EVA ACTIVE)` : `CRASH / IMPACT SITE (1:1 VR DISABLED)`);
+      if (isMobile) {
+        specStatus.innerText = isTr
+          ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ` : `KAZA / ÇARPIŞMA SAHASI`)
+          : (isLanded ? `SUCCESSFUL SOFT LANDING` : `CRASH / IMPACT SITE`);
+      } else {
+        specStatus.innerText = isTr
+          ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ (1:1 VR YÜRÜYÜŞ AKTİF)` : `KAZA / ÇARPIŞMA SAHASI (1:1 VR ENGELLENDİ)`)
+          : (isLanded ? `SUCCESSFUL SOFT LANDING (1:1 VR EVA ACTIVE)` : `CRASH / IMPACT SITE (1:1 VR DISABLED)`);
+      }
     }
     document.getElementById('spec-mass').innerText = specs.massLeftKg;
     document.getElementById('spec-power').innerText = specs.powerSource;
@@ -1080,6 +1113,31 @@ class AbandonedInSpaceApp {
         el.setAttribute('placeholder', TRANSLATIONS[this.currentLang][key]);
       }
     });
+
+    // Mobile-specific title and status clean override (no VR cues on phone)
+    const isMobileDevice = (window.innerWidth <= 768) || /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileDevice) {
+      const specStatusTitle = document.querySelector('[data-i18n="spec_status_title"]');
+      if (specStatusTitle) {
+        specStatusTitle.innerText = isTr ? "YÜZEY İNİŞ DURUMU" : "SURFACE LANDING OUTCOME";
+      }
+    }
+    if (this.sceneManager && this.sceneManager.selectedArtifact) {
+      const art = this.sceneManager.selectedArtifact;
+      const specStatus = document.getElementById('spec-status');
+      if (specStatus) {
+        const isLanded = art.landingStatus === 'landed';
+        if (isMobileDevice) {
+          specStatus.innerText = isTr
+            ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ` : `KAZA / ÇARPIŞMA SAHASI`)
+            : (isLanded ? `SUCCESSFUL SOFT LANDING` : `CRASH / IMPACT SITE`);
+        } else {
+          specStatus.innerText = isTr
+            ? (isLanded ? `BAŞARILI YUMUŞAK İNİŞ (1:1 VR YÜRÜYÜŞ AKTİF)` : `KAZA / ÇARPIŞMA SAHASI (1:1 VR ENGELLENDİ)`)
+            : (isLanded ? `SUCCESSFUL SOFT LANDING (1:1 VR EVA ACTIVE)` : `CRASH / IMPACT SITE (1:1 VR DISABLED)`);
+        }
+      }
+    }
 
     // Update Interactive Element Tooltips for Browser Hover
     const tooltips = {

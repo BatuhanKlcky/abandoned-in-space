@@ -1423,7 +1423,9 @@ const TRANSLATIONS = {
     nasa_photos_subtext: "NASA LROC, HiRISE, Magellan, Cassini ve Rosetta arşivlerinden doğrulanmış kareler (Büyütmek için tıklayın):",
     lb_nasa_archive: "NASA ARŞİVİ",
     lb_catalog_label: "KATALOG NO:",
-    lb_instrument_label: "ENSTRÜMAN:"
+    lb_instrument_label: "ENSTRÜMAN:",
+    quest_flat_title: "🥽 META QUEST KUMANDA MODU AKTİF",
+    quest_flat_desc: "Analog: Gezegeni Döndür & Yakınlaş • Tetik / [A]: Kalıntı Seç & İncele • [B]: Kapat"
   },
   en: {
     app_subtitle: "Historical Space Artifacts & Storytelling Map Across the Moon, Mars, Venus & Outer System",
@@ -1536,7 +1538,9 @@ const TRANSLATIONS = {
     nasa_photos_subtext: "Verified archive photography from NASA LROC, HiRISE, Magellan, Cassini & Rosetta (Click to enlarge):",
     lb_nasa_archive: "NASA ARCHIVE",
     lb_catalog_label: "CATALOG ID:",
-    lb_instrument_label: "INSTRUMENT:"
+    lb_instrument_label: "INSTRUMENT:",
+    quest_flat_title: "🥽 META QUEST CONTROLLER ACTIVE",
+    quest_flat_desc: "Thumbstick: Orbit & Zoom • Trigger / [A]: Select & Inspect Relic • [B]: Back"
   }
 };
 

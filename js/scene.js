@@ -24,6 +24,7 @@ class SpaceSceneManager {
     this.initAtmosphere();
     this.initMiniViewer();
     this.bindEvents();
+    this.initMetaQuestGamepadSupport();
     this.animate();
   }
 
@@ -1541,6 +1542,9 @@ class SpaceSceneManager {
   animate() {
     requestAnimationFrame(() => this.animate());
 
+    // Meta Quest Browser flat window controller input (orbit, zoom, click & inspect)
+    this.updateMetaQuestBrowserGamepad();
+
     if (this.isAutoRotating) {
       this.planetGroup.rotation.y += this.autoRotateSpeed;
     }
@@ -1568,6 +1572,281 @@ class SpaceSceneManager {
 
     if (this.miniRenderer && this.miniScene && this.miniCamera) {
       this.miniRenderer.render(this.miniScene, this.miniCamera);
+    }
+  }
+
+  // ===========================================================================
+  // META QUEST BROWSER 2D/FLAT WINDOW CONTROLLER INTERACTION & SURFACE INSPECT
+  // Allows users in Meta Quest Browser (outside WebXR immersive mode) to:
+  // 1. Smoothly orbit/rotate celestial bodies (Moon, Mars, Venus, Outer System) with Thumbsticks
+  // 2. Zoom in/out to inspect craters and modules with Thumbsticks
+  // 3. Aim laser/cursor at lunar/planetary surface beacons with haptic hover vibration
+  // 4. Pull Trigger or press Button A to click and inspect any artifact in 3D Story Drawer
+  // 5. Press Button B / Y to close drawer or reset view
+  // 6. Press Button X / Bumpers to switch planets (Moon -> Mars -> Venus -> Outer System)
+  // 7. Scroll Story Drawer with Thumbsticks while reading mission histories
+  // ===========================================================================
+  initMetaQuestGamepadSupport() {
+    this.gamepadPrevButtons = {};
+    this.questBrowserHudShown = false;
+    this.lastQuestHoverArtifact = null;
+    this.questHapticCooldown = 0;
+
+    window.addEventListener('gamepadconnected', (e) => {
+      const isQuest = /oculus|meta|quest|touch|spatial/i.test(e.gamepad.id);
+      if (isQuest) {
+        this.showQuestBrowserHudBadge(true);
+      }
+    });
+
+    window.addEventListener('gamepaddisconnected', () => {});
+  }
+
+  showQuestBrowserHudBadge(show = true) {
+    let pill = document.getElementById('quest-browser-hud-pill');
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'quest-browser-hud-pill';
+      pill.className = 'quest-browser-hud-pill interactive';
+      const isTr = window.app ? window.app.currentLang === 'tr' : false;
+      pill.innerHTML = `
+        <span class="quest-pill-icon">🥽</span>
+        <div class="quest-pill-content">
+          <span class="quest-pill-title" data-i18n="quest_flat_title">${isTr ? '🥽 META QUEST KUMANDA MODU AKTİF' : '🥽 META QUEST CONTROLLER ACTIVE'}</span>
+          <span class="quest-pill-desc" data-i18n="quest_flat_desc">${isTr ? 'Analog: Gezegeni Döndür & Yakınlaş • Tetik / [A]: Kalıntı Seç & İncele • [B]: Kapat' : 'Thumbstick: Orbit & Zoom • Trigger / [A]: Select & Inspect • [B]: Back'}</span>
+        </div>
+        <button class="quest-pill-close" id="btn-close-quest-pill" title="Dismiss">✕</button>
+      `;
+      document.body.appendChild(pill);
+      const closeBtn = document.getElementById('btn-close-quest-pill');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => { pill.classList.remove('show'); });
+      }
+    }
+
+    if (show) {
+      pill.classList.add('show');
+      setTimeout(() => {
+        if (pill) pill.classList.remove('show');
+      }, 7500);
+    } else {
+      pill.classList.remove('show');
+    }
+  }
+
+  pulseQuestHaptic(gamepad, intensity = 0.5, duration = 30) {
+    if (!gamepad) return;
+    try {
+      if (gamepad.hapticActuators && gamepad.hapticActuators.length > 0) {
+        const act = gamepad.hapticActuators[0];
+        if (act && act.pulse) act.pulse(intensity, duration);
+      } else if (gamepad.vibrationActuator && gamepad.vibrationActuator.playEffect) {
+        gamepad.vibrationActuator.playEffect('dual-rumble', {
+          startDelay: 0,
+          duration: duration,
+          weakMagnitude: intensity,
+          strongMagnitude: intensity * 0.75
+        });
+      }
+    } catch (_) {}
+  }
+
+  updateMetaQuestBrowserGamepad() {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+    const gamepads = navigator.getGamepads();
+    if (!gamepads || gamepads.length === 0) return;
+
+    let questDetected = false;
+
+    for (let i = 0; i < gamepads.length; i++) {
+      const gp = gamepads[i];
+      if (!gp || !gp.connected) continue;
+
+      const isQuest = /oculus|meta|quest|touch|spatial/i.test(gp.id);
+      if (isQuest) questDetected = true;
+
+      // Stick deadzone
+      const deadzone = 0.16;
+      const ax0 = Math.abs(gp.axes[0] || 0) > deadzone ? gp.axes[0] : 0;
+      const ax1 = Math.abs(gp.axes[1] || 0) > deadzone ? gp.axes[1] : 0;
+      const ax2 = gp.axes.length > 2 && Math.abs(gp.axes[2] || 0) > deadzone ? gp.axes[2] : 0;
+      const ax3 = gp.axes.length > 3 && Math.abs(gp.axes[3] || 0) > deadzone ? gp.axes[3] : 0;
+
+      // 1. If Story Drawer is open, vertical stick smoothly scrolls the drawer content
+      const drawerContent = document.querySelector('.drawer-content');
+      const isDrawerOpen = window.app && window.app.isDrawerOpen;
+      if (isDrawerOpen && drawerContent && (Math.abs(ax1) > 0.15 || Math.abs(ax3) > 0.15)) {
+        drawerContent.scrollTop += (ax1 || ax3) * 16;
+      }
+
+      // 2. Planet Orbit Rotation with Thumbstick (Left Stick or Right Stick X)
+      const rotY = ax0 || (Math.abs(ax2) > Math.abs(ax3) ? ax2 : 0);
+      const rotX = (!isDrawerOpen && Math.abs(ax1) > 0.15) ? ax1 : 0;
+
+      if (Math.abs(rotY) > 0.05) {
+        this.isAutoRotating = false;
+        this.planetGroup.rotation.y += rotY * 0.035;
+      }
+      if (Math.abs(rotX) > 0.05) {
+        this.isAutoRotating = false;
+        this.planetGroup.rotation.x = Math.max(-1.18, Math.min(1.18, this.planetGroup.rotation.x + rotX * 0.024));
+      }
+
+      // 3. Planet Zoom In / Out with Right Stick Y (axes[3])
+      if (Math.abs(ax3) > 0.12 && !isDrawerOpen) {
+        const curDist = this.camera.position.length();
+        const nextDist = Math.max(this.controls.minDistance + 4, Math.min(this.controls.maxDistance - 8, curDist + ax3 * 5.0));
+        this.camera.position.setLength(nextDist);
+        this.controls.update();
+      }
+
+      // Button Edge Detections
+      if (!this.gamepadPrevButtons) this.gamepadPrevButtons = {};
+      const prev = this.gamepadPrevButtons[i] || [];
+      const isPressed = (btnIdx) => gp.buttons[btnIdx] && (gp.buttons[btnIdx].pressed || gp.buttons[btnIdx].value > 0.6);
+      const justPressed = (btnIdx) => isPressed(btnIdx) && !prev[btnIdx];
+
+      // 4. Primary Trigger (buttons[0]) or Button A (buttons[4]):
+      // Click & Inspect the targeted artifact on the celestial surface!
+      if (justPressed(0) || justPressed(4)) {
+        this.triggerQuestSurfaceClick(gp);
+      }
+
+      // 5. Button B / Button Y (buttons[5]) or Stick Click (buttons[3]):
+      // Close Drawer / Exit Simulation / Reset View
+      if (justPressed(5) || justPressed(3)) {
+        this.pulseQuestHaptic(gp, 0.5, 25);
+        if (window.app && window.app.isDrawerOpen) {
+          window.app.closeDrawer();
+        } else if (window.app && window.app.simulationTheater && window.app.simulationTheater.isPlaying) {
+          window.app.simulationTheater.stopSimulation();
+        } else if (window.app && window.app.resetCamera) {
+          window.app.resetCamera();
+        }
+      }
+
+      // 6. Left Controller Button X (buttons[4] on left) or Bumpers:
+      // Cycle through planets (Moon -> Mars -> Venus -> Outer System)
+      if (gp.hand === 'left' && justPressed(4)) {
+        this.cycleToNextPlanet(gp);
+      }
+
+      this.gamepadPrevButtons[i] = gp.buttons.map((_, idx) => isPressed(idx));
+    }
+
+    if (questDetected && !this.questBrowserHudShown) {
+      this.showQuestBrowserHudBadge(true);
+      this.questBrowserHudShown = true;
+    }
+
+    // 7. Check if pointer or view center is aiming at any planetary beacon
+    this.checkQuestSurfaceAimHaptics();
+  }
+
+  checkQuestSurfaceAimHaptics() {
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hitMeshes = [];
+    this.pins.forEach(p => {
+      p.group.traverse(child => {
+        if (child.isMesh) hitMeshes.push({ mesh: child, pin: p });
+      });
+    });
+
+    const intersects = this.raycaster.intersectObjects(hitMeshes.map(h => h.mesh), false);
+    if (intersects.length > 0) {
+      const match = hitMeshes.find(h => h.mesh === intersects[0].object);
+      if (match && this.lastQuestHoverArtifact !== match.pin.artifact) {
+        this.lastQuestHoverArtifact = match.pin.artifact;
+        this.container.style.cursor = 'pointer';
+        // Pulse subtle haptic on connected gamepads!
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        for (let g = 0; g < gamepads.length; g++) {
+          if (gamepads[g] && gamepads[g].connected) {
+            this.pulseQuestHaptic(gamepads[g], 0.28, 20);
+          }
+        }
+      }
+    } else {
+      this.lastQuestHoverArtifact = null;
+    }
+  }
+
+  triggerQuestSurfaceClick(gamepad) {
+    // 1. If currently hovering over an artifact pin with laser pointer
+    if (this.hoveredArtifact || this.lastQuestHoverArtifact) {
+      const target = this.hoveredArtifact || this.lastQuestHoverArtifact;
+      this.pulseQuestHaptic(gamepad, 0.85, 50);
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1600, 0.05);
+      if (window.onArtifactSelect) {
+        window.onArtifactSelect(target);
+      }
+      return;
+    }
+
+    // 2. Raycast from current mouse / pointer coordinates
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hitMeshes = [];
+    this.pins.forEach(p => {
+      p.group.traverse(child => {
+        if (child.isMesh) hitMeshes.push({ mesh: child, pin: p });
+      });
+    });
+
+    const intersects = this.raycaster.intersectObjects(hitMeshes.map(h => h.mesh), false);
+    if (intersects.length > 0) {
+      const match = hitMeshes.find(h => h.mesh === intersects[0].object);
+      if (match && match.pin && match.pin.artifact) {
+        this.pulseQuestHaptic(gamepad, 0.85, 50);
+        if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1600, 0.05);
+        if (window.onArtifactSelect) {
+          window.onArtifactSelect(match.pin.artifact);
+        }
+        return;
+      }
+    }
+
+    // 3. Fallback: Find closest pin to the center of the camera view on the visible hemisphere!
+    let bestPin = null;
+    let minAngle = Infinity;
+    const camDir = new THREE.Vector3();
+    this.camera.getWorldDirection(camDir);
+
+    const pinWorldPos = new THREE.Vector3();
+    this.pins.forEach(p => {
+      if (!p.orbMesh) return;
+      p.orbMesh.getWorldPosition(pinWorldPos);
+      const toPin = pinWorldPos.clone().sub(this.camera.position).normalize();
+      const dot = camDir.dot(toPin); // 1 = directly in center of view
+      if (dot > 0.85 && dot < 1.0001) {
+        const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+        if (angle < minAngle) {
+          minAngle = angle;
+          bestPin = p;
+        }
+      }
+    });
+
+    if (bestPin && bestPin.artifact) {
+      this.pulseQuestHaptic(gamepad, 0.85, 50);
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1600, 0.05);
+      if (window.onArtifactSelect) {
+        window.onArtifactSelect(bestPin.artifact);
+      }
+    } else {
+      // Subtle surface sonar ping if clicked on empty space
+      this.pulseQuestHaptic(gamepad, 0.22, 16);
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(440, 0.03);
+    }
+  }
+
+  cycleToNextPlanet(gamepad) {
+    this.pulseQuestHaptic(gamepad, 0.6, 35);
+    const planets = ['moon', 'mars', 'venus', 'outer'];
+    const current = this.currentBody || 'moon';
+    const nextIdx = (planets.indexOf(current) + 1) % planets.length;
+    const nextBody = planets[nextIdx];
+    if (window.app && window.app.switchPlanet) {
+      window.app.switchPlanet(nextBody);
     }
   }
 }

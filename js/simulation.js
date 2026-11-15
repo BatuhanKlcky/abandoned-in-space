@@ -920,7 +920,7 @@ class MissionSimulationTheater {
     this.vrTouchLast = [null, null];
     this.xrLocalRefFallback = false;
 
-    // Quest 3S performance: native framebuffer scale + fixed foveated rendering
+    // Meta Quest 3S / Quest 3 performance: native framebuffer scale + fixed foveated rendering + 90Hz refresh rate
     try { if (this.renderer.xr.setFramebufferScaleFactor) this.renderer.xr.setFramebufferScaleFactor(1.0); } catch (_) {}
 
     try {
@@ -933,6 +933,15 @@ class MissionSimulationTheater {
       await this.renderer.xr.setSession(session);
     }
     try { if (this.renderer.xr.setFoveation) this.renderer.xr.setFoveation(1.0); } catch (_) {}
+
+    // Target locked 90Hz / 72Hz framerate in Meta Quest Browser
+    try {
+      if (session.supportedFrameRates && session.updateTargetFrameRate) {
+        const rates = session.supportedFrameRates;
+        if (rates.includes(90)) await session.updateTargetFrameRate(90);
+        else if (rates.includes(72)) await session.updateTargetFrameRate(72);
+      }
+    } catch (_) {}
 
     this.updateAstronautVisibility();
     this.updateQuestVRButton();
@@ -3837,6 +3846,7 @@ class MissionSimulationTheater {
     this.xrControllersSetup = true;
     this.xrControllers = [];
     this.xrLaserLines = [];
+    this.xrLaserDots = [];
 
     const laserGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
@@ -3849,10 +3859,18 @@ class MissionSimulationTheater {
 
     for (let i = 0; i < 2; i++) {
       const controller = this.renderer.xr.getController(i);
-      const laserMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.88 });
+      const laserMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.92 });
       const laserLine = new THREE.Line(laserGeo, laserMat);
       controller.add(laserLine);
       this.xrLaserLines.push(laserLine);
+
+      // Dynamic High-Contrast VR Target Dot at tip of controller laser
+      const dotGeo = new THREE.SphereGeometry(0.016, 12, 12);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+      const laserDot = new THREE.Mesh(dotGeo, dotMat);
+      laserDot.position.set(0, 0, -6.5);
+      controller.add(laserDot);
+      this.xrLaserDots.push(laserDot);
 
       // Sculpted 3D NASA EVA Astronaut Glove on each VR Controller!
       const handGroup = new THREE.Group();
@@ -5065,7 +5083,8 @@ class MissionSimulationTheater {
           label_tr: `⌨️ [SOL TIK / VR TETİK] DSKY 3B TUŞU: "${keyLabel}" (AGC Bilgisayar Komutu Gönder)`,
           label_en: `⌨️ [CLICK / VR TRIGGER] DSKY 3D KEY: "${keyLabel}" (Execute AGC Command)`,
           onClick: () => {
-            this.playSwitchClickSound(isActionKey ? 1040 : 780);
+            this.playSwitchClickSound(isActionKey ? 1240 : 960);
+            this.pulseXRHaptics(0.7, 40);
             // Mechanical 3D keycap depression animation!
             capMesh.position.z = 0.001;
             setTimeout(() => { capMesh.position.z = 0.008; }, 140);
@@ -5635,11 +5654,23 @@ class MissionSimulationTheater {
       if (this.xrLaserLines) {
         this.xrLaserLines.forEach((l) => l.material.color.setHex(0x10b981));
       }
+      if (this.xrLaserDots) {
+        this.xrLaserDots.forEach((d) => {
+          d.material.color.setHex(0x10b981);
+          d.scale.set(1.4, 1.4, 1.4);
+        });
+      }
     } else {
       if (dotEl) dotEl.classList.remove('active-target');
       if (promptEl) promptEl.classList.add('hidden');
       if (this.xrLaserLines) {
         this.xrLaserLines.forEach((l) => l.material.color.setHex(0x00f0ff));
+      }
+      if (this.xrLaserDots) {
+        this.xrLaserDots.forEach((d) => {
+          d.material.color.setHex(0x00f0ff);
+          d.scale.set(1.0, 1.0, 1.0);
+        });
       }
     }
 

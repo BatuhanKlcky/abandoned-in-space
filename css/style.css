@@ -3423,3 +3423,81 @@ body {
   0% { transform: scale(1); filter: drop-shadow(0 0 2px #ef4444); }
   100% { transform: scale(1.15); filter: drop-shadow(0 0 10px #ef4444); }
 }
+
+
+/* ==========================================================================
+   META QUEST BROWSER 2D/FLAT WINDOW CONTROLLER HUD BADGE
+   ========================================================================== */
+.quest-browser-hud-pill {
+  position: fixed;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-150%);
+  background: rgba(7, 12, 24, 0.95);
+  border: 1.5px solid #00f0ff;
+  border-radius: 30px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35), 0 8px 32px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+  max-width: 90vw;
+}
+
+.quest-browser-hud-pill.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quest-pill-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  animation: pulse-quest-icon 1.8s infinite ease-in-out alternate;
+}
+
+.quest-pill-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quest-pill-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.8px;
+}
+
+.quest-pill-desc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.quest-pill-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: var(--trans-smooth);
+}
+
+.quest-pill-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes pulse-quest-icon {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px #00f0ff); }
+  100% { transform: scale(1.18); filter: drop-shadow(0 0 8px #10b981); }
+}

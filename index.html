@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=8.1">
+  <link rel="stylesheet" href="css/style.css?v=8.2">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -323,6 +323,38 @@
           <span class="model-compass-badge" data-i18n="model_compass_badge">HOLOGRAPHIC PBR CAD</span>
           <button class="model-xray-btn" id="btn-mini-wireframe" title="Toggle CAD Wireframe (X-Ray) Mode" data-i18n="btn_mini_wireframe">CAD X-RAY</button>
           <span class="model-hud-badge" data-i18n="model_hud_badge">360° INTERACTIVE</span>
+        </div>
+
+        <!-- Cosmic Weathering & Time-Lapse Degradation Simulator -->
+        <div class="degradation-panel" id="degradation-panel">
+          <div class="deg-header">
+            <div class="deg-title-group">
+              <span class="deg-icon">⏳</span>
+              <span class="deg-title" data-i18n="deg_title">KOZMİK AŞINMA VE ZAMAN ÇİZELGESİ</span>
+            </div>
+            <span class="deg-epoch-badge" id="deg-epoch-badge">🔬 BUGÜN (55+ YIL)</span>
+          </div>
+
+          <div class="deg-slider-row">
+            <span class="deg-slider-label" data-i18n="deg_day_one">GÜN 0</span>
+            <input type="range" id="degradation-slider" class="deg-slider" min="0" max="100" value="75" step="1" aria-label="Cosmic degradation time simulator">
+            <span class="deg-slider-label" data-i18n="deg_century">+100 YIL</span>
+          </div>
+
+          <div class="deg-presets" role="group" aria-label="Degradation epochs">
+            <button type="button" class="deg-preset-btn" data-deg="0" data-i18n="deg_step_launch">✨ İniş Günü</button>
+            <button type="button" class="deg-preset-btn" data-deg="35" data-i18n="deg_step_25">⏳ +25 Yıl</button>
+            <button type="button" class="deg-preset-btn active" data-deg="75" data-i18n="deg_step_today">🔬 Bugün (55+ Yıl)</button>
+            <button type="button" class="deg-preset-btn" data-deg="100" data-i18n="deg_step_future">🌌 Gelecek (+100)</button>
+          </div>
+
+          <div class="deg-intel-box" id="deg-intel-box">
+            <div class="deg-intel-badge-row">
+              <span class="deg-intel-tag" id="deg-intel-tag">NASA LROC / PBR SİMÜLASYONU</span>
+            </div>
+            <h4 class="deg-intel-headline" id="deg-intel-headline">UV Fotobozunma ve Regolit Toz Tutunumu</h4>
+            <p class="deg-intel-desc" id="deg-intel-desc">Güneşin filtresiz ultraviyole radyasyonu altın Kapton MLI yalıtım folyosunu beyazlatarak gümüşi alt katmana dönüştürdü; elektrostatik regolit tozu yüzeylere yapıştı.</p>
+          </div>
         </div>
 
         <!-- Famous Historic Quote Card -->
@@ -703,12 +735,12 @@
     <button class="toast-close" id="btn-close-toast">✕</button>
   </div>
 
-  <!-- JavaScript Modules with Cache-Buster v8.1 -->
-  <script src="js/data.js?v=8.1"></script>
-  <script src="js/textures.js?v=8.1"></script>
-  <script src="js/audio.js?v=8.1"></script>
-  <script src="js/scene.js?v=8.1"></script>
-  <script src="js/simulation.js?v=8.1"></script>
-  <script src="js/app.js?v=8.1"></script>
+  <!-- JavaScript Modules with Cache-Buster v8.2 -->
+  <script src="js/data.js?v=8.2"></script>
+  <script src="js/textures.js?v=8.2"></script>
+  <script src="js/audio.js?v=8.2"></script>
+  <script src="js/scene.js?v=8.2"></script>
+  <script src="js/simulation.js?v=8.2"></script>
+  <script src="js/app.js?v=8.2"></script>
 </body>
 </html>

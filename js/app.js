@@ -200,6 +200,26 @@ class AbandonedInSpaceApp {
       });
     }
 
+    // Cosmic Weathering & Time Degradation Slider & Preset Controls
+    const degSlider = document.getElementById('degradation-slider');
+    if (degSlider) {
+      degSlider.addEventListener('input', (e) => {
+        this.updateDegradationUI(parseFloat(e.target.value));
+      });
+      degSlider.addEventListener('change', () => {
+        if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(880, 0.04);
+      });
+    }
+
+    document.querySelectorAll('.deg-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = parseFloat(btn.getAttribute('data-deg') || '0');
+        if (degSlider) degSlider.value = val;
+        this.updateDegradationUI(val);
+        if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1050, 0.05);
+      });
+    });
+
     // Audio broadcast snippet button
     const playAudioBtn = document.getElementById('btn-play-transmission');
     if (playAudioBtn) {
@@ -735,6 +755,10 @@ class AbandonedInSpaceApp {
       xrayBtn.classList.remove('active');
       xrayBtn.innerText = isTr ? 'CAD TEL KAFES' : 'CAD X-RAY';
     }
+
+    const currentDegVal = typeof this.currentDegradationFactor === 'number' ? (this.currentDegradationFactor * 100) : 75;
+    this.updateDegradationUI(currentDegVal, artifact);
+
     const verStatus = drawer.querySelector('.verification-status');
     if (verStatus) verStatus.innerText = isTr ? '✓ DOĞRULANDI' : '✓ VERIFIED';
 
@@ -881,6 +905,158 @@ class AbandonedInSpaceApp {
 
     const audioText = document.getElementById('drawer-audio-text');
     if (audioText) audioText.innerText = artifact.audioSnippet || '';
+  }
+
+  updateDegradationUI(degVal, artifact = null) {
+    const factor = Math.max(0, Math.min(100, typeof degVal === 'number' ? degVal : 75)) / 100;
+    this.currentDegradationFactor = factor;
+    const isTr = this.currentLang === 'tr';
+
+    const targetArt = artifact || this.selectedArtifact || (this.sceneManager && this.sceneManager.selectedArtifact) || (typeof ARTIFACTS !== 'undefined' ? ARTIFACTS[0] : null);
+    const body = (targetArt && targetArt.body) ? targetArt.body.toLowerCase() : (this.currentBody || 'moon');
+
+    const slider = document.getElementById('degradation-slider');
+    if (slider && Math.abs(parseFloat(slider.value) - degVal) > 0.5) {
+      slider.value = Math.round(degVal);
+    }
+
+    // Determine nearest preset button to highlight (0, 35, 75, 100)
+    let activePreset = 75;
+    if (degVal <= 17) activePreset = 0;
+    else if (degVal <= 54) activePreset = 35;
+    else if (degVal <= 87) activePreset = 75;
+    else activePreset = 100;
+
+    document.querySelectorAll('.deg-preset-btn').forEach(btn => {
+      const bDeg = parseFloat(btn.getAttribute('data-deg') || '0');
+      btn.classList.toggle('active', bDeg === activePreset);
+    });
+
+    // Update Epoch Badge
+    const badge = document.getElementById('deg-epoch-badge');
+    if (badge) {
+      if (degVal <= 5) {
+        badge.innerText = isTr ? '✨ İNİŞ GÜNÜ (GÜN 0)' : '✨ TOUCHDOWN (DAY 0)';
+      } else if (degVal < 25) {
+        const yrs = Math.max(1, Math.round(degVal * 0.7));
+        badge.innerText = isTr ? `✨ ERKEN DÖNEM (+${yrs} YIL)` : `✨ EARLY (+${yrs} YRS)`;
+      } else if (degVal < 55) {
+        const yrs = Math.round(degVal * 0.75);
+        badge.innerText = isTr ? `⏳ ORTA DÖNEM (+${yrs} YIL)` : `⏳ MID EPOCH (+${yrs} YRS)`;
+      } else if (degVal < 88) {
+        badge.innerText = isTr ? '🔬 BUGÜN (55+ YIL)' : '🔬 PRESENT DAY (55+ YRS)';
+      } else {
+        badge.innerText = isTr ? '🌌 GELECEK (+100 YIL)' : '🌌 FUTURE (+100 YRS)';
+      }
+    }
+
+    // Compute Dynamic Scientific Intel per Celestial Body and Epoch
+    const intelTag = document.getElementById('deg-intel-tag');
+    const intelHeadline = document.getElementById('deg-intel-headline');
+    const intelDesc = document.getElementById('deg-intel-desc');
+
+    if (intelTag) {
+      if (body === 'moon') {
+        intelTag.innerText = isTr ? 'NASA LROC / PBR SİMÜLASYONU' : 'NASA LROC / PBR SIMULATION';
+      } else if (body === 'mars') {
+        intelTag.innerText = isTr ? 'NASA JPL HIRISE / TOZ AŞINMASI' : 'NASA JPL HIRISE / DUST WEATHERING';
+      } else if (body === 'venus') {
+        intelTag.innerText = isTr ? 'VENERA & PIONEER / 93 ATM TERMAL BASINÇ' : 'VENERA & PIONEER / 93 ATM PYROLYSIS';
+      } else {
+        intelTag.innerText = isTr ? 'ESA CASSINI-HUYGENS / KRİYOJENİK STATÜS' : 'ESA CASSINI-HUYGENS / CRYOGENIC STASIS';
+      }
+    }
+
+    let headline = '';
+    let desc = '';
+
+    if (degVal <= 15) {
+      // Day 0
+      headline = isTr
+        ? 'İlk Temas: Fabrika Saflığı ve Kusursuz Havacılık Kaplamaları'
+        : 'First Touchdown: Factory-Fresh Aerospace Finishes';
+      desc = isTr
+        ? 'Araç yüzeye henüz ulaştı. Altın Kapton MLI yalıtım folyoları lekesiz ve yüksek yansıtıcılığa sahip; güneş panelleri %100 optik verimlilikte ve şasi boyası lekesiz.'
+        : 'The vehicle has just touched down. Golden Kapton MLI multilayer foils are unblemished with peak reflectivity; solar arrays operate at 100% optical clarity with pristine chassis paint.';
+    } else if (degVal < 50) {
+      // +25 Years
+      if (body === 'moon') {
+        headline = isTr
+          ? '25 Yıllık Maruziyet: Erken UV Fotobozunma ve İlk Toz Katmanı'
+          : '25 Years of Exposure: Early UV Bleaching & Electrostatic Dust';
+        desc = isTr
+          ? 'Güneşin filtresiz UV ışınları altın Kapton folyonun dış poliimid katmanını zayıflatmaya başladı. Elektrostatik olarak havalanan mikroskobik ay tozu metalik yüzeylere tutunuyor.'
+          : 'Unfiltered solar UV rays begin photolysing the outer polyimide layer of Kapton foil. Electrostatically levitated lunar dust clings to metallic struts and footpads.';
+      } else if (body === 'mars') {
+        headline = isTr
+          ? '25 Yıllık Maruziyet: Mars Toz Fırtınaları ve Panel Kararması'
+          : '25 Years of Exposure: Martian Dust Deposition & Solar Dimming';
+        desc = isTr
+          ? 'Mevsimsel küresel toz fırtınaları fotovoltajik güneş hücreleri üzerinde ince bir demiroksit (pas) tozu tabakası oluşturdu. Parlak gövde boyaları rüzgarla matlaştı.'
+          : 'Seasonal global dust storms deposit a fine ferric oxide (rust) layer over photovoltaic arrays, dulling glossy paint and attenuating solar power conversion.';
+      } else if (body === 'venus') {
+        headline = isTr
+          ? 'Aşırı Basınç & Sıcaklık: Süperkritik CO₂ Kararması'
+          : 'Supercritical CO₂ Scorching & Thermal Oxidation';
+        desc = isTr
+          ? '467°C yüzey sıcaklığı ve 93 atmosferlik süperkritik basınç altında metal yüzeyler kükürt buharıyla reaksiyona girdi; dış kaplamalar kavruldu.'
+          : 'Under 467°C heat and 93 bar supercritical CO2 pressure, exposed metallic components react with sulfur vapors, undergoing severe thermal scorching.';
+      } else {
+        headline = isTr
+          ? 'Kriyojenik Sabitleme ve Erken Tholin Çöküntüsü'
+          : 'Cryogenic Stasis & Hydrocarbon Tholin Deposition';
+        desc = isTr
+          ? 'Eksi 179°C sıcaklıkta araç dondurucu bir hidrokarbon sisine gömüldü; organik fotokimyasal tholin parçacıkları yüzeyde ince turuncu-kahve bir film tabakası oluşturdu.'
+          : 'At -179°C, the probe settles into cryogenic stasis under orange-brown photochemical smog, collecting a delicate patina of aerosol tholins.';
+      }
+    } else if (degVal < 85) {
+      // Present Day (55+ Years)
+      if (body === 'moon') {
+        headline = isTr
+          ? 'Günümüz (LROC Teyitli): Altın Folyonun Beyazlaması ve Termal Yorgunluk'
+          : 'Present Day (LROC Verified): Photochemical Kapton Bleaching';
+        desc = isTr
+          ? 'NASA LROC uydusu fotoğrafları teyit etti: Altın Kapton folyo fotokimyasal bozulmayla gümüş-beyaz renge dönüştü. 600+ gece-gündüz termal döngüsü (+120°C / -170°C) malzemeleri gevrekleştirdi.'
+          : 'NASA LROC orbital imagery confirms: Golden Kapton MLI foil has photochemically bleached into a silvery-white substrate. 600+ thermal cycles (+120°C to -170°C) caused extensive material fatigue.';
+      } else if (body === 'mars') {
+        headline = isTr
+          ? 'Günümüz Durumu: Tam Demir Oksit Boğulması ve Kum Aşınması'
+          : 'Present Day: Full Ferric Dust Mantle & Eolian Abrasion';
+        desc = isTr
+          ? 'Opportunity ve InSight verileriyle belgelendiği üzere, kalın demiroksit tozu güneş panellerini tamamen kapladı. Atmosferik rüzgarlar açık metal köşeleri zımparaladı.'
+          : 'As documented by Opportunity and InSight telemetry, fine iron oxide dust completely suffocated solar panels while atmospheric winds sandblasted exposed metal edges.';
+      } else if (body === 'venus') {
+        headline = isTr
+          ? 'Günümüz Durumu: Aşırı Basınç Altında Korunmuş Arkeolojik Kapsül'
+          : 'Present Day: High-Pressure Crushed Archaeological Capsule';
+        desc = isTr
+          ? 'Yüzeydeki aşırı korozif ortam ve kurşunu eriten ısı dış enstrümanları tamamen oksitledi ve yüzey bazaltlarıyla kimyasal olarak kaynaştırdı.'
+          : 'The hyperbaric supercritical environment and 467°C lead-melting heat have heavily oxidized external sensors, fusing them into the Venusian basaltic bedrock.';
+      } else {
+        headline = isTr
+          ? 'Günümüz Durumu: Dondurucu Sessizlik ve Organik Çökelti'
+          : 'Present Day: Cryogenic Deep Freeze & Tholin Mantle';
+        desc = isTr
+          ? 'Huygens ve Philae, Güneş Sistemi\'nin en el değmemiş derin dondurucusunda, metan gölleri ve kriyojenik kayalar arasında kusursuz bir sessizlik içinde korunuyor.'
+          : 'Huygens and Philae rest in deep cryogenic preservation at -180°C among liquid hydrocarbon dunes and cometary regolith, virtually frozen in time.';
+      }
+    } else {
+      // Future Century (+100 Years)
+      headline = isTr
+        ? 'Gelecek Yüzyıl: Gezegenlerarası Arkeolojik Miras ve Denge'
+        : 'Future Century: Permanent Interplanetary Archaeological Heritage';
+      desc = isTr
+        ? 'İnsanlığın ilk gezegenlerarası keşif araçları kalıcı bir kozmik dengeye ulaştı. Atmosfersiz ortamlarda mikrometeorit kratercikleri dışında milyonlarca yıl boyunca bozulmadan duracak tarihi anıtlar.'
+        : 'Humanity\'s first interplanetary relics have entered a permanent archaeological equilibrium. Barring micrometeorite micro-cratering, they will endure for millions of years as silent monuments to our early space age.';
+    }
+
+    if (intelHeadline) intelHeadline.innerText = headline;
+    if (intelDesc) intelDesc.innerText = desc;
+
+    // Apply real-time 3D PBR degradation to scene
+    if (this.sceneManager) {
+      this.sceneManager.setMiniModelDegradation(factor, targetArt);
+    }
   }
 
   openDrawer(artifact) {
@@ -1256,6 +1432,8 @@ class AbandonedInSpaceApp {
       this.updateBodyTelemetry();
       this.updateLiveMarsCard();
       this.renderArtifactsList();
+      const currentDegVal = typeof this.currentDegradationFactor === 'number' ? (this.currentDegradationFactor * 100) : 75;
+      this.updateDegradationUI(currentDegVal, this.selectedArtifact);
     } catch (_) {}
 
     // Update Tour Chapter Pills & Default Banner Text
@@ -1456,6 +1634,13 @@ const TRANSLATIONS = {
     ver_monograph_label: "AKADEMİK MONOGRAFİ:",
     ver_dataset_label: "UYDU & SENSÖR VERİSİ:",
     ver_heritage_label: "KORUMA STATÜSÜ:",
+    deg_title: "KOZMİK AŞINMA VE ZAMAN ÇİZELGESİ",
+    deg_day_one: "GÜN 0",
+    deg_century: "+100 YIL",
+    deg_step_launch: "✨ İniş Günü",
+    deg_step_25: "⏳ +25 Yıl",
+    deg_step_today: "🔬 Bugün (55+ Yıl)",
+    deg_step_future: "🌌 Gelecek (+100)",
     transmission_label: "TELSİZ VE TELEMETRİ SESİ",
     play_audio_btn: "TELSİZİ DİNLE",
     btn_prev_site: "Önceki Kalıntı",
@@ -1575,6 +1760,13 @@ const TRANSLATIONS = {
     ver_monograph_label: "ACADEMIC MONOGRAPH:",
     ver_dataset_label: "ORBITER & SENSOR DATA:",
     ver_heritage_label: "HERITAGE STATUS:",
+    deg_title: "COSMIC AGING & TIMELINE SIMULATOR",
+    deg_day_one: "DAY 0",
+    deg_century: "+100 YRS",
+    deg_step_launch: "✨ Touchdown",
+    deg_step_25: "⏳ +25 Yrs",
+    deg_step_today: "🔬 Present Day",
+    deg_step_future: "🌌 Future (+100)",
     transmission_label: "RADIO AUDIO & TELEMETRY",
     play_audio_btn: "LISTEN TO TRANSMISSION",
     btn_prev_site: "Previous Site",

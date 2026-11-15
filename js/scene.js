@@ -12,6 +12,7 @@ class SpaceSceneManager {
     this.selectedArtifact = null;
     this.hoveredArtifact = null;
     this.isMiniWireframe = false;
+    this.currentDegradationFactor = 0.75; // 0.0 (day 0) to 1.0 (future century); 0.75 = present day (55+ yrs)
 
     this.sphereRadius = 100;
     this.isAutoRotating = true;
@@ -750,6 +751,47 @@ class SpaceSceneManager {
       wireframe: this.isMiniWireframe
     });
 
+    this.currentMiniArtifact = artifact;
+    this.miniMaterials = {
+      goldMat,
+      amberFoilMat,
+      inconelMat,
+      silverMat,
+      titaniumMat,
+      whiteMat,
+      darkMat,
+      copperEngineMat,
+      solarMat,
+      cyanAccentMat
+    };
+
+    this.miniOriginals = {
+      goldColor: goldMat.color.clone(),
+      goldRoughness: goldMat.roughness,
+      goldMetalness: goldMat.metalness,
+      amberColor: amberFoilMat.color.clone(),
+      amberRoughness: amberFoilMat.roughness,
+      amberMetalness: amberFoilMat.metalness,
+      inconelColor: inconelMat.color.clone(),
+      inconelRoughness: inconelMat.roughness,
+      silverColor: silverMat.color.clone(),
+      silverRoughness: silverMat.roughness,
+      silverMetalness: silverMat.metalness,
+      titaniumColor: titaniumMat.color.clone(),
+      titaniumRoughness: titaniumMat.roughness,
+      titaniumMetalness: titaniumMat.metalness,
+      whiteColor: whiteMat.color.clone(),
+      whiteRoughness: whiteMat.roughness,
+      whiteMetalness: whiteMat.metalness,
+      darkColor: darkMat.color.clone(),
+      darkRoughness: darkMat.roughness,
+      copperColor: copperEngineMat.color.clone(),
+      copperRoughness: copperEngineMat.roughness,
+      solarColor: solarMat.color.clone(),
+      solarRoughness: solarMat.roughness,
+      solarMetalness: solarMat.metalness
+    };
+
     const model = new THREE.Group();
 
     if (type === 'lander') {
@@ -1448,6 +1490,105 @@ class SpaceSceneManager {
       this.miniControls.target.set(0, -0.1, 0);
       this.miniControls.update();
     }
+
+    if (typeof this.currentDegradationFactor === 'number') {
+      this.setMiniModelDegradation(this.currentDegradationFactor, artifact);
+    }
+  }
+
+  // =========================================================================
+  // COSMIC WEATHERING & AGING PBR SIMULATOR (NASA / LROC / OPPORTUNITY MODEL)
+  // factor: 0.0 (Touchdown day) to 1.0 (Future century: +100 years)
+  // =========================================================================
+  setMiniModelDegradation(factor, artifact = null) {
+    factor = Math.max(0, Math.min(1, typeof factor === 'number' ? factor : 0.75));
+    this.currentDegradationFactor = factor;
+    if (!this.miniMaterials || !this.miniOriginals) return;
+
+    const targetArt = artifact || this.currentMiniArtifact || this.selectedArtifact;
+    const body = (targetArt && targetArt.body) ? targetArt.body.toLowerCase() : (this.currentBody || 'moon');
+
+    const {
+      goldMat, amberFoilMat, inconelMat, silverMat, titaniumMat,
+      whiteMat, darkMat, copperEngineMat, solarMat, cyanAccentMat
+    } = this.miniMaterials;
+
+    const orig = this.miniOriginals;
+
+    // 1. Kapton Polyimide Multi-Layer Insulation (Gold & Amber MLI)
+    // NASA LROC confirmed: Unfiltered solar UV photolysis bleaches polyimide, revealing silvery aluminized backing
+    const bleachedGold = new THREE.Color(0xdce2e8); // Silvery-white aluminum backing
+    goldMat.color.copy(orig.goldColor).lerp(bleachedGold, factor * 0.94);
+    goldMat.roughness = orig.goldRoughness + factor * 0.54; // 0.22 -> 0.76 (embrittlement & micro-flaking)
+    goldMat.metalness = orig.goldMetalness - factor * 0.42; // 0.88 -> 0.46
+
+    const bleachedAmber = new THREE.Color(0xbab2a2);
+    amberFoilMat.color.copy(orig.amberColor).lerp(bleachedAmber, factor * 0.88);
+    amberFoilMat.roughness = orig.amberRoughness + factor * 0.50;
+    amberFoilMat.metalness = orig.amberMetalness - factor * 0.40;
+
+    // 2. White Painted Chassis & Composite Structures (Planet-Specific Regolith & Dust)
+    let dustColor = new THREE.Color(0x9fa8b2); // Moon basaltic regolith gray default
+    let dustRoughnessBoost = 0.45;
+
+    if (body === 'mars') {
+      // Fine ferric oxide (rust) reddish-amber dust
+      dustColor = new THREE.Color(0xcc6f43);
+      dustRoughnessBoost = 0.52;
+    } else if (body === 'venus') {
+      // Severe 467°C heat & supercritical sulfuric scorching
+      dustColor = new THREE.Color(0x382f25);
+      dustRoughnessBoost = 0.58;
+    } else if (body === 'outer') {
+      // Titan organic tholin haze / Comet 67P dark refractory carbonaceous mantle
+      dustColor = new THREE.Color(0xa26d46);
+      dustRoughnessBoost = 0.42;
+    }
+
+    whiteMat.color.copy(orig.whiteColor).lerp(dustColor, factor * 0.82);
+    whiteMat.roughness = Math.min(0.92, orig.whiteRoughness + factor * dustRoughnessBoost);
+    whiteMat.metalness = Math.max(0.04, orig.whiteMetalness - factor * 0.1);
+
+    // 3. Photovoltaic Solar Arrays (Dust Obstruction & Power Attenuation)
+    if (body === 'mars') {
+      // Opportunity / Spirit / InSight solar array suffocation by Martian dust
+      const marsSolarDust = new THREE.Color(0x7c4930);
+      solarMat.color.copy(orig.solarColor).lerp(marsSolarDust, factor * 0.88);
+    } else if (body === 'venus') {
+      const scorchedSolar = new THREE.Color(0x2d251e);
+      solarMat.color.copy(orig.solarColor).lerp(scorchedSolar, factor * 0.95);
+    } else {
+      const lunarSolarDust = new THREE.Color(0x3e5265);
+      solarMat.color.copy(orig.solarColor).lerp(lunarSolarDust, factor * 0.75);
+    }
+    solarMat.roughness = Math.min(0.88, orig.solarRoughness + factor * 0.65); // 0.18 -> 0.83 (loss of gloss)
+    solarMat.metalness = Math.max(0.18, orig.solarMetalness - factor * 0.55); // 0.75 -> 0.20
+
+    // 4. Structural Titanium, Stainless Steel & Inconel Alloys
+    // Micrometeorite pitting & thermal cycle fatigue
+    silverMat.roughness = Math.min(0.72, orig.silverRoughness + factor * 0.52);
+    titaniumMat.roughness = Math.min(0.78, orig.titaniumRoughness + factor * 0.46);
+    if (body === 'venus') {
+      // Extreme chemical oxidation on Venus
+      silverMat.color.copy(orig.silverColor).lerp(new THREE.Color(0x524638), factor * 0.75);
+      titaniumMat.color.copy(orig.titaniumColor).lerp(new THREE.Color(0x40362b), factor * 0.8);
+    } else {
+      silverMat.color.copy(orig.silverColor).lerp(new THREE.Color(0xcfd7df), factor * 0.4);
+      titaniumMat.color.copy(orig.titaniumColor).lerp(new THREE.Color(0x738191), factor * 0.4);
+    }
+
+    // 5. Copper & Rocket Engine Exhaust Nozzles
+    if (body === 'venus') {
+      copperEngineMat.color.copy(orig.copperColor).lerp(new THREE.Color(0x3a2512), factor * 0.85);
+    } else {
+      copperEngineMat.color.copy(orig.copperColor).lerp(new THREE.Color(0x8a5520), factor * 0.45);
+    }
+    copperEngineMat.roughness = Math.min(0.75, orig.copperRoughness + factor * 0.45);
+
+    // Request render update for materials
+    Object.values(this.miniMaterials).forEach(m => {
+      if (m) m.needsUpdate = true;
+    });
   }
 
   // --- Interaction & Events ---

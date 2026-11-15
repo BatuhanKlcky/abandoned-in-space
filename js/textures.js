@@ -1565,6 +1565,101 @@ class CelestialTextureGenerator {
       update
     };
   }
+
+  /**
+   * Generates a photorealistic astronomical star sprite texture with:
+   * - Smooth Gaussian Airy disc corona bloom
+   * - Delicate 4-point diffraction cross (signature of space telescopes & Hasselblad lunar cameras)
+   * - Luminous searing central core
+   */
+  generateStarSpriteTexture(size = 128) {
+    if (this._cachedStarSprite) return this._cachedStarSprite;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const half = size / 2;
+
+    // 1. Airy disc radial gradient (Gaussian falloff)
+    const radGrad = ctx.createRadialGradient(half, half, 0, half, half, half - 2);
+    radGrad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    radGrad.addColorStop(0.12, 'rgba(240, 248, 255, 0.95)');
+    radGrad.addColorStop(0.30, 'rgba(180, 220, 255, 0.55)');
+    radGrad.addColorStop(0.58, 'rgba(90, 155, 255, 0.16)');
+    radGrad.addColorStop(0.85, 'rgba(45, 95, 225, 0.03)');
+    radGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = radGrad;
+    ctx.beginPath();
+    ctx.arc(half, half, half - 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Optical 4-point diffraction cross spikes
+    const spikeH = ctx.createLinearGradient(0, half, size, half);
+    spikeH.addColorStop(0.0, 'rgba(255, 255, 255, 0)');
+    spikeH.addColorStop(0.2, 'rgba(255, 255, 255, 0.15)');
+    spikeH.addColorStop(0.5, 'rgba(255, 255, 255, 0.85)');
+    spikeH.addColorStop(0.8, 'rgba(255, 255, 255, 0.15)');
+    spikeH.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = spikeH;
+    ctx.fillRect(4, half - 1, size - 8, 2);
+
+    const spikeV = ctx.createLinearGradient(half, 0, half, size);
+    spikeV.addColorStop(0.0, 'rgba(255, 255, 255, 0)');
+    spikeV.addColorStop(0.2, 'rgba(255, 255, 255, 0.15)');
+    spikeV.addColorStop(0.5, 'rgba(255, 255, 255, 0.85)');
+    spikeV.addColorStop(0.8, 'rgba(255, 255, 255, 0.15)');
+    spikeV.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = spikeV;
+    ctx.fillRect(half - 1, 4, 2, size - 8);
+
+    // 3. Ultra-bright focal core
+    const coreGrad = ctx.createRadialGradient(half, half, 0, half, half, half * 0.18);
+    coreGrad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    coreGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(half, half, half * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    this._cachedStarSprite = tex;
+    return tex;
+  }
+
+  /**
+   * Generates a soft interstellar gas / galactic nebula sprite texture for the Milky Way arc
+   */
+  generateNebulaSpriteTexture(size = 128) {
+    if (this._cachedNebulaSprite) return this._cachedNebulaSprite;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const half = size / 2;
+
+    const radGrad = ctx.createRadialGradient(half, half, 0, half, half, half);
+    radGrad.addColorStop(0.0, 'rgba(255, 255, 255, 0.82)');
+    radGrad.addColorStop(0.25, 'rgba(205, 230, 255, 0.42)');
+    radGrad.addColorStop(0.55, 'rgba(125, 175, 245, 0.15)');
+    radGrad.addColorStop(0.82, 'rgba(65, 105, 195, 0.03)');
+    radGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = radGrad;
+    ctx.fillRect(0, 0, size, size);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    this._cachedNebulaSprite = tex;
+    return tex;
+  }
 }
 
 window.CelestialTextures = new CelestialTextureGenerator();

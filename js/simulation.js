@@ -1958,6 +1958,10 @@ class MissionSimulationTheater {
       this.cameraRig.position.set(0, 0, 0);
       this.cameraRig.rotation.set(0, 0, 0);
     }
+    if (this.starfieldGroup) {
+      this.scene.remove(this.starfieldGroup);
+      this.starfieldGroup = null;
+    }
     if (this.vrHelpPanel) this.vrHelpPanel.visible = false;
     if (this.overlay) this.overlay.classList.remove('open');
   }
@@ -3292,6 +3296,316 @@ class MissionSimulationTheater {
     }
   }
 
+  // ===========================================================================
+  // PHOTOREALISTIC DEEP COSMOS STARFIELD & MILKY WAY CELESTIAL ENGINE
+  // ===========================================================================
+  createPhotorealisticStarfield(body, artifact) {
+    if (this.starfieldGroup) {
+      if (this.starfieldGroup.parent) {
+        this.starfieldGroup.parent.remove(this.starfieldGroup);
+      }
+      this.starfieldGroup = null;
+    }
+
+    const isMoon = body === 'moon';
+    const isVenus = body === 'venus';
+    const isOuter = body === 'outer';
+
+    // On Venus, dense sulfuric 92-atm atmosphere scatters ground starlight completely
+    if (isVenus) return;
+
+    this.starfieldGroup = new THREE.Group();
+
+    // High-Resolution Astronomical Sprites from CelestialTextureGenerator
+    const texGen = window.CelestialTextures || window.ProceduralTextures;
+    const starTex = texGen && texGen.generateStarSpriteTexture
+      ? texGen.generateStarSpriteTexture(128)
+      : null;
+    const nebulaTex = texGen && texGen.generateNebulaSpriteTexture
+      ? texGen.generateNebulaSpriteTexture(128)
+      : null;
+
+    // Morgan-Keenan Astrophysical Stellar Spectral Color Palette
+    const spectralColors = [
+      new THREE.Color(0x9db4ff), // O/B: Hot luminous blue (Rigel, Spica)
+      new THREE.Color(0xbbccff), // B: Blue-white
+      new THREE.Color(0xdce6ff), // B/A: Crisp azure white
+      new THREE.Color(0xf8f9ff), // A: Pure brilliant white (Sirius, Vega)
+      new THREE.Color(0xffffff), // A: Luminous white
+      new THREE.Color(0xfff5ec), // F: Cream white (Canopus, Procyon)
+      new THREE.Color(0xfff199), // G: Solar yellow (Sun, Alpha Centauri)
+      new THREE.Color(0xffe680), // G: Deep golden yellow
+      new THREE.Color(0xffd2a1), // K: Warm orange giant (Arcturus, Aldebaran)
+      new THREE.Color(0xffbe7b), // K: Rich amber orange
+      new THREE.Color(0xff7055), // M: Red supergiant (Betelgeuse, Antares)
+      new THREE.Color(0xff8870)  // M: Crimson stellar flare
+    ];
+
+    const skyRadius = 3800; // vast astronomical sky sphere radius
+
+    // =========================================================================
+    // LAYER 1: Deep Cosmos Starfield (9,500 Stars across full celestial dome)
+    // =========================================================================
+    const bgCount = 9500;
+    const bgGeo = new THREE.BufferGeometry();
+    const bgPos = new Float32Array(bgCount * 3);
+    const bgColors = new Float32Array(bgCount * 3);
+
+    for (let i = 0; i < bgCount; i++) {
+      const r = skyRadius + (Math.random() - 0.5) * 600;
+      const theta = Math.random() * Math.PI * 2;
+      const u = Math.random() * 2 - 1;
+      const phi = Math.acos(u);
+
+      const px = r * Math.sin(phi) * Math.cos(theta);
+      const py = r * Math.sin(phi) * Math.sin(theta);
+      const pz = r * Math.cos(phi);
+
+      bgPos[i * 3] = px;
+      bgPos[i * 3 + 1] = py;
+      bgPos[i * 3 + 2] = pz;
+
+      const c = spectralColors[Math.floor(Math.random() * spectralColors.length)].clone();
+      const magFactor = 0.45 + Math.random() * 0.55;
+      c.multiplyScalar(magFactor);
+
+      bgColors[i * 3] = c.r;
+      bgColors[i * 3 + 1] = c.g;
+      bgColors[i * 3 + 2] = c.b;
+    }
+
+    bgGeo.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
+    bgGeo.setAttribute('color', new THREE.BufferAttribute(bgColors, 3));
+
+    const bgMat = new THREE.PointsMaterial({
+      map: starTex,
+      size: isMoon ? 2.8 : (isOuter ? 3.0 : 2.2),
+      vertexColors: true,
+      transparent: true,
+      opacity: isMoon ? 0.98 : (isOuter ? 1.0 : 0.82),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true
+    });
+
+    const bgStarsMesh = new THREE.Points(bgGeo, bgMat);
+    this.starfieldGroup.add(bgStarsMesh);
+
+    // =========================================================================
+    // LAYER 2: Brilliant 1st & 2nd Magnitude Navigation Guide Stars (750 Stars)
+    // =========================================================================
+    const brightCount = 750;
+    const brightGeo = new THREE.BufferGeometry();
+    const brightPos = new Float32Array(brightCount * 3);
+    const brightColors = new Float32Array(brightCount * 3);
+
+    for (let i = 0; i < brightCount; i++) {
+      const r = skyRadius + (Math.random() - 0.5) * 300;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+
+      brightPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      brightPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      brightPos[i * 3 + 2] = r * Math.cos(phi);
+
+      const c = spectralColors[Math.floor(Math.random() * spectralColors.length)].clone();
+      c.multiplyScalar(1.0 + Math.random() * 0.35);
+
+      brightColors[i * 3] = c.r;
+      brightColors[i * 3 + 1] = c.g;
+      brightColors[i * 3 + 2] = c.b;
+    }
+
+    brightGeo.setAttribute('position', new THREE.BufferAttribute(brightPos, 3));
+    brightGeo.setAttribute('color', new THREE.BufferAttribute(brightColors, 3));
+
+    const brightMat = new THREE.PointsMaterial({
+      map: starTex,
+      size: isMoon ? 6.2 : (isOuter ? 6.5 : 4.8),
+      vertexColors: true,
+      transparent: true,
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true
+    });
+
+    const brightStarsMesh = new THREE.Points(brightGeo, brightMat);
+    this.starfieldGroup.add(brightStarsMesh);
+
+    // =========================================================================
+    // LAYER 3: The Majestic Milky Way Galactic Arc & Core (4,200 Star Particles)
+    // =========================================================================
+    const mwNormal = new THREE.Vector3(0.42, 0.84, 0.35).normalize();
+    const mwU = new THREE.Vector3().crossVectors(mwNormal, new THREE.Vector3(0, 0, 1)).normalize();
+    const mwV = new THREE.Vector3().crossVectors(mwNormal, mwU).normalize();
+
+    const mwCount = 4200;
+    const mwGeo = new THREE.BufferGeometry();
+    const mwPos = new Float32Array(mwCount * 3);
+    const mwColors = new Float32Array(mwCount * 3);
+
+    for (let i = 0; i < mwCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const latDev = (Math.random() + Math.random() + Math.random() - 1.5) * 0.22;
+      const r = skyRadius + (Math.random() - 0.5) * 450;
+
+      const pCirc = new THREE.Vector3()
+        .addScaledVector(mwU, Math.cos(angle))
+        .addScaledVector(mwV, Math.sin(angle))
+        .addScaledVector(mwNormal, latDev)
+        .normalize()
+        .multiplyScalar(r);
+
+      mwPos[i * 3] = pCirc.x;
+      mwPos[i * 3 + 1] = pCirc.y;
+      mwPos[i * 3 + 2] = pCirc.z;
+
+      const coreProx = Math.max(0, Math.cos(angle - 1.2));
+      let col;
+      if (coreProx > 0.4) {
+        col = new THREE.Color().lerpColors(
+          new THREE.Color(0xffd180),
+          new THREE.Color(0xfb923c),
+          Math.random() * 0.6
+        );
+        col.multiplyScalar(0.75 + coreProx * 0.65);
+      } else {
+        col = new THREE.Color().lerpColors(
+          new THREE.Color(0x93c5fd),
+          new THREE.Color(0xe2e8f0),
+          Math.random()
+        );
+        col.multiplyScalar(0.55 + Math.random() * 0.45);
+      }
+
+      mwColors[i * 3] = col.r;
+      mwColors[i * 3 + 1] = col.g;
+      mwColors[i * 3 + 2] = col.b;
+    }
+
+    mwGeo.setAttribute('position', new THREE.BufferAttribute(mwPos, 3));
+    mwGeo.setAttribute('color', new THREE.BufferAttribute(mwColors, 3));
+
+    const mwMat = new THREE.PointsMaterial({
+      map: starTex,
+      size: isMoon ? 3.6 : (isOuter ? 4.0 : 2.8),
+      vertexColors: true,
+      transparent: true,
+      opacity: isMoon ? 0.95 : (isOuter ? 0.98 : 0.78),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true
+    });
+
+    const mwMesh = new THREE.Points(mwGeo, mwMat);
+    this.starfieldGroup.add(mwMesh);
+
+    // =========================================================================
+    // LAYER 4: Velvety Cosmic Dust & Interstellar Nebula Clouds (140 Puffs)
+    // =========================================================================
+    const nebCount = 140;
+    const nebGeo = new THREE.BufferGeometry();
+    const nebPos = new Float32Array(nebCount * 3);
+    const nebColors = new Float32Array(nebCount * 3);
+
+    for (let i = 0; i < nebCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const latDev = (Math.random() + Math.random() - 1.0) * 0.16;
+      const r = skyRadius * 0.98;
+
+      const pCirc = new THREE.Vector3()
+        .addScaledVector(mwU, Math.cos(angle))
+        .addScaledVector(mwV, Math.sin(angle))
+        .addScaledVector(mwNormal, latDev)
+        .normalize()
+        .multiplyScalar(r);
+
+      nebPos[i * 3] = pCirc.x;
+      nebPos[i * 3 + 1] = pCirc.y;
+      nebPos[i * 3 + 2] = pCirc.z;
+
+      const coreProx = Math.max(0, Math.cos(angle - 1.2));
+      let col;
+      if (coreProx > 0.45) {
+        col = new THREE.Color(0xfbbf24).multiplyScalar(0.28 + coreProx * 0.35);
+      } else {
+        const dustHue = Math.random();
+        col = dustHue < 0.5 ? new THREE.Color(0x38bdf8) : new THREE.Color(0x818cf8);
+        col.multiplyScalar(0.18 + Math.random() * 0.22);
+      }
+
+      nebColors[i * 3] = col.r;
+      nebColors[i * 3 + 1] = col.g;
+      nebColors[i * 3 + 2] = col.b;
+    }
+
+    nebGeo.setAttribute('position', new THREE.BufferAttribute(nebPos, 3));
+    nebGeo.setAttribute('color', new THREE.BufferAttribute(nebColors, 3));
+
+    const nebMat = new THREE.PointsMaterial({
+      map: nebulaTex,
+      size: 280,
+      vertexColors: true,
+      transparent: true,
+      opacity: isMoon ? 0.34 : (isOuter ? 0.40 : 0.20),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true
+    });
+
+    const nebMesh = new THREE.Points(nebGeo, nebMat);
+    this.starfieldGroup.add(nebMesh);
+
+    // =========================================================================
+    // LAYER 5: Large & Small Magellanic Clouds (Southern Deep Space Companions)
+    // =========================================================================
+    const magCenters = [
+      { dir: new THREE.Vector3(-0.45, -0.65, 0.62).normalize(), r: 180, count: 220, col: 0x93c5fd },
+      { dir: new THREE.Vector3(-0.25, -0.78, 0.56).normalize(), r: 110, count: 120, col: 0xa5b4fc }
+    ];
+
+    magCenters.forEach(mc => {
+      const mGeo = new THREE.BufferGeometry();
+      const mPos = new Float32Array(mc.count * 3);
+      const mCols = new Float32Array(mc.count * 3);
+
+      for (let i = 0; i < mc.count; i++) {
+        const offset = new THREE.Vector3(
+          (Math.random() - 0.5) * mc.r * 2,
+          (Math.random() - 0.5) * mc.r * 1.5,
+          (Math.random() - 0.5) * mc.r * 2
+        );
+        const p = mc.dir.clone().multiplyScalar(skyRadius).add(offset);
+        mPos[i * 3] = p.x;
+        mPos[i * 3 + 1] = p.y;
+        mPos[i * 3 + 2] = p.z;
+
+        const c = new THREE.Color(mc.col).multiplyScalar(0.45 + Math.random() * 0.55);
+        mCols[i * 3] = c.r;
+        mCols[i * 3 + 1] = c.g;
+        mCols[i * 3 + 2] = c.b;
+      }
+
+      mGeo.setAttribute('position', new THREE.BufferAttribute(mPos, 3));
+      mGeo.setAttribute('color', new THREE.BufferAttribute(mCols, 3));
+
+      const mMat = new THREE.PointsMaterial({
+        map: starTex,
+        size: 3.4,
+        vertexColors: true,
+        transparent: true,
+        opacity: isMoon ? 0.88 : 0.68,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: true
+      });
+      this.starfieldGroup.add(new THREE.Points(mGeo, mMat));
+    });
+
+    this.scene.add(this.starfieldGroup);
+  }
+
   buildSimulationScene(artifact) {
     if (!this.scene) return;
 
@@ -3369,25 +3683,8 @@ class MissionSimulationTheater {
       this.scene.add(phobos);
     }
 
-    // Stars Field
-    if (!isVenus) {
-      const starCount = 2000;
-      const starGeo = new THREE.BufferGeometry();
-      const starPos = new Float32Array(starCount * 3);
-      for (let i = 0; i < starCount; i++) {
-        starPos[i * 3] = (Math.random() - 0.5) * 1600;
-        starPos[i * 3 + 1] = 25 + Math.random() * 800;
-        starPos[i * 3 + 2] = (Math.random() - 0.5) * 1600;
-      }
-      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-      const starMat = new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: isMoon ? 1.8 : 1.3,
-        transparent: true,
-        opacity: isMoon ? 0.92 : 0.48
-      });
-      this.scene.add(new THREE.Points(starGeo, starMat));
-    }
+    // Photorealistic Ultra-High-Resolution Multi-Tier Deep Cosmos Starfield & Milky Way
+    this.createPhotorealisticStarfield(body, artifact);
 
     // =========================================================================
     // ULTRA-HIGH-RESOLUTION 220x220 PBR PLANETARY SURFACE (ALL CELESTIAL BODIES)
@@ -7653,6 +7950,11 @@ class MissionSimulationTheater {
           child.scale.setScalar(1.0 + bOsc * 0.16);
         }
       });
+    }
+
+    // Pin deep cosmos starfield to camera position (zero translation parallax, true astronomical infinity)
+    if (this.starfieldGroup) {
+      this.starfieldGroup.position.copy(this.camera.position);
     }
 
     this.renderer.render(this.scene, this.camera);

@@ -465,11 +465,12 @@ class SpaceAudioEngine {
       const now = this.ctx.currentTime;
       if (active) {
         if (!this.roverOsc) {
+          // Fundamental traction motor low-end rumble
           this.roverOsc = this.ctx.createOscillator();
           this.roverGain = this.ctx.createGain();
           this.roverFilter = this.ctx.createBiquadFilter();
           this.roverFilter.type = 'lowpass';
-          this.roverFilter.frequency.setValueAtTime(260, now);
+          this.roverFilter.frequency.setValueAtTime(320, now);
           this.roverOsc.type = 'sawtooth';
           this.roverOsc.frequency.setValueAtTime(85, now);
           this.roverGain.gain.setValueAtTime(0.001, now);
@@ -477,13 +478,65 @@ class SpaceAudioEngine {
           this.roverFilter.connect(this.roverGain);
           this.roverGain.connect(this.ctx.destination);
           this.roverOsc.start(now);
+
+          // Authentic harmonic 80:1 harmonic drive gear reduction whine
+          this.roverWhineOsc = this.ctx.createOscillator();
+          this.roverWhineGain = this.ctx.createGain();
+          this.roverWhineFilter = this.ctx.createBiquadFilter();
+          this.roverWhineFilter.type = 'bandpass';
+          this.roverWhineFilter.frequency.setValueAtTime(800, now);
+          this.roverWhineFilter.Q.setValueAtTime(3.0, now);
+          this.roverWhineOsc.type = 'sine';
+          this.roverWhineOsc.frequency.setValueAtTime(380, now);
+          this.roverWhineGain.gain.setValueAtTime(0.001, now);
+          this.roverWhineOsc.connect(this.roverWhineFilter);
+          this.roverWhineFilter.connect(this.roverWhineGain);
+          this.roverWhineGain.connect(this.ctx.destination);
+          this.roverWhineOsc.start(now);
         }
-        const targetPitch = 70 + Math.min(1.0, speed) * 85;
+
+        const clampedSpeed = Math.max(0.1, Math.min(1.8, Math.abs(speed)));
+        const targetPitch = 65 + clampedSpeed * 95;
+        const targetWhine = 340 + clampedSpeed * 680;
+
         this.roverOsc.frequency.setTargetAtTime(targetPitch, now, 0.08);
-        this.roverGain.gain.setTargetAtTime(0.055, now, 0.1);
-      } else if (this.roverGain) {
-        this.roverGain.gain.setTargetAtTime(0.0001, now, 0.15);
+        this.roverGain.gain.setTargetAtTime(0.065, now, 0.1);
+
+        if (this.roverWhineOsc) {
+          this.roverWhineOsc.frequency.setTargetAtTime(targetWhine, now, 0.08);
+          this.roverWhineGain.gain.setTargetAtTime(0.028, now, 0.1);
+        }
+      } else {
+        if (this.roverGain) this.roverGain.gain.setTargetAtTime(0.0001, now, 0.12);
+        if (this.roverWhineGain) this.roverWhineGain.gain.setTargetAtTime(0.0001, now, 0.12);
       }
+    } catch (_) {}
+  }
+
+  /**
+   * Rover Terrain Suspension Bump / Regolith Wheel Impact
+   */
+  playRoverSuspensionBump(intensity = 1.0) {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(180, now);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(75, now);
+      osc.frequency.exponentialRampToValueAtTime(32, now + 0.12);
+      gain.gain.setValueAtTime(Math.min(0.16, 0.08 * intensity), now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
     } catch (_) {}
   }
 

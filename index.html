@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=9.1">
+  <link rel="stylesheet" href="css/style.css?v=9.3">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -718,6 +718,7 @@
               <button class="walk-sub-btn active" id="btn-walk-cabin" title="Open / Close Airlock Hatch (E)" data-i18n="walk_btn_cabin">🚪 Open EVA Hatch & Exit (E)</button>
               <button class="walk-sub-btn active" id="btn-walk-torch" title="Toggle NASA EVA Flashlight (F)" data-i18n="walk_btn_torch">🔦 EVA Torch (F)</button>
               <button class="walk-sub-btn" id="btn-walk-scanner" title="Toggle Handheld XRF / Raman Spectrometer (G)" data-i18n="walk_btn_scanner">🔬 XRF Spektrometre (G)</button>
+              <button class="walk-sub-btn" id="btn-walk-rover" title="Mount / Dismount Rover (R)" data-i18n="walk_btn_rover">🚙 Araca Bin / Sür (R)</button>
               <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Cinematic Fullscreen Mode (H / TAB)" data-i18n="walk_btn_clean_ui">🎮 Hide UI / Game Mode (H)</button>
             </div>
           </div>
@@ -766,6 +767,37 @@
 
             <!-- Interactive Scan Trigger Button for Mobile / Mouse Touch -->
             <button class="spec-trigger-btn" id="btn-spec-trigger">⚡ YÜZEYİ TARA (BASILI TUT)</button>
+          </div>
+
+          <!-- Driveable Rover Telemetry Dashboard HUD (Shown when driving) -->
+          <div class="rover-dash-overlay hidden" id="rover-dash-overlay">
+            <div class="rover-dash-card">
+              <div class="rover-dash-header">
+                <span class="rover-dash-title" id="rover-dash-title">🚙 APOLLO LRV AY ARACI TELEMETRİSİ</span>
+                <span class="rover-dash-badge" id="rover-motor-status">MOTOR: 4× 0.25 HP AKTİF</span>
+              </div>
+              <div class="rover-gauges-grid">
+                <div class="rover-gauge-item">
+                  <span class="rover-g-lbl" data-i18n="rover_lbl_speed">HIZ:</span>
+                  <span class="rover-g-val" id="rover-dash-speed">0.0 km/h</span>
+                </div>
+                <div class="rover-gauge-item">
+                  <span class="rover-g-lbl" data-i18n="rover_lbl_incline">EĞİM (PITCH/ROLL):</span>
+                  <span class="rover-g-val" id="rover-dash-incline">+0.0° / 0.0°</span>
+                </div>
+                <div class="rover-gauge-item">
+                  <span class="rover-g-lbl" data-i18n="rover_lbl_heading">PUSULA / YÖN:</span>
+                  <span class="rover-g-val" id="rover-dash-heading">045° KD</span>
+                </div>
+                <div class="rover-gauge-item">
+                  <span class="rover-g-lbl" data-i18n="rover_lbl_odo">KAT EDİLEN YOL:</span>
+                  <span class="rover-g-val" id="rover-dash-odo">0 m</span>
+                </div>
+              </div>
+              <div class="rover-dash-footer" id="rover-dash-footer">
+                <span>KONTROL: [W]: Gaz • [S]: Fren/Geri • [A/D]: Direksiyon • [E / R]: Araçtan İn</span>
+              </div>
+            </div>
           </div>
 
           <!-- Center Visor Crosshair & Interactive 3D Button / Switch Tooltip -->
@@ -910,11 +942,11 @@
   </div>
 
   <!-- JavaScript Modules with Cache-Buster v9.1 -->
-  <script src="js/data.js?v=9.1"></script>
-  <script src="js/textures.js?v=9.1"></script>
-  <script src="js/audio.js?v=9.1"></script>
-  <script src="js/scene.js?v=9.1"></script>
-  <script src="js/simulation.js?v=9.1"></script>
-  <script src="js/app.js?v=9.1"></script>
+  <script src="js/data.js?v=9.3"></script>
+  <script src="js/textures.js?v=9.3"></script>
+  <script src="js/audio.js?v=9.3"></script>
+  <script src="js/scene.js?v=9.3"></script>
+  <script src="js/simulation.js?v=9.3"></script>
+  <script src="js/app.js?v=9.3"></script>
 </body>
 </html>

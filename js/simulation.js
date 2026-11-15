@@ -243,6 +243,11 @@ class MissionSimulationTheater {
       cabinToggleBtn.addEventListener('click', () => this.toggleCabinInterior());
     }
 
+    const roverToggleBtn = document.getElementById('btn-walk-rover');
+    if (roverToggleBtn) {
+      roverToggleBtn.addEventListener('click', () => this.toggleRoverDrive());
+    }
+
     const cleanUiBtn = document.getElementById('btn-walk-clean-ui');
     if (cleanUiBtn) {
       cleanUiBtn.addEventListener('click', () => this.toggleCleanVRGameMode());
@@ -304,6 +309,9 @@ class MissionSimulationTheater {
       }
       if (code === 'KeyG') {
         this.toggleSpectrometer();
+      }
+      if (code === 'KeyR') {
+        this.toggleRoverDrive();
       }
       if (code === 'KeyE') {
         // First check if looking at an interactive 3D object/sample/rover within reach; otherwise toggle cabin/hatch/rover!
@@ -734,27 +742,404 @@ class MissionSimulationTheater {
   }
 
   toggleRoverDrive() {
-    if (!this.lrvPropGroup || this.walkState.isInsideCabin || this.walkState.isOnLadder) return;
+    if (this.walkState.isInsideCabin || this.walkState.isOnLadder) return;
+    if (!this.lrvPropGroup) {
+      if (this.currentArtifact && this.currentArtifact.vrAllowed !== false) {
+        this.buildLunarRoverProp(this.walkState.x + 3.0, this.walkState.z + 1.0);
+      } else {
+        return;
+      }
+    }
     const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const ws = this.walkState;
     ws.isDrivingRover = !ws.isDrivingRover;
     this.playSwitchClickSound(ws.isDrivingRover ? 780 : 520);
 
+    const rBtn = document.getElementById('btn-walk-rover');
+    const overlay = document.getElementById('rover-dash-overlay');
+
     if (ws.isDrivingRover) {
+      if (!this.roverState) {
+        this.roverState = {
+          speed: 0,
+          heading: this.lrvPropGroup.rotation.y,
+          steerAngle: 0,
+          pitch: 0,
+          roll: 0,
+          wheelAngle: 0,
+          odometer: 0,
+          tBarPitch: 0,
+          tBarRoll: 0
+        };
+      } else {
+        this.roverState.speed = 0;
+        this.roverState.steerAngle = 0;
+        this.roverState.heading = this.lrvPropGroup.rotation.y;
+      }
       ws.x = this.lrvPropGroup.position.x;
       ws.z = this.lrvPropGroup.position.z;
-      ws.y = this.getExactSurfaceHeight(ws.x, ws.z) + 0.35;
-      ws.yaw = this.lrvPropGroup.rotation.y + Math.PI;
-      ws.smoothYaw = ws.yaw;
-      this.updateVRGameMiniPill(isTr ? 'LRV Ay Aracı Sürüşü Aktif!' : 'LRV Rover Driving Active!');
+      ws.y = this.lrvPropGroup.position.y;
+      ws.smoothYaw = this.roverState.heading;
+
+      if (rBtn) {
+        rBtn.classList.add('active');
+        rBtn.innerText = isTr ? '🚗 LRV Araçtan İn (R)' : '🚗 Dismount Rover (R)';
+      }
+      if (overlay) overlay.classList.remove('hidden');
+      this.updateVRGameMiniPill(isTr ? '🚙 LRV Ay Aracı Sürüş Modu Aktif (W/S: Gaz/Fren • A/D: Direksiyon)' : '🚙 LRV Moon Buggy Driving Active (W/S: Throttle • A/D: Steer)');
+      this.updateRoverDashboardHUD(this.roverState);
     } else {
       if (window.SpaceAudio) window.SpaceAudio.setRoverMotorHum(false);
-      const rYaw = this.lrvPropGroup.rotation.y;
-      // Step off to the left side of the LRV driver's seat based on rover orientation
+      const rYaw = this.roverState ? this.roverState.heading : this.lrvPropGroup.rotation.y;
       ws.x = this.lrvPropGroup.position.x - Math.cos(rYaw) * 1.55;
       ws.z = this.lrvPropGroup.position.z + Math.sin(rYaw) * 1.55;
       ws.y = this.getExactSurfaceHeight(ws.x, ws.z);
-      this.updateVRGameMiniPill(isTr ? 'LRV Araçtan İnildi' : 'Dismounted LRV Rover');
+
+      if (rBtn) {
+        rBtn.classList.remove('active');
+        rBtn.innerText = isTr ? '🚙 Araca Bin / Sür (R)' : '🚙 Drive Rover (R)';
+      }
+      if (overlay) overlay.classList.add('hidden');
+      this.updateVRGameMiniPill(isTr ? 'LRV Araçtan İnildi — Yüzey EVA Modu' : 'Dismounted LRV Rover — Surface EVA');
+    }
+  }
+
+  updateRoverDashboardHUD(rState) {
+    const overlay = document.getElementById('rover-dash-overlay');
+    if (!overlay) return;
+    if (!this.walkState.isDrivingRover) {
+      if (!overlay.classList.contains('hidden')) overlay.classList.add('hidden');
+      return;
+    }
+    if (overlay.classList.contains('hidden')) overlay.classList.remove('hidden');
+
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    const speedKmh = (Math.abs(rState.speed || 0) * 3.6).toFixed(1);
+    const speedEl = document.getElementById('rover-dash-speed');
+    if (speedEl) speedEl.innerText = `${speedKmh} km/h`;
+
+    const pitchDeg = ((rState.pitch || 0) * 180 / Math.PI).toFixed(1);
+    const rollDeg = ((rState.roll || 0) * 180 / Math.PI).toFixed(1);
+    const inclineEl = document.getElementById('rover-dash-incline');
+    if (inclineEl) {
+      inclineEl.innerText = `${pitchDeg >= 0 ? '+' : ''}${pitchDeg}° / ${rollDeg >= 0 ? '+' : ''}${rollDeg}°`;
+    }
+
+    let deg = (((-rState.heading * 180 / Math.PI) % 360) + 360) % 360;
+    let card = 'K';
+    if (deg >= 337.5 || deg < 22.5) card = isTr ? 'K' : 'N';
+    else if (deg < 67.5) card = isTr ? 'KD' : 'NE';
+    else if (deg < 112.5) card = isTr ? 'D' : 'E';
+    else if (deg < 157.5) card = isTr ? 'GD' : 'SE';
+    else if (deg < 202.5) card = isTr ? 'G' : 'S';
+    else if (deg < 247.5) card = isTr ? 'GB' : 'SW';
+    else if (deg < 292.5) card = isTr ? 'B' : 'W';
+    else card = isTr ? 'KB' : 'NW';
+
+    const headingEl = document.getElementById('rover-dash-heading');
+    if (headingEl) {
+      headingEl.innerText = `${Math.round(deg).toString().padStart(3, '0')}° ${card}`;
+    }
+
+    const odoEl = document.getElementById('rover-dash-odo');
+    if (odoEl) {
+      const odoM = Math.round(rState.odometer || 0);
+      odoEl.innerText = odoM >= 1000 ? `${(odoM / 1000).toFixed(2)} km` : `${odoM} m`;
+    }
+
+    const titleEl = document.getElementById('rover-dash-title');
+    if (titleEl) {
+      titleEl.innerText = isTr ? '🚙 APOLLO LRV AY ARACI TELEMETRİSİ' : '🚙 APOLLO LRV TELEMETRY';
+    }
+    const motorEl = document.getElementById('rover-motor-status');
+    if (motorEl) {
+      const isMoving = Math.abs(rState.speed || 0) > 0.05;
+      motorEl.innerText = isMoving
+        ? (isTr ? 'MOTOR: 4× 0.25 HP AKTİF (80:1 HARMONİK)' : 'MOTOR: 4× 0.25 HP ACTIVE (80:1 HARMONIC)')
+        : (isTr ? 'MOTOR: 4× 0.25 HP BOŞTA' : 'MOTOR: 4× 0.25 HP IDLE');
+    }
+    const footerEl = document.getElementById('rover-dash-footer');
+    if (footerEl) {
+      footerEl.innerHTML = isTr
+        ? '<span>KONTROL: [W]: Gaz • [S]: Fren/Geri • [A/D]: Direksiyon • [E / R]: Araçtan İn</span>'
+        : '<span>CONTROLS: [W]: Throttle • [S]: Brake/Reverse • [A/D]: Steer • [E / R]: Dismount</span>';
+    }
+  }
+
+  updateRoverDrivingPhysics(dt, isXR) {
+    const ws = this.walkState;
+    if (!this.roverState) {
+      this.roverState = {
+        speed: 0,
+        heading: this.lrvPropGroup ? this.lrvPropGroup.rotation.y : -0.65,
+        steerAngle: 0,
+        pitch: 0,
+        roll: 0,
+        wheelAngle: 0,
+        odometer: 0,
+        tBarPitch: 0,
+        tBarRoll: 0
+      };
+    }
+    const rState = this.roverState;
+
+    // 1. Inputs: Keyboard WASD or WebXR Left Thumbstick
+    let throttle = 0;
+    let steer = 0;
+
+    if (ws.keys.w) throttle += 1.0;
+    if (ws.keys.s) throttle -= 1.0;
+    if (ws.keys.a) steer -= 1.0;
+    if (ws.keys.d) steer += 1.0;
+
+    if (isXR && this.xrSession && this.xrSession.inputSources) {
+      for (const source of this.xrSession.inputSources) {
+        const gp = source.gamepad;
+        if (!gp || !gp.axes) continue;
+        const axes = gp.axes;
+        const axX = axes.length >= 4 ? (axes[2] || 0) : (axes[0] || 0);
+        const axY = axes.length >= 4 ? (axes[3] || 0) : (axes[1] || 0);
+        const deadzone = 0.15;
+        if (source.handedness === 'left') {
+          if (Math.abs(axY) > deadzone) throttle = -axY;
+          if (Math.abs(axX) > deadzone) steer = axX;
+        }
+      }
+    }
+
+    // 2. Smooth Steering Angle (max ~26.5 deg = 0.46 rad)
+    const maxSteerRad = 0.46;
+    const targetSteer = steer * maxSteerRad;
+    rState.steerAngle += (targetSteer - rState.steerAngle) * Math.min(1.0, dt * 7.5);
+
+    // 3. Velocity Integration with NASA LRV 16 km/h max speed & authentic inertia
+    const maxFwdSpeed = 4.5; // ~16.2 km/h
+    const maxRevSpeed = 1.8; // ~6.5 km/h
+    const accelRate = 3.2;   // m/s^2
+    const brakeRate = 5.8;   // m/s^2
+    const rollResistance = 1.4; // m/s^2
+
+    if (throttle > 0.05) {
+      if (rState.speed < -0.1) {
+        rState.speed += brakeRate * dt;
+      } else {
+        const target = throttle * maxFwdSpeed;
+        rState.speed += (target - rState.speed) * Math.min(1.0, dt * accelRate);
+      }
+    } else if (throttle < -0.05) {
+      if (rState.speed > 0.1) {
+        rState.speed = Math.max(0, rState.speed - brakeRate * dt);
+      } else {
+        const targetRev = throttle * maxRevSpeed;
+        rState.speed += (targetRev - rState.speed) * Math.min(1.0, dt * accelRate);
+      }
+    } else {
+      if (Math.abs(rState.speed) > 0.02) {
+        const drag = Math.sign(rState.speed) * rollResistance * dt;
+        if (Math.abs(drag) >= Math.abs(rState.speed)) {
+          rState.speed = 0;
+        } else {
+          rState.speed -= drag;
+        }
+      } else {
+        rState.speed = 0;
+      }
+    }
+
+    // 4. Kinematics (Bicycle / Ackermann turning model)
+    const wheelbase = 2.3;
+    if (Math.abs(rState.speed) > 0.01 && Math.abs(rState.steerAngle) > 0.005) {
+      const turnRate = (rState.speed / wheelbase) * Math.tan(rState.steerAngle);
+      rState.heading += turnRate * dt;
+    }
+    while (rState.heading > Math.PI) rState.heading -= Math.PI * 2;
+    while (rState.heading < -Math.PI) rState.heading += Math.PI * 2;
+
+    const stepDist = rState.speed * dt;
+    const fwdX = Math.sin(rState.heading);
+    const fwdZ = Math.cos(rState.heading);
+    const candX = ws.x + fwdX * stepDist;
+    const candZ = ws.z + fwdZ * stepDist;
+    const candDist = Math.hypot(candX, candZ);
+
+    if (candDist > 4.5 && candDist < 135) {
+      ws.x = candX;
+      ws.z = candZ;
+    } else if (candDist <= 4.5) {
+      // Gentle bumper bounce off lunar module landing pads
+      rState.speed = -rState.speed * 0.35;
+      if (window.SpaceAudio) window.SpaceAudio.playRoverSuspensionBump(0.6);
+    }
+    rState.odometer += Math.abs(stepDist);
+
+    // 5. 4-Corner Terrain Height Sampling for Conforming Pitch & Roll
+    const cHead = Math.cos(rState.heading);
+    const sHead = Math.sin(rState.heading);
+
+    const calcCornerH = (lx, lz) => {
+      const wx = ws.x + lx * cHead + lz * sHead;
+      const wz = ws.z - lx * sHead + lz * cHead;
+      return { x: wx, z: wz, y: this.getExactSurfaceHeight(wx, wz) };
+    };
+
+    const fl = calcCornerH(-0.95, 1.15);
+    const fr = calcCornerH(0.95, 1.15);
+    const rl = calcCornerH(-0.95, -1.15);
+    const rr = calcCornerH(0.95, -1.15);
+
+    const yFront = (fl.y + fr.y) * 0.5;
+    const yRear = (rl.y + rr.y) * 0.5;
+    const yLeft = (fl.y + rl.y) * 0.5;
+    const yRight = (fr.y + rr.y) * 0.5;
+    const yCenter = (yFront + yRear) * 0.5;
+
+    const targetPitch = Math.atan2(yFront - yRear, 2.3);
+    const targetRoll = Math.atan2(yRight - yLeft, 1.9);
+
+    const prevPitch = rState.pitch;
+    rState.pitch += (targetPitch - rState.pitch) * Math.min(1.0, dt * 8.5);
+    rState.roll += (targetRoll - rState.roll) * Math.min(1.0, dt * 8.5);
+
+    ws.y = yCenter + 0.38;
+    ws.vy = 0;
+    ws.isGrounded = true;
+
+    // Suspension bump audio on crater rims and slopes
+    const pitchDelta = Math.abs(rState.pitch - prevPitch) / Math.max(0.01, dt);
+    if (pitchDelta > 1.2 && Math.abs(rState.speed) > 1.0 && window.SpaceAudio) {
+      window.SpaceAudio.playRoverSuspensionBump(Math.min(1.0, pitchDelta * 0.35));
+    }
+
+    // 6. Update 3D LRV Prop Group Transform
+    if (this.lrvPropGroup) {
+      this.lrvPropGroup.position.set(ws.x, ws.y, ws.z);
+      this.lrvPropGroup.rotation.order = 'YXZ';
+      this.lrvPropGroup.rotation.set(rState.pitch, rState.heading, -rState.roll);
+    }
+
+    // 7. Update Wheel Spin and Steering Knuckles
+    const wheelRadius = 0.32;
+    rState.wheelAngle += stepDist / wheelRadius;
+    if (this.lrvWheelNodes) {
+      for (const w of this.lrvWheelNodes) {
+        if (w.isFront) {
+          w.knuckle.rotation.y = rState.steerAngle;
+        } else {
+          w.knuckle.rotation.y = -rState.steerAngle * 0.25;
+        }
+        w.spinGroup.rotation.x = rState.wheelAngle;
+      }
+    }
+
+    // 8. Central T-Bar Joystick Tilt
+    const targetTBarPitch = -throttle * 0.28;
+    const targetTBarRoll = steer * 0.22;
+    rState.tBarPitch += (targetTBarPitch - rState.tBarPitch) * Math.min(1.0, dt * 10.0);
+    rState.tBarRoll += (targetTBarRoll - rState.tBarRoll) * Math.min(1.0, dt * 10.0);
+    if (this.lrvTBar) {
+      this.lrvTBar.rotation.x = rState.tBarPitch;
+      this.lrvTBar.rotation.z = rState.tBarRoll;
+    }
+
+    // 9. Rear Wheel Lunar Dust Roostertails
+    if (Math.abs(rState.speed) > 0.6 && Math.random() < 0.65) {
+      this.spawnBootDust(rl.x, rl.z, 2);
+      this.spawnBootDust(rr.x, rr.z, 2);
+    }
+
+    // 10. Traction Motor Audio & WebXR Haptics
+    const speedRatio = Math.min(1.0, Math.abs(rState.speed) / maxFwdSpeed);
+    if (window.SpaceAudio) {
+      window.SpaceAudio.setRoverMotorHum(Math.abs(rState.speed) > 0.05, speedRatio);
+    }
+    if (isXR && Math.abs(rState.speed) > 0.1) {
+      this.pulseXRHaptics(0.08 + speedRatio * 0.24, 25);
+    }
+
+    // 11. Live Telemetry Dashboard HUD
+    this.updateRoverDashboardHUD(rState);
+
+    // 12. Seating & Camera Orientation
+    this.updateRoverCameras(dt, isXR);
+  }
+
+  updateRoverCameras(dt, isXR) {
+    const ws = this.walkState;
+    const rState = this.roverState;
+    if (!rState) return;
+
+    // Driver Seat local offset inside chassis:
+    // x = -0.42, y = 0.95 (eye height from chassis center), z = -0.15
+    const seatOffset = new THREE.Vector3(-0.42, 0.95, -0.15);
+    seatOffset.applyEuler(new THREE.Euler(rState.pitch, rState.heading, -rState.roll, 'YXZ'));
+    const driverEye = new THREE.Vector3(ws.x, ws.y, ws.z).add(seatOffset);
+
+    if (isXR) {
+      // WebXR 6-DoF Room-scale Headset anchoring
+      const xrSeat = new THREE.Vector3(-0.42, 0.22, -0.15);
+      xrSeat.applyEuler(new THREE.Euler(0, rState.heading, 0));
+      this.cameraRig.position.set(ws.x + xrSeat.x, ws.y + xrSeat.y, ws.z + xrSeat.z);
+      this.cameraRig.rotation.set(0, rState.heading, 0, 'YXZ');
+    } else if (this.walkViewMode === 'tp') {
+      // 3rd-Person Chase Camera Behind LRV
+      this.cameraRig.position.set(0, 0, 0);
+      this.cameraRig.rotation.set(0, 0, 0);
+      const camDist = 4.2;
+      const camHeight = 1.95;
+      const chaseOffset = new THREE.Vector3(
+        -Math.sin(rState.heading) * camDist,
+        camHeight,
+        -Math.cos(rState.heading) * camDist
+      );
+      const camX = ws.x + chaseOffset.x;
+      const camZ = ws.z + chaseOffset.z;
+      const terrainCamY = this.getExactSurfaceHeight(camX, camZ) + 0.6;
+      const camY = Math.max(terrainCamY, ws.y + chaseOffset.y);
+
+      this.camera.position.set(camX, camY, camZ);
+      this.camera.lookAt(ws.x, ws.y + 0.65, ws.z);
+
+      // Animate 3rd-Person Astronaut Seated in Left Driver Seat
+      if (this.tpAstronaut) {
+        this.tpAstronaut.visible = true;
+        const tpSeat = new THREE.Vector3(-0.42, 0.14, -0.15);
+        tpSeat.applyEuler(new THREE.Euler(rState.pitch, rState.heading, -rState.roll, 'YXZ'));
+        this.tpAstronaut.position.set(ws.x + tpSeat.x, ws.y + tpSeat.y, ws.z + tpSeat.z);
+        this.tpAstronaut.rotation.order = 'YXZ';
+        this.tpAstronaut.rotation.set(rState.pitch, rState.heading, -rState.roll);
+
+        if (this.tpLimbs) {
+          if (this.tpLimbs.leftLeg) this.tpLimbs.leftLeg.rotation.x = 1.45;
+          if (this.tpLimbs.rightLeg) this.tpLimbs.rightLeg.rotation.x = 1.45;
+          if (this.tpLimbs.leftShin) this.tpLimbs.leftShin.rotation.x = 1.45;
+          if (this.tpLimbs.rightShin) this.tpLimbs.rightShin.rotation.x = 1.45;
+          if (this.tpLimbs.leftArm) this.tpLimbs.leftArm.rotation.x = -0.65;
+          if (this.tpLimbs.rightArm) this.tpLimbs.rightArm.rotation.x = -0.75;
+          if (this.tpLimbs.leftForearm) this.tpLimbs.leftForearm.rotation.x = 0.85;
+          if (this.tpLimbs.rightForearm) this.tpLimbs.rightForearm.rotation.x = 0.95;
+        }
+      }
+    } else {
+      // 1st-Person Astronaut Visor In-Cockpit Camera
+      this.cameraRig.position.set(0, 0, 0);
+      this.cameraRig.rotation.set(0, 0, 0);
+      this.camera.position.copy(driverEye);
+
+      const effectivePitch = Math.max(-1.0, Math.min(1.0, ws.smoothPitch + rState.pitch * 0.75));
+      const effectiveYaw = rState.heading + ws.smoothYaw;
+      this.camera.rotation.order = 'YXZ';
+      this.camera.rotation.set(effectivePitch, effectiveYaw, -rState.roll * 0.75);
+
+      if (this.tpAstronaut) this.tpAstronaut.visible = false;
+
+      // Animate 1st-Person Gloved Hands Gripping T-Bar & Armrest
+      if (this.fpLeftArm && this.fpRightArm) {
+        this.fpLeftArm.position.set(-0.32, -0.25, -0.45);
+        this.fpLeftArm.rotation.set(0.65, 0.25, -0.15);
+
+        this.fpRightArm.position.set(0.24 + rState.tBarRoll * 0.2, -0.22 + rState.tBarPitch * 0.15, -0.42);
+        this.fpRightArm.rotation.set(0.75 + rState.tBarPitch * 0.5, -0.15, 0.18 + rState.tBarRoll * 0.4);
+      }
     }
   }
 
@@ -1001,13 +1386,14 @@ class MissionSimulationTheater {
 
     this.updateAstronautVisibility();
     this.updateQuestVRButton();
+    this.attachToolsToXRControllers();
     this.showVRHelpPanel(true);
     this.pulseXRHaptics(0.6, 80);
 
     if (statusEl) {
       statusEl.innerText = isTr
-        ? `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} AKTİF • Sol Çubuk: Yürü • Sağ Çubuk: 30° Dön • Tetik: Etkileşim/Işınlan • Grip+Kol Salla: Yürü • A: Zıpla • B: Kapı/LRV • X: Fener • Y: Yardım`
-        : `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} ACTIVE • L-Stick: Walk • R-Stick: Snap Turn • Trigger: Interact/Teleport • Grip+Swing: Walk • A: Jump • B: Door/LRV • X: Torch • Y: Help`;
+        ? `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} AKTİF • Sol Çubuk: Yürü • Sağ Çubuk: 30° Dön • Tetik: Lazer Tara/Işınlan • A: Zıpla • B: LRV/Kapı • X: Spektrometre & Tablet • Y: Yardım`
+        : `🥽 META QUEST 3S ${sessionMode === 'immersive-ar' ? 'MR' : 'VR'} ACTIVE • L-Stick: Walk • R-Stick: 30° Turn • Trigger: Laser Scan/Teleport • A: Jump • B: LRV/Door • X: Spectrometer & Tablet • Y: Help`;
     }
     this.updateVRGameMiniPill(isTr ? 'Meta Quest 3S VR Oturumu Başladı' : 'Meta Quest 3S VR Session Started');
 
@@ -1019,6 +1405,7 @@ class MissionSimulationTheater {
         this.cameraRig.rotation.set(0, 0, 0);
       }
       if (this.vrHelpPanel) this.vrHelpPanel.visible = false;
+      this.reattachToolsToFPArms();
       this.updateAstronautVisibility();
       this.updateQuestVRButton();
       setTimeout(() => this.onResize(), 60);
@@ -1067,26 +1454,26 @@ class MissionSimulationTheater {
       ['SOL ÇUBUK BAS', 'Koş (basılı tut)'],
       ['SAĞ ÇUBUK ◀ ▶', '30° adım dönüş (mide bulantısız)'],
       ['SAĞ ÇUBUK BAS', 'EVA feneri aç / kapat'],
-      ['TETİK (her iki el)', 'Lazerle buton/kapı/numune • Zemine ışınlan'],
+      ['TETİK (TRIGGER)', 'Lazerle tara • Buton/kapı • Zemine ışınlan'],
       ['GRIP + KOL SALLA', 'Kollarınla yürü (gerçek yürüyüş hissi)'],
       ['GERÇEK YÜRÜME', 'Odada yürü — çarpışmalı oda ölçeği'],
       ['ELLE DOKUN', 'Butona eldiveninle fiziksel dokun'],
       ['A', 'Zıpla (kabin içinde: kapıyı aç/kapat)'],
-      ['B', 'Hava kilidi kapısı • LRV aracına bin/in'],
-      ['X', 'EVA feneri'],
+      ['B', 'LRV Ay aracına bin/in • Kabin kapısı'],
+      ['X', '🔬 XRF Lazer Spektrometresi ve Bilim Tableti'],
       ['Y', 'Bu yardım panelini aç / kapat']
     ] : [
       ['LEFT STICK', 'Walk toward gaze (analog speed)'],
       ['LEFT STICK CLICK', 'Sprint (hold)'],
       ['RIGHT STICK ◀ ▶', '30° snap turn (comfort)'],
       ['RIGHT STICK CLICK', 'Toggle EVA torch'],
-      ['TRIGGER (either)', 'Laser buttons/doors/samples • Teleport'],
+      ['TRIGGER', 'Fire laser scan • Buttons/doors • Teleport'],
       ['GRIP + SWING ARMS', 'Arm-swing locomotion'],
       ['REAL WALKING', 'Room-scale walking with collision'],
       ['HAND TOUCH', 'Physically press buttons with glove'],
       ['A', 'Jump (in cabin: open/close door)'],
-      ['B', 'Airlock door • Mount/dismount LRV'],
-      ['X', 'EVA torch'],
+      ['B', 'Mount/dismount LRV • Cabin door'],
+      ['X', '🔬 XRF Laser Spectrometer & Science Tablet'],
       ['Y', 'Show / hide this help board']
     ];
     rows.forEach((r, i) => {
@@ -1189,9 +1576,8 @@ class MissionSimulationTheater {
         this.toggleCabinInterior();
       }
     } else if (button === 'X') {
-      this.pulseXRHaptics(0.45, 30, 'left');
-      this.toggleFlashlight();
-      this.updateVRGameMiniPill(this.flashlightOn ? (isTr ? 'EVA Feneri Açık' : 'EVA Torch On') : (isTr ? 'EVA Feneri Kapalı' : 'EVA Torch Off'));
+      this.pulseXRHaptics(0.65, 45, 'left');
+      this.toggleSpectrometer();
     } else if (button === 'Y') {
       this.pulseXRHaptics(0.45, 30, 'left');
       this.showVRHelpPanel(!(this.vrHelpPanel && this.vrHelpPanel.visible));
@@ -1558,6 +1944,14 @@ class MissionSimulationTheater {
     this.walkState.keys = { w: false, a: false, s: false, d: false };
     this.walkState.isLooking = false;
     this.walkState.isDrivingRover = false;
+    const roverDash = document.getElementById('rover-dash-overlay');
+    if (roverDash) roverDash.classList.add('hidden');
+    const roverBtn = document.getElementById('btn-walk-rover');
+    if (roverBtn) {
+      roverBtn.classList.remove('active');
+      const isTr = window.app ? window.app.currentLang === 'tr' : false;
+      roverBtn.innerText = isTr ? '🚙 Araca Bin / Sür (R)' : '🚙 Drive Rover (R)';
+    }
     this.setCleanVRGameMode(false);
     if (this.controls) this.controls.enabled = false;
     if (this.cameraRig) {
@@ -1700,6 +2094,7 @@ class MissionSimulationTheater {
     this.flashlight.target = this.flashlightTarget;
 
     this.camera.add(this.fpRig);
+    this.reattachToolsToFPArms();
 
     // 2. Full 3rd-Person Articulated Astronaut Model (visible in 3rd-Person Walk Mode)
     this.tpAstronaut = this.createFullAstronautMesh();
@@ -2149,80 +2544,251 @@ class MissionSimulationTheater {
   // ===========================================================================
   buildLunarRoverProp(x, z) {
     const lrv = new THREE.Group();
-    const y = this.getTerrainHeight(x, z);
+    const y = this.getExactSurfaceHeight(x, z);
     lrv.position.set(x, y + 0.38, z);
+    lrv.rotation.order = 'YXZ';
     lrv.rotation.y = -0.65;
     this.lrvPropGroup = lrv;
     this.lrvWheels = [];
+    this.lrvWheelNodes = [];
+    this.roverState = {
+      speed: 0,
+      heading: -0.65,
+      steerAngle: 0,
+      pitch: 0,
+      roll: 0,
+      wheelAngle: 0,
+      odometer: 0,
+      tBarPitch: 0,
+      tBarRoll: 0
+    };
 
-    const alumMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.82, roughness: 0.28 });
+    // PBR Aerospace Materials
+    const alumMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.28 });
+    const darkAlumMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.78, roughness: 0.35 });
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.88, roughness: 0.22 });
-    const meshWheelMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.75, roughness: 0.4, wireframe: true });
-    const seatMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+    const wireMeshMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.82, roughness: 0.32, wireframe: true });
+    const tireRubberMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.38, roughness: 0.72 });
+    const chevronMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.92, roughness: 0.18 });
+    const fenderMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.52, roughness: 0.44 });
+    const seatMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.82 });
+    const rubberMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.90 });
 
-    // Chassis Frame (3.1m long, 1.8m wide)
-    const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.12, 3.0), alumMat);
-    chassis.castShadow = true;
-    lrv.add(chassis);
-
-    // Forward LCRU Gold Electronics Box & TV Camera
-    const lcru = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.35, 0.55), goldMat);
-    lcru.position.set(0, 0.24, 1.15);
-    lrv.add(lcru);
-
-    // High-Gain Wire Umbrella Dish Antenna
-    const dishPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.35), alumMat);
-    dishPole.position.set(-0.45, 0.72, 0.85);
-    const dish = new THREE.Mesh(
-      new THREE.SphereGeometry(0.55, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.45),
-      meshWheelMat
-    );
-    dish.position.set(-0.45, 1.38, 0.85);
-    dish.rotation.x = Math.PI * 0.75;
-    lrv.add(dishPole, dish);
-
-    // Twin Astronaut Folding Seats & T-Bar Hand Controller
     const roverInteract = {
-      label_tr: '🚙 [SOL TIK / E / VR TETİK] LRV AY ARACINA BİN & YÜZEYDE SÜR (1:1 SÜRÜŞ MODU)',
-      label_en: '🚙 [CLICK / E / VR TRIGGER] MOUNT & DRIVE LRV MOON BUGGY ON SURFACE',
+      label_tr: '🚙 [SOL TIK / E / R / VR TETİK] LRV AY ARACINA BİN & YÜZEYDE SÜR (1:1 SÜRÜŞ MODU)',
+      label_en: '🚙 [CLICK / E / R / VR TRIGGER] MOUNT & DRIVE LRV MOON BUGGY ON SURFACE',
       onClick: () => {
         this.toggleRoverDrive();
       }
     };
-    chassis.userData.interactive = roverInteract;
-    lcru.userData.interactive = roverInteract;
-    if (this.surfaceInteractables) this.surfaceInteractables.push(chassis, lcru);
 
+    // 1. Chassis Frame (3.1m long, 1.8m track width)
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.10, 2.75), alumMat);
+    chassis.castShadow = true;
+    chassis.userData.interactive = roverInteract;
+    lrv.add(chassis);
+
+    // Front angled nose chassis
+    const frontChassis = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.08, 0.85), alumMat);
+    frontChassis.position.set(0, 0.05, 1.65);
+    frontChassis.rotation.x = -0.08;
+    frontChassis.userData.interactive = roverInteract;
+    lrv.add(frontChassis);
+
+    // Tubular front bumper
+    const bumper = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.45, 12), darkAlumMat);
+    bumper.rotation.z = Math.PI / 2;
+    bumper.position.set(0, 0.12, 2.10);
+    lrv.add(bumper);
+
+    // Rear cargo deck platform
+    const rearDeck = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.06, 0.85), alumMat);
+    rearDeck.position.set(0, 0.08, -1.65);
+    rearDeck.userData.interactive = roverInteract;
+    lrv.add(rearDeck);
+
+    // Side safety rails
+    for (let side = -1; side <= 1; side += 2) {
+      const sideRail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.2, 10), darkAlumMat);
+      sideRail.rotation.x = Math.PI / 2;
+      sideRail.position.set(side * 0.75, 0.22, 0);
+      lrv.add(sideRail);
+    }
+
+    // 2. Forward LCRU Gold Electronics Box & Antennas
+    const lcru = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.38, 0.55), goldMat);
+    lcru.position.set(0, 0.25, 1.25);
+    lcru.userData.interactive = roverInteract;
+    lrv.add(lcru);
+
+    // High-Gain Parabolic Umbrella Wire Dish Antenna
+    const dishPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.4, 10), alumMat);
+    dishPole.position.set(-0.48, 0.75, 0.95);
+    const dish = new THREE.Mesh(
+      new THREE.SphereGeometry(0.55, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.45),
+      wireMeshMat
+    );
+    dish.position.set(-0.48, 1.45, 0.95);
+    dish.rotation.x = Math.PI * 0.72;
+    dish.rotation.y = 0.25;
+
+    const feedHorn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 8), darkAlumMat);
+    feedHorn.position.set(-0.48, 1.45, 0.65);
+    feedHorn.rotation.x = -Math.PI * 0.28;
+    lrv.add(dishPole, dish, feedHorn);
+
+    // Low-Gain whip antenna
+    const whip = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.2, 8), darkAlumMat);
+    whip.position.set(0.48, 0.75, 1.15);
+    lrv.add(whip);
+
+    // Ground-Controlled Television Assembly (GCTA Camera)
+    const camPost = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 10), alumMat);
+    camPost.position.set(0.48, 0.35, 1.55);
+    const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.28), goldMat);
+    camBody.position.set(0.48, 0.58, 1.55);
+    const camLens = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.14, 12), darkAlumMat);
+    camLens.rotation.x = Math.PI / 2;
+    camLens.position.set(0.48, 0.58, 1.72);
+    lrv.add(camPost, camBody, camLens);
+
+    // 3. Center Control Console & Articulated T-Bar Hand Controller
+    const consolePedestal = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.32, 0.42), darkAlumMat);
+    consolePedestal.position.set(0, 0.20, 0.12);
+    consolePedestal.userData.interactive = roverInteract;
+    lrv.add(consolePedestal);
+
+    const dashPanel = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.04, 0.28), alumMat);
+    dashPanel.position.set(0, 0.38, 0.24);
+    dashPanel.rotation.x = -0.45;
+    lrv.add(dashPanel);
+
+    const tBarRoot = new THREE.Group();
+    tBarRoot.position.set(0, 0.36, 0.14);
+    const tStem = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.30, 10), darkAlumMat);
+    tStem.position.y = 0.15;
+    const tHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.22, 12), rubberMat);
+    tHandle.position.y = 0.30;
+    tHandle.rotation.z = Math.PI / 2;
+    tBarRoot.add(tStem, tHandle);
+    lrv.add(tBarRoot);
+    this.lrvTBar = tBarRoot;
+
+    // 4. Twin Astronaut Folding Seats (Left: Driver, Right: Navigator)
     for (let s = -1; s <= 1; s += 2) {
-      const seatBottom = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.52), seatMat);
-      seatBottom.position.set(s * 0.42, 0.12, -0.15);
-      const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.58, 0.06), seatMat);
-      seatBack.position.set(s * 0.42, 0.40, -0.40);
+      const seatBottom = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.06, 0.50), seatMat);
+      seatBottom.position.set(s * 0.42, 0.14, -0.15);
+      const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.56, 0.06), seatMat);
+      seatBack.position.set(s * 0.42, 0.42, -0.40);
+      seatBack.rotation.x = -0.15;
       seatBottom.userData.interactive = roverInteract;
       seatBack.userData.interactive = roverInteract;
       if (this.surfaceInteractables) this.surfaceInteractables.push(seatBottom, seatBack);
       lrv.add(seatBottom, seatBack);
     }
 
-    // 4 Woven Piano-Wire Mesh Wheels + Dust Fenders
+    // 5. Rear Cargo Pallet (Apollo Rock Sample Collection Boxes)
+    const rockBox1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.34), alumMat);
+    rockBox1.position.set(-0.35, 0.25, -1.65);
+    const rockBox2 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.34), alumMat);
+    rockBox2.position.set(0.35, 0.25, -1.65);
+    lrv.add(rockBox1, rockBox2);
+
+    // 6. 4 Independent Wheel Assemblies with Steering Knuckles & 24 Chevron Treads
     for (let wx = -1; wx <= 1; wx += 2) {
       for (let wz = -1; wz <= 1; wz += 2) {
+        const isFront = wz > 0;
+        const isLeft = wx < 0;
+
         const wGroup = new THREE.Group();
-        wGroup.position.set(wx * 1.05, -0.02, wz * 1.15);
-        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 10, 22), meshWheelMat);
-        tire.rotation.y = Math.PI / 2;
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.16, 12), goldMat);
-        hub.rotation.z = Math.PI / 2;
-        const fender = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.43, 0.24, 12, 1, true, 0, Math.PI), goldMat);
+        wGroup.position.set(wx * 0.98, -0.02, wz * 1.15);
+
+        // Steering Knuckle Group (Pivots around local Y axis for Ackermann steering)
+        const knuckle = new THREE.Group();
+        wGroup.add(knuckle);
+
+        // Amber Fiberglass Dust Fender (attached to knuckle so it turns with wheel)
+        const fender = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.44, 0.44, 0.26, 16, 1, true, 0, Math.PI),
+          fenderMat
+        );
         fender.rotation.z = Math.PI / 2;
-        fender.position.y = 0.05;
-        wGroup.add(tire, hub, fender);
-        this.lrvWheels.push(tire);
+        fender.position.set(0, 0.05, 0);
+        knuckle.add(fender);
+
+        // Rubber trailing flap on fender
+        const flap = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.01), rubberMat);
+        flap.position.set(0, -0.06, (wz > 0 ? -1 : -1) * 0.38);
+        knuckle.add(flap);
+
+        // Spinning Spindle Group (Rotates around local X axis with velocity)
+        const spinGroup = new THREE.Group();
+        knuckle.add(spinGroup);
+
+        // 6a. Woven zinc-coated piano-wire mesh tire
+        const tireTorus = new THREE.Mesh(
+          new THREE.TorusGeometry(0.32, 0.10, 12, 28),
+          wireMeshMat
+        );
+        tireTorus.rotation.y = Math.PI / 2;
+        spinGroup.add(tireTorus);
+
+        // 6b. Inner bump stop rubber ring
+        const innerTorus = new THREE.Mesh(
+          new THREE.TorusGeometry(0.24, 0.04, 8, 20),
+          tireRubberMat
+        );
+        innerTorus.rotation.y = Math.PI / 2;
+        spinGroup.add(innerTorus);
+
+        // 6c. 24 Titanium chevron tread strips riveted across wire mesh
+        const numChevrons = 24;
+        for (let c = 0; c < numChevrons; c++) {
+          const ang = (c / numChevrons) * Math.PI * 2;
+          const r = 0.32;
+          const cy = Math.sin(ang) * r;
+          const cz = Math.cos(ang) * r;
+
+          const chevL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.02), chevronMat);
+          chevL.position.set(-0.04, cy, cz);
+          chevL.rotation.x = -ang;
+          chevL.rotation.y = 0.25;
+
+          const chevR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.02), chevronMat);
+          chevR.position.set(0.04, cy, cz);
+          chevR.rotation.x = -ang;
+          chevR.rotation.y = -0.25;
+
+          spinGroup.add(chevL, chevR);
+        }
+
+        // 6d. Spun aluminum motor hub & gold center cap
+        const motorHub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 16), alumMat);
+        motorHub.rotation.z = Math.PI / 2;
+        spinGroup.add(motorHub);
+
+        const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.20, 12), goldMat);
+        hubCap.rotation.z = Math.PI / 2;
+        spinGroup.add(hubCap);
+
+        this.lrvWheels.push(spinGroup);
+        this.lrvWheelNodes.push({
+          isFront: isFront,
+          isLeft: isLeft,
+          localOffset: new THREE.Vector3(wx * 0.98, -0.02, wz * 1.15),
+          group: wGroup,
+          knuckle: knuckle,
+          spinGroup: spinGroup
+        });
+
+        tireTorus.userData.interactive = roverInteract;
+        if (this.surfaceInteractables) this.surfaceInteractables.push(tireTorus);
+
         lrv.add(wGroup);
       }
     }
 
-    // Dual Forward LRV Headlights & Dynamic Terrain SpotLight Beams
+    // 7. Dual Forward Headlights & Spotlights
     for (let hSide = -1; hSide <= 1; hSide += 2) {
       const lampCase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 14), alumMat);
       lampCase.rotation.x = Math.PI / 2;
@@ -2239,6 +2805,9 @@ class MissionSimulationTheater {
       roverLight.target = lightTarget;
     }
 
+    if (this.surfaceInteractables) {
+      this.surfaceInteractables.push(chassis, frontChassis, rearDeck, lcru, consolePedestal);
+    }
     this.scene.add(lrv);
   }
 
@@ -3196,13 +3765,14 @@ class MissionSimulationTheater {
       // =======================================================================
       // REALISTIC VEHICLE & SURFACE EQUIPMENT PER HISTORICAL LOCATION
       // =======================================================================
-      // 1. Apollo LRV Moon Buggy: ONLY SPAWNS ON APOLLO 15, 16, 17!
-      const hasLRV = ['apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(artifact.id);
-      if (hasLRV) {
-        this.buildLunarRoverProp(13.5, -7.5);
+      // 1. Apollo LRV Moon Buggy: Spawns on all surface walk missions & historical EVA sites!
+      const isSurfaceWalk = (artifact.vrAllowed !== false);
+      if (isSurfaceWalk) {
+        this.buildLunarRoverProp(12.5, -6.5);
       } else {
         this.lrvPropGroup = null;
         this.lrvWheels = [];
+        this.lrvWheelNodes = [];
       }
 
       // 2. Apollo 14 MET Modular Equipment Transporter ("The Lunar Wheelbarrow"):
@@ -3215,8 +3785,14 @@ class MissionSimulationTheater {
         this.buildSurveyorProbeProp(18.5, -12.5);
       }
     } else {
-      this.lrvPropGroup = null;
-      this.lrvWheels = [];
+      const isSurfaceWalk = (artifact.vrAllowed !== false);
+      if (isSurfaceWalk) {
+        this.buildLunarRoverProp(12.5, -6.5);
+      } else {
+        this.lrvPropGroup = null;
+        this.lrvWheels = [];
+        this.lrvWheelNodes = [];
+      }
     }
 
     // Build First-Person & Third-Person Astronaut Rigs
@@ -4138,8 +4714,8 @@ class MissionSimulationTheater {
     );
     ctx.fillText(
       isTr
-        ? 'Tetik: Etkileşim | A: Zıpla | B: Kapı/LRV | X: Fener | Y: ÇIKIŞ & YARDIM'
-        : 'Trigger: Interact | A: Jump | B: Door/LRV | X: Torch | Y: EXIT & HELP',
+        ? 'Tetik: Lazer Tara/Işınlan | A: Zıpla | B: LRV | X: Spektrometre | Y: YARDIM'
+        : 'Trigger: Laser Scan/Teleport | A: Jump | B: LRV | X: Spectrometer | Y: HELP',
       18,
       134
     );
@@ -4235,9 +4811,7 @@ class MissionSimulationTheater {
         controller.userData.handedness = src ? src.handedness : null;
         controller.userData.inputSource = src || null;
         controller.visible = true;
-        if (src && src.handedness === 'left' && this.vrWristMesh && this.vrWristMesh.parent !== handGroup) {
-          handGroup.add(this.vrWristMesh);
-        }
+        this.attachToolsToXRControllers();
       });
       controller.addEventListener('disconnected', () => {
         controller.userData.handedness = null;
@@ -4245,10 +4819,15 @@ class MissionSimulationTheater {
         controller.visible = false;
       });
 
-      // Trigger ('selectstart') or hand-tracking pinch: interact with 3D object OR teleport to surface point
+      // Trigger ('selectstart'): interact with 3D object OR fire laser spectrometer OR teleport
       controller.addEventListener('selectstart', () => {
         if (this.cameraMode === 'walk') {
           this.handleXRControllerTrigger(controller);
+        }
+      });
+      controller.addEventListener('selectend', () => {
+        if (this.cameraMode === 'walk' && this.isSpectrometerActive) {
+          this.stopSpectrometerScan();
         }
       });
 
@@ -4261,7 +4840,15 @@ class MissionSimulationTheater {
   }
 
   handleXRControllerTrigger(controller) {
-    // 1. Check if pointing at an interactive 3D button/switch/hatch/sample/rover/ALSEP
+    // 1. If handheld laser spectrometer is active, TRIGGER MUST FIRE THE LASER SCAN, NOT TELEPORT!
+    if (this.isSpectrometerActive) {
+      this.startSpectrometerScan();
+      const hand = controller.userData ? controller.userData.handedness : 'right';
+      this.pulseXRHaptics(0.65, 45, hand);
+      return;
+    }
+
+    // 2. Check if pointing at an interactive 3D button/switch/hatch/sample/rover/ALSEP
     const hitObj = this.getHoveredInteractive(null, controller, 16.0);
     if (hitObj && hitObj.userData && hitObj.userData.interactive && hitObj.userData.interactive.onClick) {
       this.pulseXRHaptics(0.75, 50, controller.userData.handedness || null);
@@ -6132,6 +6719,486 @@ class MissionSimulationTheater {
     }
   }
 
+  buildScienceTabletDevice() {
+    if (this.scienceTabletGroup) return;
+
+    this.scienceTabletGroup = new THREE.Group();
+
+    // High-precision ruggedized aerospace materials
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.85,
+      roughness: 0.35
+    });
+    const bumperMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.9,
+      metalness: 0.1
+    });
+    const goldBezelMat = new THREE.MeshStandardMaterial({
+      color: 0xd97706,
+      metalness: 0.92,
+      roughness: 0.22
+    });
+    const titaniumBracketMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      metalness: 0.9,
+      roughness: 0.3
+    });
+
+    // 1. Rugged Magnesium / Carbon Frame Chassis (28cm x 20cm x 1.4cm)
+    const padW = 0.28, padH = 0.20, padD = 0.014;
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(padW, padH, padD), frameMat);
+    this.scienceTabletGroup.add(chassis);
+
+    // 2. Beveled Gold Thermal Trim around screen opening
+    const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(padW - 0.012, padH - 0.012, 0.002), goldBezelMat);
+    goldTrim.position.set(0, 0, 0.007);
+    this.scienceTabletGroup.add(goldTrim);
+
+    // 3. 4 Protective EVA Corner Rubber Bumpers
+    const bx = padW / 2 - 0.012;
+    const by = padH / 2 - 0.012;
+    const bumperGeo = new THREE.BoxGeometry(0.028, 0.028, 0.022);
+    [[-bx, -by], [bx, -by], [-bx, by], [bx, by]].forEach(([cx, cy]) => {
+      const bumper = new THREE.Mesh(bumperGeo, bumperMat);
+      bumper.position.set(cx, cy, 0);
+      this.scienceTabletGroup.add(bumper);
+    });
+
+    // 4. Top Telemetry Antenna & Sensor Bar
+    const antGeo = new THREE.CylinderGeometry(0.0035, 0.0035, 0.065, 8);
+    const antenna = new THREE.Mesh(antGeo, goldBezelMat);
+    antenna.position.set(padW / 2 - 0.035, padH / 2 + 0.028, 0);
+    this.scienceTabletGroup.add(antenna);
+
+    const sensorBar = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.012, 0.012), titaniumBracketMat);
+    sensorBar.position.set(0, padH / 2 + 0.005, 0);
+    this.scienceTabletGroup.add(sensorBar);
+
+    // 5. Back EVA Gauntlet Handle Strap
+    const strapBase = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.035, 0.018), bumperMat);
+    strapBase.position.set(0, 0, -0.015);
+    this.scienceTabletGroup.add(strapBase);
+
+    // 6. Dynamic High-Resolution Tablet Screen Canvas & Texture (1024 x 768)
+    this.tabletCanvas = document.createElement('canvas');
+    this.tabletCanvas.width = 1024;
+    this.tabletCanvas.height = 768;
+    this.tabletTexture = new THREE.CanvasTexture(this.tabletCanvas);
+    this.tabletTexture.minFilter = THREE.LinearFilter;
+    this.tabletTexture.magFilter = THREE.LinearFilter;
+
+    const screenGeo = new THREE.PlaneGeometry(padW - 0.025, padH - 0.025);
+    const screenMat = new THREE.MeshBasicMaterial({
+      map: this.tabletTexture,
+      side: THREE.DoubleSide
+    });
+    this.tabletScreenMesh = new THREE.Mesh(screenGeo, screenMat);
+    this.tabletScreenMesh.position.set(0, 0, 0.0085);
+    this.scienceTabletGroup.add(this.tabletScreenMesh);
+
+    // Initial render of tablet canvas content
+    this.updateScienceTabletCanvas();
+
+    // Attach to fpLeftArm by default if available
+    if (this.fpLeftArm) {
+      this.scienceTabletGroup.position.set(0.08, 0.12, -0.18);
+      this.scienceTabletGroup.rotation.set(-0.45, 0.35, -0.18);
+      this.scienceTabletGroup.scale.set(0.85, 0.85, 0.85);
+      this.scienceTabletGroup.visible = false;
+      this.fpLeftArm.add(this.scienceTabletGroup);
+    }
+  }
+
+  updateScienceTabletCanvas() {
+    if (!this.tabletCanvas) return;
+    const ctx = this.tabletCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = this.tabletCanvas.width;
+    const h = this.tabletCanvas.height;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    const artifact = this.currentArtifact;
+    const data = this.lastSpectrometerTargetData;
+    const dist = this.lastSpectrometerDist || 0;
+    const isScanning = this.isActivelyScanning;
+    const progress = this.spectrometerScanProgress || 0.2;
+
+    // 1. Dark Space Slate Background
+    ctx.fillStyle = '#060b17';
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle Hexagonal / Grid Blueprint Lines
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.08)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // Outer Rugged Frame Border
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(6, 6, w - 12, h - 12);
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+
+    // Corner Alignment Marks (High-Tech Space Instrumentation)
+    const corners = [
+      [18, 18], [w - 18, 18], [18, h - 18], [w - 18, h - 18]
+    ];
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3;
+    corners.forEach(([cx, cy]) => {
+      const sx = cx < 100 ? 1 : -1;
+      const sy = cy < 100 ? 1 : -1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + sy * 18);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx + sx * 18, cy);
+      ctx.stroke();
+    });
+
+    // 2. Top Header Bar
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(16, 16, w - 32, 68);
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(16, 16, w - 32, 68);
+
+    // Header Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px "Consolas", "Courier New", monospace';
+    ctx.fillText(
+      isTr ? '🔬 NASA / LPI EVA SAHA BİLİM TABLETİ' : '🔬 NASA / LPI EVA FIELD SCIENCE DATA PAD',
+      32,
+      48
+    );
+
+    // Mission / Artifact Subtitle
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px "Consolas", monospace';
+    const siteTitle = artifact
+      ? (artifact.name || artifact.id).toUpperCase()
+      : (isTr ? 'AY YÜZEYİ KEŞİF ALANI' : 'LUNAR SURFACE EVA SITE');
+    ctx.fillText(
+      `SİTE: ${siteTitle} • XRF/RAMAN 532nm`,
+      32,
+      70
+    );
+
+    // Header Right Pill (Status)
+    const statusText = isScanning
+      ? (isTr ? '● AKTİF LAZER' : '● ACTIVE LASER')
+      : (data ? (isTr ? '● KİLİTLİ' : '● LOCKED') : (isTr ? '○ BEKLEMEDE' : '○ STANDBY'));
+    const statusBg = isScanning ? '#ef4444' : (data ? '#10b981' : '#64748b');
+
+    ctx.fillStyle = statusBg;
+    ctx.beginPath();
+    ctx.roundRect(w - 200, 30, 170, 38, 8);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px "Consolas", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(statusText, w - 115, 55);
+    ctx.textAlign = 'left';
+
+    // 3. Telemetry & Scanner Status Banner (Y: 92 to 165)
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(16, 92, w - 32, 68);
+    ctx.strokeStyle = isScanning ? '#00f0ff' : 'rgba(56, 189, 248, 0.35)';
+    ctx.lineWidth = isScanning ? 2.5 : 1;
+    ctx.strokeRect(16, 92, w - 32, 68);
+
+    // Range & Laser Power info
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 16px "Consolas", monospace';
+    ctx.fillText(
+      isTr
+        ? `MENZİL: ${dist > 0 ? dist.toFixed(2) + ' m' : '--'}   IŞIN GÜCÜ: 120 keV   FREKANS: 532 nm   HASSASİYET: 0.05%`
+        : `RANGE: ${dist > 0 ? dist.toFixed(2) + ' m' : '--'}   LASER BEAM: 120 keV   FREQ: 532 nm   PRECISION: 0.05%`,
+      32,
+      116
+    );
+
+    // Animated Scan Progress Bar
+    const barX = 32, barY = 128, barW = w - 64, barH = 20;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeStyle = '#475569';
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const fillW = Math.max(10, Math.min(barW, barW * progress));
+    const barGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    barGrad.addColorStop(0, '#0284c7');
+    barGrad.addColorStop(0.5, '#00f0ff');
+    barGrad.addColorStop(1, '#10b981');
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(barX, barY, fillW, barH);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px "Consolas", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      isScanning
+        ? (isTr ? `SPEKTRUM ALINIYOR... %${Math.round(progress * 100)}` : `ACQUIRING SPECTRUM... ${Math.round(progress * 100)}%`)
+        : (data ? (isTr ? 'SPEKTRAL İMZA TAMAMLANDI' : 'SPECTRAL SIGNATURE VERIFIED') : (isTr ? 'HEDEF BEKLENİYOR' : 'AWAITING TARGET')),
+      barX + barW / 2,
+      barY + 15
+    );
+    ctx.textAlign = 'left';
+
+    // 4. Target Identity Panel (Y: 168 to 238)
+    ctx.fillStyle = '#0b1329';
+    ctx.fillRect(16, 168, w - 32, 66);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(16, 168, w - 32, 66);
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 13px "Consolas", monospace';
+    ctx.fillText(
+      isTr ? '▸ TESPİT EDİLEN TARİHİ BİLEŞEN & KATMAN:' : '▸ DETECTED HISTORIC COMPONENT & SUBSTRATE:',
+      32,
+      188
+    );
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px "Consolas", monospace';
+    const targetTitle = data && data.name
+      ? data.name
+      : (isTr ? 'Lazer Spektrometreyi Yüzeye Doğrultun...' : 'Point Laser Spectrometer at Surface...');
+    ctx.fillText(targetTitle, 32, 218);
+
+    // 5. Elemental Breakdown Table (Y: 242 to 470)
+    ctx.fillStyle = '#090e1a';
+    ctx.fillRect(16, 242, w - 32, 224);
+    ctx.strokeStyle = '#1e293b';
+    ctx.strokeRect(16, 242, w - 32, 224);
+
+    // Table Header
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(18, 244, w - 36, 32);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 13px "Consolas", monospace';
+    ctx.fillText(isTr ? 'ELEMENTEL İMZA VE KİMYASAL BİLEŞEN' : 'ELEMENTAL SIGNATURE & COMPOSITION', 32, 265);
+    ctx.fillText(isTr ? 'ORAN' : 'CONC.', 460, 265);
+    ctx.fillText(isTr ? 'SPEKTRAL DAĞILIM' : 'SPECTRAL DISTRIBUTION', 560, 265);
+
+    // 4 Rows
+    const elems = (data && data.elems && data.elems.length > 0)
+      ? data.elems
+      : [
+          { name: isTr ? 'Silika / Regolit (SiO₂)' : 'Silica / Regolith (SiO₂)', pct: '45.4%', barPct: 45 },
+          { name: isTr ? 'Alüminyum Buhar Katmanı (Al)' : 'Vapor-Deposited Al', pct: '28.5%', barPct: 29 },
+          { name: isTr ? 'Titanyum Alaşımı (Ti-6Al-4V)' : 'Titanium Alloy (Ti-6Al-4V)', pct: '14.8%', barPct: 15 },
+          { name: isTr ? 'Güneş Rüzgarı Helyum-3 (He-3)' : 'Solar Wind Implant He-3', pct: '4.2 ppb', barPct: 22 }
+        ];
+
+    const rowColors = ['#00f0ff', '#10b981', '#f59e0b', '#c084fc'];
+
+    for (let r = 0; r < 4; r++) {
+      const item = elems[r] || { name: '--', pct: '--', barPct: 5 };
+      const ry = 286 + r * 44;
+
+      // Alternating row background
+      if (r % 2 === 1) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+        ctx.fillRect(18, ry - 8, w - 36, 40);
+      }
+
+      // Element Index
+      ctx.fillStyle = rowColors[r];
+      ctx.font = 'bold 15px "Consolas", monospace';
+      ctx.fillText(`0${r + 1}`, 32, ry + 16);
+
+      // Element Name
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 16px "Consolas", monospace';
+      ctx.fillText(item.name, 68, ry + 16);
+
+      // Percentage text
+      ctx.fillStyle = rowColors[r];
+      ctx.font = 'bold 16px "Consolas", monospace';
+      ctx.fillText(item.pct, 460, ry + 16);
+
+      // Distribution Bar
+      const dBarX = 560, dBarY = ry + 4, dBarH = 14, dBarW = w - 560 - 32;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(dBarX, dBarY, dBarW, dBarH);
+
+      const dFillW = Math.max(6, Math.min(dBarW, (dBarW * item.barPct) / 100));
+      ctx.fillStyle = rowColors[r];
+      ctx.fillRect(dBarX, dBarY, dFillW, dBarH);
+    }
+
+    // 6. Cosmic Weathering & Degradation Diagnostics Box (Y: 474 to 675)
+    ctx.fillStyle = '#080d1a';
+    ctx.fillRect(16, 474, w - 32, 198);
+    ctx.strokeStyle = '#334155';
+    ctx.strokeRect(16, 474, w - 32, 198);
+
+    // Diagnostics title with icon
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 15px "Consolas", monospace';
+    ctx.fillText(
+      isTr
+        ? '☀️ KOZMİK AŞINMA VE UZAY BOZULMASI TESPİT RAPORU:'
+        : '☀️ COSMIC WEATHERING & SPACE DEGRADATION REPORT:',
+      32,
+      498
+    );
+
+    // Multi-line word-wrapped degradation diagnostic text
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '16px "Consolas", monospace';
+    const diagText = data && data.diag
+      ? data.diag
+      : (isTr
+          ? 'Güneş rüzgarı partikülleri, mikrometeorit akısı ve doğrudan UV fotolizi yüzeyde mikron düzeyinde aşınma kraterleri oluşturmuştur. Lazer spektrometreyi hedef donanıma doğrultarak tetik çekiniz.'
+          : 'Solar wind bombardment, micrometeorite flux, and direct UV photolysis have created micro-impact craters. Aim the laser spectrometer and pull trigger for real-time elemental diagnostics.');
+
+    this.wrapTabletText(ctx, diagText, 32, 524, w - 64, 22);
+
+    // Heritage Protection Banner inside diagnostics box
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+    ctx.fillRect(28, 620, w - 56, 42);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(28, 620, w - 56, 42);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 14px "Consolas", monospace';
+    ctx.fillText(
+      isTr
+        ? '🏛️ ARTEMIS ACCORDS SEC. 9 • NASA LROC TEYİTLİ TARİHİ KORUMA ALANI (DOKUNULMAZ)'
+        : '🏛️ ARTEMIS ACCORDS SEC. 9 • NASA LROC VERIFIED HISTORIC PROTECTED ZONE (HERITAGE)',
+      42,
+      646
+    );
+
+    // 7. Footer Bar (Y: 680 to 754)
+    ctx.fillStyle = '#030712';
+    ctx.fillRect(16, 680, w - 32, 74);
+    ctx.strokeStyle = '#1e293b';
+    ctx.strokeRect(16, 680, w - 32, 74);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 14px "Consolas", monospace';
+    ctx.fillText('🔋 RTG: 98.4%', 32, 706);
+    ctx.fillText('📶 TELEMETRY: DUAL-LINK HOUSTON', 170, 706);
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 14px "Consolas", monospace';
+    ctx.fillText(
+      isTr
+        ? '🥽 VR KONTROL: [Tetik] Lazer Tara • [X] Tableti Aç/Kapat'
+        : '🥽 VR CONTROLS: [Trigger] Laser Scan • [X] Toggle Tablet',
+      470,
+      706
+    );
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px "Consolas", monospace';
+    ctx.fillText(
+      isTr
+        ? '💻 PC: [Sol Tık / Basılı Tut] Spektrometre Lazerini Ateşle • [G] Spektrometre & Tableti Göster/Gizle'
+        : '💻 PC: [Hold Left Click] Fire Spectrometer Laser • [G] Toggle Spectrometer & Data Pad',
+      32,
+      736
+    );
+
+    // Upload to WebGL GPU
+    if (this.tabletTexture) {
+      this.tabletTexture.needsUpdate = true;
+    }
+  }
+
+  wrapTabletText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let currY = y;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        ctx.fillText(line, x, currY);
+        line = words[n] + ' ';
+        currY += lineHeight;
+        if (currY > y + lineHeight * 3.5) break;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) {
+      ctx.fillText(line, x, currY);
+    }
+  }
+
+  attachToolsToXRControllers() {
+    if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+    if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
+
+    const rightCtrl = this.findXRController('right') || (this.xrControllers && this.xrControllers[1]);
+    const leftCtrl = this.findXRController('left') || (this.xrControllers && this.xrControllers[0]);
+
+    if (rightCtrl && this.spectrometerGroup) {
+      if (this.spectrometerGroup.parent !== rightCtrl) {
+        if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
+        rightCtrl.add(this.spectrometerGroup);
+      }
+      this.spectrometerGroup.position.set(0, -0.015, -0.08);
+      this.spectrometerGroup.rotation.set(-0.15, 0, 0);
+      this.spectrometerGroup.scale.set(1, 1, 1);
+      this.spectrometerGroup.visible = !!this.isSpectrometerActive;
+    }
+
+    if (leftCtrl && this.scienceTabletGroup) {
+      if (this.scienceTabletGroup.parent !== leftCtrl) {
+        if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
+        leftCtrl.add(this.scienceTabletGroup);
+      }
+      this.scienceTabletGroup.position.set(0.02, 0.07, -0.08);
+      this.scienceTabletGroup.rotation.set(-Math.PI / 3.2, 0, 0);
+      this.scienceTabletGroup.scale.set(1, 1, 1);
+      this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
+    }
+  }
+
+  reattachToolsToFPArms() {
+    if (this.spectrometerGroup && this.spectrometerGroup.parent !== this.fpRightArm) {
+      if (this.spectrometerGroup.parent) this.spectrometerGroup.parent.remove(this.spectrometerGroup);
+      if (this.fpRightArm) {
+        this.spectrometerGroup.position.set(0, 0.04, -0.16);
+        this.spectrometerGroup.rotation.set(-0.12, 0.05, 0);
+        this.spectrometerGroup.scale.set(1, 1, 1);
+        this.fpRightArm.add(this.spectrometerGroup);
+      }
+      this.spectrometerGroup.visible = !!this.isSpectrometerActive;
+    }
+
+    if (this.scienceTabletGroup && this.scienceTabletGroup.parent !== this.fpLeftArm) {
+      if (this.scienceTabletGroup.parent) this.scienceTabletGroup.parent.remove(this.scienceTabletGroup);
+      if (this.fpLeftArm) {
+        this.scienceTabletGroup.position.set(0.08, 0.12, -0.18);
+        this.scienceTabletGroup.rotation.set(-0.45, 0.35, -0.18);
+        this.scienceTabletGroup.scale.set(0.85, 0.85, 0.85);
+        this.fpLeftArm.add(this.scienceTabletGroup);
+      }
+      this.scienceTabletGroup.visible = !!this.isSpectrometerActive;
+    }
+  }
+
   toggleSpectrometer() {
     this.isSpectrometerActive = !this.isSpectrometerActive;
     this.playSwitchClickSound(this.isSpectrometerActive ? 750 : 450);
@@ -6146,13 +7213,24 @@ class MissionSimulationTheater {
     if (btn) {
       btn.classList.toggle('active', this.isSpectrometerActive);
       btn.innerText = this.isSpectrometerActive
-        ? (isTr ? '🔬 Spektrometre: AÇIK [G]' : '🔬 Spectrometer: ON [G]')
-        : (isTr ? '🔬 Spektrometre: KAPALI [G]' : '🔬 Spectrometer: OFF [G]');
+        ? (isTr ? '🔬 Spektrometre & Tablet: AÇIK [X/G]' : '🔬 Spectrometer & Tablet: ON [X/G]')
+        : (isTr ? '🔬 Spektrometre & Tablet: KAPALI [X/G]' : '🔬 Spectrometer & Tablet: OFF [X/G]');
     }
 
     if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+    if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
+
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting) {
+      this.attachToolsToXRControllers();
+    } else {
+      this.reattachToolsToFPArms();
+    }
+
     if (this.spectrometerGroup) {
       this.spectrometerGroup.visible = this.isSpectrometerActive;
+    }
+    if (this.scienceTabletGroup) {
+      this.scienceTabletGroup.visible = this.isSpectrometerActive;
     }
 
     if (!this.isSpectrometerActive) {
@@ -6160,6 +7238,7 @@ class MissionSimulationTheater {
       if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
       if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
     } else {
+      this.updateScienceTabletCanvas();
       this.startSpectrometerScan();
       setTimeout(() => {
         if (!this.isMouseDownScanning) this.stopSpectrometerScan();
@@ -6168,8 +7247,8 @@ class MissionSimulationTheater {
 
     this.updateVRGameMiniPill(
       this.isSpectrometerActive
-        ? (isTr ? '🔬 XRF Yüzey Spektrometresi Aktif [G]' : '🔬 XRF Surface Spectrometer Active [G]')
-        : (isTr ? '🔬 Spektrometre Kapatıldı' : '🔬 Spectrometer Stowed')
+        ? (isTr ? '🔬 XRF Yüzey Spektrometresi & Bilim Tableti Aktif [X/G]' : '🔬 XRF Surface Spectrometer & Science Tablet Active [X/G]')
+        : (isTr ? '🔬 Spektrometre ve Tablet Kapatıldı' : '🔬 Spectrometer & Tablet Stowed')
     );
   }
 
@@ -6198,6 +7277,7 @@ class MissionSimulationTheater {
     if (!this.isSpectrometerActive || this.cameraMode !== 'walk') {
       if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
       if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+      if (this.scienceTabletGroup) this.scienceTabletGroup.visible = false;
       if (window.SpaceAudio && this.isScanningAudioActive) {
         window.SpaceAudio.setSpectrometerBeamHum(false);
         this.isScanningAudioActive = false;
@@ -6206,17 +7286,28 @@ class MissionSimulationTheater {
     }
 
     if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+    if (!this.scienceTabletGroup) this.buildScienceTabletDevice();
     if (this.spectrometerGroup) this.spectrometerGroup.visible = true;
+    if (this.scienceTabletGroup) this.scienceTabletGroup.visible = true;
+
+    // Scan progress animation
+    if (this.isActivelyScanning) {
+      this.spectrometerScanProgress = Math.min(1.0, (this.spectrometerScanProgress || 0) + dt * 0.85);
+    } else {
+      this.spectrometerScanProgress = Math.max(0.15, (this.spectrometerScanProgress || 0) - dt * 0.35);
+    }
 
     // Raycast from camera center or XR controller into the scene
     const rayOrigin = new THREE.Vector3();
     const rayDir = new THREE.Vector3(0, 0, -1);
 
-    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers && this.xrControllers.length > 1) {
-      const rightCtrl = this.xrControllers[1];
-      rightCtrl.getWorldPosition(rayOrigin);
-      const tempMatrix = new THREE.Matrix4().identity().extractRotation(rightCtrl.matrixWorld);
-      rayDir.applyMatrix4(tempMatrix);
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers && this.xrControllers.length > 0) {
+      const rightCtrl = this.findXRController('right') || this.xrControllers[1] || this.xrControllers[0];
+      if (rightCtrl) {
+        const tempMatrix = new THREE.Matrix4().identity().extractRotation(rightCtrl.matrixWorld);
+        rayOrigin.setFromMatrixPosition(rightCtrl.matrixWorld);
+        rayDir.set(0, 0, -1).applyMatrix4(tempMatrix);
+      }
     } else {
       this.camera.getWorldPosition(rayOrigin);
       this.camera.getWorldDirection(rayDir);
@@ -6237,6 +7328,7 @@ class MissionSimulationTheater {
     if (hits && hits.length > 0) {
       const hit = hits[0];
       const dist = hit.distance;
+      this.lastSpectrometerDist = dist;
 
       // Position the contact ring on the hit point aligned with surface normal
       if (this.spectrometerContactRing) {
@@ -6268,12 +7360,20 @@ class MissionSimulationTheater {
         this.spectrometerBeam.material.opacity = this.isActivelyScanning ? 0.88 : 0.24;
       }
 
-      // Analyze target and update HUD card
+      // Analyze target and update HUD card & in-hand Science Tablet
       this.analyzeSpectrometerTarget(hit.object, dist);
 
     } else {
+      this.lastSpectrometerDist = 0;
       if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
       if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+    }
+
+    // Smooth periodic update of Science Tablet canvas (~20 fps)
+    const now = performance.now();
+    if (!this.lastTabletCanvasUpdate || now - this.lastTabletCanvasUpdate > 48) {
+      this.lastTabletCanvasUpdate = now;
+      this.updateScienceTabletCanvas();
     }
   }
 
@@ -6505,6 +7605,9 @@ class MissionSimulationTheater {
         if (ePctEl) ePctEl.innerText = item.pct;
       }
     }
+
+    this.lastSpectrometerTargetData = data;
+    this.lastSpectrometerDist = dist;
   }
 
   renderFrame() {
@@ -6981,6 +8084,15 @@ class MissionSimulationTheater {
         }
         this.xrButtonPrev[hand] = btns.map((_, i) => isPressed(i));
       }
+    }
+
+    // If driving the LRV Moon Buggy, run dedicated vehicle physics and skip foot walking
+    if (ws.isDrivingRover) {
+      this.updateRoverDrivingPhysics(dt, isXR);
+      const dist = Math.hypot(ws.x, ws.z).toFixed(1);
+      const distEl = document.getElementById('walk-hud-dist');
+      if (distEl) distEl.innerText = `${dist} m`;
+      return;
     }
 
     // ARM-SWING LOCOMOTION: hold Grip on a hand and swing that arm to walk forward

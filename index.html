@@ -64,6 +64,10 @@
 
       <!-- Header Action Buttons (Desktop) -->
       <div class="header-actions">
+        <button class="hud-btn btn-trailer-promo" id="btn-trailer-toggle" title="Watch Project Showcase Video (Full HD 1080p Trailer)">
+          <span>🎬</span>
+          <span data-i18n="btn_trailer">PROMO VIDEO</span>
+        </button>
         <button class="hud-btn btn-primary-sim" id="btn-top-sim" title="Launch 3D Descent / Kinetic Impact Reenactment">
           <span>🎬</span>
           <span data-i18n="btn_sim">SIMULATION</span>
@@ -631,6 +635,39 @@
           </div>
         </div>
         <p class="photo-modal-desc" id="lightbox-desc"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Video Trailer Modal -->
+  <div id="video-trailer-modal" class="modal-overlay">
+    <div class="modal-content video-modal-content">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge">🎬 NASA SPACE APPS 2026 // OFFICIAL SHOWCASE VIDEO</span>
+          <h2 style="margin:4px 0 0; font-size:18px; color:#fff;">ABANDONED IN SPACE — PROJECT TRAILER</h2>
+        </div>
+        <button class="modal-close" id="btn-close-video-trailer">&times;</button>
+      </div>
+      <div class="modal-body video-modal-body">
+        <div class="video-container">
+          <video id="promo-trailer-video" controls poster="assets/photos/apollo11_aldrin.jpg" preload="metadata">
+            <source src="assets/abandoned-in-space-trailer.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div class="video-meta-bar">
+          <div class="video-tags">
+            <span class="video-badge">1080p Full HD</span>
+            <span class="video-badge">54.5s Cinematic Showcase</span>
+            <span class="video-badge">Team Yiğido Orbit</span>
+          </div>
+          <div class="video-actions">
+            <a href="assets/abandoned-in-space-trailer.mp4" download="abandoned-in-space-trailer.mp4" class="hud-btn btn-primary-sim" style="text-decoration:none; padding:8px 16px;">
+              <span>⬇️</span> <span data-i18n="btn_download_video">DOWNLOAD MP4 (60 MB)</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

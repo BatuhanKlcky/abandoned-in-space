@@ -290,6 +290,34 @@ class AbandonedInSpaceApp {
     if (closeSourcesBtn) closeSourcesBtn.addEventListener('click', () => {
       if (sourcesModal) sourcesModal.classList.remove('open');
     });
+
+    // Project Video Trailer Modal
+    const trailerBtn = document.getElementById('btn-trailer-toggle');
+    const trailerModal = document.getElementById('video-trailer-modal');
+    const closeTrailerBtn = document.getElementById('btn-close-video-trailer');
+    const promoVideo = document.getElementById('promo-trailer-video');
+
+    const openTrailer = () => {
+      if (trailerModal) trailerModal.classList.add('open');
+      if (promoVideo) {
+        promoVideo.currentTime = 0;
+        promoVideo.play().catch(() => {});
+      }
+      if (window.SpaceAudio) window.SpaceAudio.playTelemetryPing(1200, 0.08);
+    };
+
+    const closeTrailer = () => {
+      if (trailerModal) trailerModal.classList.remove('open');
+      if (promoVideo) promoVideo.pause();
+    };
+
+    if (trailerBtn) trailerBtn.addEventListener('click', openTrailer);
+    if (closeTrailerBtn) closeTrailerBtn.addEventListener('click', closeTrailer);
+    if (trailerModal) {
+      trailerModal.addEventListener('click', (e) => {
+        if (e.target === trailerModal) closeTrailer();
+      });
+    }
     if (sourcesModal) {
       sourcesModal.addEventListener('click', (e) => {
         if (e.target === sourcesModal) sourcesModal.classList.remove('open');
@@ -906,6 +934,7 @@ class AbandonedInSpaceApp {
 
     // Update Interactive Element Tooltips for Browser Hover
     const tooltips = {
+      'btn-trailer-toggle': isTr ? 'Resmi Proje Tanıtım Videosunu İzle (1080p Full HD)' : 'Watch Official Project Showcase Video (1080p Full HD)',
       'btn-sound-toggle': isTr ? 'Sesi Aç / Kapat' : 'Toggle Audio / Ambient Sound',
       'btn-sources-toggle': isTr ? 'Resmi NASA Veri Kaynakları ve Tarih Serisi PDF Arşivleri' : 'Official NASA Data Sources & History Series PDF Archives',
       'btn-tour-toggle': isTr ? '5 Bölümlük Rehberli Hikaye Turunu Başlat' : 'Start 5-Act Guided Narrative Tour',
@@ -1045,6 +1074,8 @@ const TRANSLATIONS = {
     planet_mars: "MARS",
     planet_venus: "VENÜS",
     planet_outer: "TİTAN & DIŞ SİSTEM",
+    btn_trailer: "PROJE VİDEOSU",
+    btn_download_video: "VİDEOYU İNDİR (60 MB MP4)",
     btn_sim: "SİMÜLASYON",
     btn_walk_top: "1:1 YÜZEY / VR",
     btn_sources: "RESMİ KAYNAKLAR",
@@ -1147,6 +1178,8 @@ const TRANSLATIONS = {
     planet_mars: "MARS",
     planet_venus: "VENUS",
     planet_outer: "TITAN & OUTER SYSTEM",
+    btn_trailer: "PROMO VIDEO",
+    btn_download_video: "DOWNLOAD MP4 (60 MB)",
     btn_sim: "SIMULATION",
     btn_walk_top: "1:1 WALK / VR",
     btn_sources: "OFFICIAL SOURCES",

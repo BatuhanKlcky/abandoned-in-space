@@ -82,6 +82,15 @@ class MissionSimulationTheater {
     this.xrControllerPrevPos = [new THREE.Vector3(), new THREE.Vector3()];
     this.xrControllerPosInit = [false, false];
     this.vrTouchCooldown = 0;
+
+    // Handheld XRF / Raman Archaeological Spectrometer
+    this.isSpectrometerActive = false;
+    this.isActivelyScanning = false;
+    this.spectrometerGroup = null;
+    this.spectrometerBeam = null;
+    this.spectrometerContactRing = null;
+    this.lastSpectrometerTarget = null;
+    this.lastSpecChirpTime = 0;
   }
 
   setCleanVRGameMode(clean) {
@@ -209,6 +218,26 @@ class MissionSimulationTheater {
       torchToggleBtn.addEventListener('click', () => this.toggleFlashlight());
     }
 
+    const scannerToggleBtn = document.getElementById('btn-walk-scanner');
+    if (scannerToggleBtn) {
+      scannerToggleBtn.addEventListener('click', () => this.toggleSpectrometer());
+    }
+
+    const specTriggerBtn = document.getElementById('btn-spec-trigger');
+    if (specTriggerBtn) {
+      specTriggerBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.startSpectrometerScan();
+      });
+      specTriggerBtn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.stopSpectrometerScan();
+      });
+      specTriggerBtn.addEventListener('pointerleave', () => this.stopSpectrometerScan());
+    }
+
     const cabinToggleBtn = document.getElementById('btn-walk-cabin');
     if (cabinToggleBtn) {
       cabinToggleBtn.addEventListener('click', () => this.toggleCabinInterior());
@@ -273,6 +302,9 @@ class MissionSimulationTheater {
       if (code === 'KeyF') {
         this.toggleFlashlight();
       }
+      if (code === 'KeyG') {
+        this.toggleSpectrometer();
+      }
       if (code === 'KeyE') {
         // First check if looking at an interactive 3D object/sample/rover within reach; otherwise toggle cabin/hatch/rover!
         const hitObj = this.getHoveredInteractive(this.mouseNDC);
@@ -311,6 +343,9 @@ class MissionSimulationTheater {
         this.walkState.downMouseY = e.clientY;
         this.walkState.lastMouseX = e.clientX;
         this.walkState.lastMouseY = e.clientY;
+        if (this.isSpectrometerActive) {
+          this.startSpectrometerScan();
+        }
       });
 
       window.addEventListener('pointermove', (e) => {
@@ -341,6 +376,9 @@ class MissionSimulationTheater {
       });
 
       window.addEventListener('pointerup', (e) => {
+        if (this.isSpectrometerActive) {
+          this.stopSpectrometerScan();
+        }
         if (this.walkState.isLooking && this.cameraMode === 'walk') {
           const moveDist = Math.hypot(
             e.clientX - (this.walkState.downMouseX || e.clientX),
@@ -861,6 +899,16 @@ class MissionSimulationTheater {
       this.walkState.isDrivingRover = false;
       if (this.scaleRingsGroup) this.scaleRingsGroup.visible = false;
       if (walkHud) walkHud.classList.add('hidden');
+      const specCard = document.getElementById('spectrometer-card');
+      if (specCard) specCard.classList.add('hidden');
+      if (this.isSpectrometerActive) {
+        this.isSpectrometerActive = false;
+        const btn = document.getElementById('btn-walk-scanner');
+        if (btn) btn.classList.remove('active');
+        if (window.SpaceAudio) window.SpaceAudio.setSpectrometerBeamHum(false);
+      }
+      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
       if (walkBtn) walkBtn.classList.remove('active');
       if (this.controls) {
         this.controls.enabled = (mode === 'free');
@@ -1492,6 +1540,20 @@ class MissionSimulationTheater {
     }
     if (window.SpaceAudio) {
       window.SpaceAudio.setRoverMotorHum(false);
+      window.SpaceAudio.setSpectrometerBeamHum(false);
+    }
+    if (this.isSpectrometerActive) {
+      this.isSpectrometerActive = false;
+      const card = document.getElementById('spectrometer-card');
+      if (card) card.classList.add('hidden');
+      const btn = document.getElementById('btn-walk-scanner');
+      if (btn) btn.classList.remove('active');
+    }
+    if (this.spectrometerContactRing) {
+      this.spectrometerContactRing.visible = false;
+    }
+    if (this.spectrometerBeam) {
+      this.spectrometerBeam.material.opacity = 0.0;
     }
     this.walkState.keys = { w: false, a: false, s: false, d: false };
     this.walkState.isLooking = false;
@@ -5966,6 +6028,485 @@ class MissionSimulationTheater {
     }
   }
 
+  // ===========================================================================
+  // HANDHELD XRF / RAMAN ARCHAEOLOGICAL SURFACE SPECTROMETER
+  // ===========================================================================
+  buildSpectrometerDevice() {
+    if (this.spectrometerGroup) return;
+
+    this.spectrometerGroup = new THREE.Group();
+
+    // High-precision aerospace PBR materials
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.88,
+      roughness: 0.28
+    });
+    const titaniumMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.92,
+      roughness: 0.2
+    });
+    const goldAccMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.88,
+      roughness: 0.18
+    });
+    const ledCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const screenMat = new THREE.MeshBasicMaterial({ color: 0x064e3b }); // emerald display glow
+
+    // Angular Scanner Chassis Body
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.055, 0.17), bodyMat);
+    chassis.position.set(0, 0, -0.06);
+    this.spectrometerGroup.add(chassis);
+
+    // Front XRF Emitter Snout
+    const emitterSnout = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.06, 16), titaniumMat);
+    emitterSnout.rotation.x = Math.PI / 2;
+    emitterSnout.position.set(0, 0.005, -0.17);
+    this.spectrometerGroup.add(emitterSnout);
+
+    // Emitter Laser Lens Aperture
+    this.spectrometerLens = new THREE.Mesh(new THREE.CircleGeometry(0.016, 16), ledCyanMat);
+    this.spectrometerLens.rotation.y = Math.PI;
+    this.spectrometerLens.position.set(0, 0.005, -0.201);
+    this.spectrometerGroup.add(this.spectrometerLens);
+
+    // Top Angled OLED Telemetry Micro-Screen
+    const screenMesh = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.002, 0.065), screenMat);
+    screenMesh.position.set(0, 0.03, -0.045);
+    screenMesh.rotation.x = -0.25;
+    this.spectrometerGroup.add(screenMesh);
+
+    // Gold Thermal Dissipation Fins
+    [-0.034, 0.034].forEach(x => {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.035, 0.12), goldAccMat);
+      fin.position.set(x, 0.005, -0.06);
+      this.spectrometerGroup.add(fin);
+    });
+
+    // Holographic Laser Beam Line from emitter to hit point
+    const beamGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -5)
+    ]);
+    const beamMat = new THREE.LineBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.0
+    });
+    this.spectrometerBeam = new THREE.Line(beamGeo, beamMat);
+    this.spectrometerBeam.frustumCulled = false;
+    this.spectrometerGroup.add(this.spectrometerBeam);
+
+    // Holographic Contact Reticle on surface
+    const ringGeo = new THREE.RingGeometry(0.14, 0.18, 28);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.0,
+      depthTest: true
+    });
+    this.spectrometerContactRing = new THREE.Mesh(ringGeo, ringMat);
+    this.spectrometerContactRing.visible = false;
+    this.scene.add(this.spectrometerContactRing);
+
+    // 4 Corner Tick Lines around reticle
+    const ticksGroup = new THREE.Group();
+    for (let i = 0; i < 4; i++) {
+      const ang = (i * Math.PI) / 2 + Math.PI / 4;
+      const tick = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.016), ringMat);
+      tick.position.set(Math.cos(ang) * 0.24, Math.sin(ang) * 0.24, 0);
+      tick.rotation.z = ang;
+      ticksGroup.add(tick);
+    }
+    this.spectrometerContactRing.add(ticksGroup);
+
+    // Attach spectrometer to fpRightArm if available
+    if (this.fpRightArm) {
+      this.spectrometerGroup.position.set(0, 0.04, -0.16);
+      this.spectrometerGroup.rotation.set(-0.12, 0.05, 0);
+      this.spectrometerGroup.visible = false;
+      this.fpRightArm.add(this.spectrometerGroup);
+    }
+  }
+
+  toggleSpectrometer() {
+    this.isSpectrometerActive = !this.isSpectrometerActive;
+    this.playSwitchClickSound(this.isSpectrometerActive ? 750 : 450);
+
+    const card = document.getElementById('spectrometer-card');
+    const btn = document.getElementById('btn-walk-scanner');
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+
+    if (card) {
+      card.classList.toggle('hidden', !this.isSpectrometerActive);
+    }
+    if (btn) {
+      btn.classList.toggle('active', this.isSpectrometerActive);
+      btn.innerText = this.isSpectrometerActive
+        ? (isTr ? '🔬 Spektrometre: AÇIK [G]' : '🔬 Spectrometer: ON [G]')
+        : (isTr ? '🔬 Spektrometre: KAPALI [G]' : '🔬 Spectrometer: OFF [G]');
+    }
+
+    if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+    if (this.spectrometerGroup) {
+      this.spectrometerGroup.visible = this.isSpectrometerActive;
+    }
+
+    if (!this.isSpectrometerActive) {
+      this.stopSpectrometerScan();
+      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+    } else {
+      this.startSpectrometerScan();
+      setTimeout(() => {
+        if (!this.isMouseDownScanning) this.stopSpectrometerScan();
+      }, 700);
+    }
+
+    this.updateVRGameMiniPill(
+      this.isSpectrometerActive
+        ? (isTr ? '🔬 XRF Yüzey Spektrometresi Aktif [G]' : '🔬 XRF Surface Spectrometer Active [G]')
+        : (isTr ? '🔬 Spektrometre Kapatıldı' : '🔬 Spectrometer Stowed')
+    );
+  }
+
+  startSpectrometerScan() {
+    this.isActivelyScanning = true;
+    this.isMouseDownScanning = true;
+    if (window.SpaceAudio) {
+      window.SpaceAudio.setSpectrometerBeamHum(true);
+      window.SpaceAudio.playSpectrometerAnalyzeChirp();
+    }
+    const triggerBtn = document.getElementById('btn-spec-trigger');
+    if (triggerBtn) triggerBtn.classList.add('active');
+  }
+
+  stopSpectrometerScan() {
+    this.isActivelyScanning = false;
+    this.isMouseDownScanning = false;
+    if (window.SpaceAudio) {
+      window.SpaceAudio.setSpectrometerBeamHum(false);
+    }
+    const triggerBtn = document.getElementById('btn-spec-trigger');
+    if (triggerBtn) triggerBtn.classList.remove('active');
+  }
+
+  updateSpectrometer(dt) {
+    if (!this.isSpectrometerActive || this.cameraMode !== 'walk') {
+      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+      if (window.SpaceAudio && this.isScanningAudioActive) {
+        window.SpaceAudio.setSpectrometerBeamHum(false);
+        this.isScanningAudioActive = false;
+      }
+      return;
+    }
+
+    if (!this.spectrometerGroup) this.buildSpectrometerDevice();
+    if (this.spectrometerGroup) this.spectrometerGroup.visible = true;
+
+    // Raycast from camera center or XR controller into the scene
+    const rayOrigin = new THREE.Vector3();
+    const rayDir = new THREE.Vector3(0, 0, -1);
+
+    if (this.renderer && this.renderer.xr && this.renderer.xr.isPresenting && this.xrControllers && this.xrControllers.length > 1) {
+      const rightCtrl = this.xrControllers[1];
+      rightCtrl.getWorldPosition(rayOrigin);
+      const tempMatrix = new THREE.Matrix4().identity().extractRotation(rightCtrl.matrixWorld);
+      rayDir.applyMatrix4(tempMatrix);
+    } else {
+      this.camera.getWorldPosition(rayOrigin);
+      this.camera.getWorldDirection(rayDir);
+    }
+
+    this.spectrometerRaycaster = this.spectrometerRaycaster || new THREE.Raycaster();
+    this.spectrometerRaycaster.ray.origin.copy(rayOrigin);
+    this.spectrometerRaycaster.ray.direction.copy(rayDir);
+    this.spectrometerRaycaster.far = 38.0;
+
+    const targetsToTest = [];
+    if (this.spacecraft) targetsToTest.push(this.spacecraft);
+    if (this.terrain) targetsToTest.push(this.terrain);
+    if (this.interactables && this.interactables.length > 0) targetsToTest.push(...this.interactables);
+
+    const hits = this.spectrometerRaycaster.intersectObjects(targetsToTest, true);
+
+    if (hits && hits.length > 0) {
+      const hit = hits[0];
+      const dist = hit.distance;
+
+      // Position the contact ring on the hit point aligned with surface normal
+      if (this.spectrometerContactRing) {
+        this.spectrometerContactRing.visible = true;
+        const norm = (hit.face && hit.face.normal) ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0);
+        norm.transformDirection(hit.object.matrixWorld);
+        this.spectrometerContactRing.position.copy(hit.point).addScaledVector(norm, 0.03);
+        this.spectrometerContactRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), norm);
+        this.spectrometerContactRing.rotation.z += dt * 2.8;
+        this.spectrometerContactRing.material.opacity = this.isActivelyScanning ? 0.95 : 0.45;
+        this.spectrometerContactRing.scale.setScalar(this.isActivelyScanning ? 1.15 : 1.0);
+      }
+
+      // Update laser beam
+      if (this.spectrometerBeam && this.spectrometerGroup) {
+        const lensWorld = new THREE.Vector3();
+        if (this.spectrometerLens) {
+          this.spectrometerLens.getWorldPosition(lensWorld);
+        } else {
+          this.spectrometerGroup.getWorldPosition(lensWorld);
+        }
+        const localLens = this.spectrometerGroup.worldToLocal(lensWorld);
+        const localHit = this.spectrometerGroup.worldToLocal(hit.point.clone());
+
+        const positions = this.spectrometerBeam.geometry.attributes.position;
+        positions.setXYZ(0, localLens.x, localLens.y, localLens.z);
+        positions.setXYZ(1, localHit.x, localHit.y, localHit.z);
+        positions.needsUpdate = true;
+        this.spectrometerBeam.material.opacity = this.isActivelyScanning ? 0.88 : 0.24;
+      }
+
+      // Analyze target and update HUD card
+      this.analyzeSpectrometerTarget(hit.object, dist);
+
+    } else {
+      if (this.spectrometerContactRing) this.spectrometerContactRing.visible = false;
+      if (this.spectrometerBeam) this.spectrometerBeam.material.opacity = 0.0;
+    }
+  }
+
+  analyzeSpectrometerTarget(hitObj, dist) {
+    if (!hitObj) return;
+    const isTr = window.app ? window.app.currentLang === 'tr' : false;
+    const artifact = this.currentArtifact;
+    const body = (artifact && artifact.body) ? artifact.body.toLowerCase() : (this.currentBody || 'moon');
+
+    let targetType = 'chassis'; // 'terrain', 'kapton', 'inconel', 'solar', 'engine', 'ladder', 'sample', 'chassis'
+
+    // Check terrain first
+    if (hitObj === this.terrain || (hitObj.parent && hitObj.parent === this.terrain)) {
+      targetType = 'terrain';
+    } else {
+      let curr = hitObj;
+      let depth = 0;
+      while (curr && depth < 6) {
+        if (curr.userData && curr.userData.interactive && curr.userData.interactive.isSample) {
+          targetType = 'sample';
+          break;
+        }
+        if (curr.geometry && (curr.geometry.type === 'ConeGeometry' || curr.geometry.type === 'CylinderGeometry') && curr.position.y < -1.0) {
+          targetType = 'engine';
+          break;
+        }
+        curr = curr.parent;
+        depth++;
+      }
+
+      if (targetType === 'chassis') {
+        const mat = Array.isArray(hitObj.material) ? hitObj.material[0] : hitObj.material;
+        if (mat) {
+          if (mat.bumpMap || (mat.color && mat.color.r > 0.8 && mat.color.g > 0.4 && mat.color.b < 0.3)) {
+            targetType = 'kapton';
+          } else if (mat.color && mat.color.b > 0.22 && mat.color.r < 0.25) {
+            targetType = 'solar';
+          } else if (mat.color && mat.color.r < 0.25 && mat.color.g < 0.25 && mat.color.b < 0.25) {
+            targetType = 'inconel';
+          } else if (hitObj.position && (hitObj.position.y < -0.8 || (hitObj.geometry && hitObj.geometry.type === 'TorusGeometry'))) {
+            targetType = 'ladder';
+          }
+        }
+      }
+    }
+
+    // Audio chirp when discovering a new surface type
+    if (this.lastSpectrometerTarget !== targetType) {
+      this.lastSpectrometerTarget = targetType;
+      if (window.SpaceAudio) window.SpaceAudio.playSpectrometerAnalyzeChirp();
+    }
+
+    let data = {
+      name: '',
+      elems: [],
+      diag: ''
+    };
+
+    if (targetType === 'terrain') {
+      if (body === 'mars') {
+        data = {
+          name: isTr ? 'MARS MERİDİANİ BAZALTİK PAS KUMU' : 'MARTIAN BASALTIC FERRIC SOIL',
+          elems: [
+            { name: isTr ? 'Silika (SiO₂)' : 'Silicon Dioxide (SiO₂)', pct: '46.8%', barPct: 47 },
+            { name: isTr ? 'Demir Oksit (Fe₂O₃ / Pas)' : 'Ferric Iron Oxide (Rust)', pct: '19.4%', barPct: 19 },
+            { name: isTr ? 'Sülfat Tuzları (SO₃)' : 'Sulfates & Salts (SO₃)', pct: '13.5%', barPct: 14 },
+            { name: isTr ? 'Kil & Alüminosilikat' : 'Clay Minerals', pct: '11.2%', barPct: 11 }
+          ],
+          diag: isTr
+            ? 'Mevsimsel küresel fırtınalarla sürüklenen mikron altı demiroksit (pas) tozu. Opportunity ve Curiosity tekerlek izleri eoliyen kum rüzgarıyla yavaşça silinmektedir.'
+            : 'Sub-micron ferric oxide dust transported by seasonal planet-wide storms. Opportunity and Curiosity tracks undergo gradual aeolian sand abrasion.'
+        };
+      } else if (body === 'venus') {
+        data = {
+          name: isTr ? 'VENÜS SÜPERKRİTİK BAZALT LAV PLATOSU' : 'VENUSIAN SUPERCRITICAL BASALT',
+          elems: [
+            { name: isTr ? 'Silikat Lav (SiO₂)' : 'Silicate Basalt (SiO₂)', pct: '48.6%', barPct: 49 },
+            { name: isTr ? 'Kükürt Bileşikleri (S / FeS)' : 'Sulfur & Pyrite (FeS)', pct: '18.5%', barPct: 19 },
+            { name: isTr ? 'Magnezyum Oksit (MgO)' : 'Magnesium Oxide (MgO)', pct: '14.2%', barPct: 14 },
+            { name: isTr ? 'Titanyum Manyetit' : 'Titanomagnetite', pct: '9.4%', barPct: 9 }
+          ],
+          diag: isTr
+            ? '467°C sıcaklık ve 93 atmosferlik süperkritik basınç altında pirolize uğramış lav kabuğu. Venera gövdesi bazalt kayasıyla kimyasal füzyona uğramıştır.'
+            : 'Severe thermal sulfurization under 467°C heat and 93 bar supercritical CO2. Lander hulls have chemically fused into the basaltic bedrock.'
+        };
+      } else if (body === 'outer') {
+        data = {
+          name: isTr ? 'TİTAN ORGANİK THOLİN & SU BUZU' : 'TITAN CRYOGENIC WATER ICE & THOLIN',
+          elems: [
+            { name: isTr ? 'Katı Su Buzu (H₂O)' : 'Solid Water Ice (H₂O)', pct: '58.4%', barPct: 58 },
+            { name: isTr ? 'Organik Tholin Pus (C-H-N)' : 'Photochemical Tholins', pct: '26.2%', barPct: 26 },
+            { name: isTr ? 'Sıvı Hidrokarbon (CH₄)' : 'Liquid Hydrocarbons', pct: '12.1%', barPct: 12 },
+            { name: isTr ? 'Amonyak Kristalleri' : 'Ammonia Hydrate', pct: '3.3%', barPct: 5 }
+          ],
+          diag: isTr
+            ? '-179°C sıcaklıkta derin kriyojenik sabitleme. Metan gölleri kıyısında atmosferik fotokimyasal tholin aerosolleri enkaz üzerinde ince organik film tabakası oluşturmuştur.'
+            : 'Deep cryogenic stasis at -179°C. Photochemical tholin haze settles as an organic patina across Huygens and cometary terrain.'
+        };
+      } else {
+        // Moon Mare Tranquillitatis
+        data = {
+          name: isTr ? 'MARE TRANQUILLITATIS BAZALTİK AY REGOLİTİ' : 'BASALTIC LUNAR REGOLITH (MARE BASALT)',
+          elems: [
+            { name: isTr ? 'Silika (SiO₂)' : 'Silicon Dioxide (SiO₂)', pct: '45.4%', barPct: 45 },
+            { name: isTr ? 'Alümina (Al₂O₃)' : 'Aluminum Oxide (Al₂O₃)', pct: '14.8%', barPct: 15 },
+            { name: isTr ? 'Demir Oksit (FeO)' : 'Iron Oxide (FeO)', pct: '14.2%', barPct: 14 },
+            { name: isTr ? 'Helyum-3 (He-3)' : 'Helium-3 Solar Implant', pct: '4.2 ppb', barPct: 28 }
+          ],
+          diag: isTr
+            ? 'NASA LROC teyitli: Güneş rüzgarı partikülleri ve mikrometeorit akısı regoliti camsı aglütinatlara dönüştürmüştür. Armstrong ve Aldrin\'in tarihi bot izleri 55+ yıldır rüzgarsız ay ortamında bozulmadan korunmaktadır.'
+            : 'NASA LROC verified: Solar wind particle bombardment and micrometeorite impacts have forged agglutinate glasses. Armstrong and Aldrin\'s bootprints remain pristinely preserved across 55+ years.'
+        };
+      }
+    } else if (targetType === 'kapton') {
+      data = {
+        name: isTr ? 'APOLLO KAPTON MLI YALITIM FOLYOSU' : 'APOLLO KAPTON MLI THERMAL BLANKET',
+        elems: [
+          { name: isTr ? 'Poliimid Matris (C₂₂H₁₀N₂O₅)' : 'Polyimide Matrix (Kapton HN)', pct: '62.4%', barPct: 62 },
+          { name: isTr ? 'Alüminyum Buhar Katmanı (Al)' : 'Vapor-Deposited Aluminum (Al)', pct: '28.5%', barPct: 29 },
+          { name: isTr ? 'Silisyum Monoksit Kaplama' : 'Silicon Monoxide Passivation', pct: '6.8%', barPct: 10 },
+          { name: isTr ? 'Fotoliz Bozulması / Karbon' : 'UV Photolysis Carbonization', pct: '2.3%', barPct: 6 }
+        ],
+        diag: isTr
+          ? 'Güneşin filtresiz UV fotolizi altın poliimid tabakayı beyazlatarak alüminize gümüş alt tabakayı açığa çıkarmıştır. Yüzeyde mikrometeorit çarpma çukurları ve termal yorgunluk kırışıklıkları tespit edildi.'
+          : 'NASA LROC verified: Unfiltered solar UV photolysis bleached the outer golden polyimide film, exposing silvery aluminized substrate. Heavy micro-cratering and thermal crinkling verified.'
+      };
+    } else if (targetType === 'inconel') {
+      data = {
+        name: isTr ? 'INCONEL 718 NİKEL-KROM ISI KALKANI' : 'INCONEL 718 SUPERALLOY HEAT SHIELD',
+        elems: [
+          { name: isTr ? 'Nikel (Ni)' : 'Nickel (Ni)', pct: '52.8%', barPct: 53 },
+          { name: isTr ? 'Krom (Cr)' : 'Chromium (Cr)', pct: '19.1%', barPct: 19 },
+          { name: isTr ? 'Demir (Fe)' : 'Iron (Fe)', pct: '18.2%', barPct: 18 },
+          { name: isTr ? 'Niyobyum & Molibden' : 'Niobium & Molybdenum', pct: '8.4%', barPct: 12 }
+        ],
+        diag: isTr
+          ? 'Descent Propulsion System (DPS) roket alevinin 1400°C ısısına dayanmış nikel süperalaşımı. Korozyon ve oksidasyon sıfıra yakın; uzay boşluğunda yapısal sertliğini milyonlarca yıl koruyacaktır.'
+          : 'Superalloy engineered to withstand 1400°C rocket plumes. Zero oxidation in space vacuum; structural tensile integrity will endure for millennia.'
+      };
+    } else if (targetType === 'solar') {
+      data = {
+        name: isTr ? 'FOTOVOLTAJİK GÜNEŞ PANELİ HÜCRELERİ' : 'PHOTOVOLTAIC SOLAR ARRAY CELLS',
+        elems: [
+          { name: isTr ? 'Tek Kristal Silikon (Si)' : 'Monocrystalline Silicon (Si)', pct: '72.6%', barPct: 73 },
+          { name: isTr ? 'Galyum Arsenit (GaAs)' : 'Gallium Arsenide (GaAs)', pct: '18.2%', barPct: 18 },
+          { name: isTr ? 'Bor & Fosfor İletkenler' : 'Boron/Phosphorus Dopants', pct: '3.4%', barPct: 8 },
+          { name: isTr ? 'Yüzey Toz Tutunumu' : 'Regolith Dust Obstruction', pct: '5.8%', barPct: 12 }
+        ],
+        diag: isTr
+          ? 'Mikrometeorit mikro-pitting kratercikleri ve elektrostatik toz örtüsü foton geçirgenliğini azaltmıştır. Mars roverlarında (Opportunity/Spirit) rüzgarla taşınan pas tozu yüzeyi tamamen kaplamıştır.'
+          : 'Micrometeorite pitting and electrostatic dust deposition have choked photon transmission. On Mars rovers, ferric oxide dust blankets have fully extinguished photovoltaic conversion.'
+      };
+    } else if (targetType === 'engine') {
+      data = {
+        name: isTr ? 'AEROJET TRW DPS İNİŞ MOTORU ÇANI' : 'AEROJET TRW DESCENT ROCKET NOZZLE',
+        elems: [
+          { name: isTr ? 'Niyobyum-Titanyum Alaşımı' : 'Niobium-Titanium Alloy', pct: '58.4%', barPct: 58 },
+          { name: isTr ? 'Bakır Isı Radyatörü (Cu)' : 'Copper Heat Radiator (Cu)', pct: '28.6%', barPct: 29 },
+          { name: isTr ? 'Karbon-Grafit Boğaz Astarı' : 'Carbon-Graphite Throat Liner', pct: '9.8%', barPct: 12 },
+          { name: isTr ? 'Aerozin-50 Yanma Kalıntısı' : 'Aerozine-50 Plume Residue', pct: '3.2%', barPct: 8 }
+        ],
+        diag: isTr
+          ? 'Ay yüzeyine yumuşak iniş sağlayan kısılabilir roket nozulu. Yanma egzozunun radyal püskürme izleri iniş bölgesindeki regolitin üst katmanında hala belirgindir.'
+          : 'Throttleable lunar descent engine bell. Thruster plume radial blast scars are visibly etched into the upper regolith bedding surrounding the landing pad.'
+      };
+    } else if (targetType === 'ladder') {
+      data = {
+        name: isTr ? 'TİTANYUM İNİŞ AYAĞI VE APOLLO MERDİVENİ' : 'TITANIUM STRUT & HISTORIC APOLLO LADDER',
+        elems: [
+          { name: isTr ? 'Ti-6Al-4V Havacılık Titanyumu' : 'Ti-6Al-4V Grade 5 Titanium', pct: '64.2%', barPct: 64 },
+          { name: isTr ? '7075-T6 Uçak Alüminyumu' : '7075-T6 Aerospace Aluminum', pct: '24.8%', barPct: 25 },
+          { name: isTr ? '304L Paslanmaz Çelik' : '304L Stainless Steel Plaque', pct: '8.5%', barPct: 11 },
+          { name: isTr ? 'Ezilme Petek Sönümleyicisi' : 'Crushable Honeycomb Core', pct: '2.5%', barPct: 6 }
+        ],
+        diag: isTr
+          ? 'Neil Armstrong\'un Ay yüzeyine ilk adımı attığı tarihi EVA merdiveni. Basamaklar arasındaki paslanmaz çelik Apollo 11 plaketi ("Here men from the planet Earth first set foot upon the Moon...") lekesiz korunmaktadır.'
+          : 'Historic ladder used by Neil Armstrong during the first human lunar EVA. The stainless steel Apollo 11 commemorative plaque mounted between rungs remains perfectly preserved.'
+      };
+    } else if (targetType === 'sample') {
+      data = {
+        name: isTr ? 'ALSEP / JEOLOJİK NUMUNE KAPSÜLÜ' : 'ALSEP / GEOLOGICAL SAMPLE CAPSULE',
+        elems: [
+          { name: isTr ? 'Titanyum Numune Kabı (Grade 5)' : 'Grade 5 Titanium Canister', pct: '78.4%', barPct: 78 },
+          { name: isTr ? 'Hermetik İndiyum Contası' : 'Hermetic Indium Seal', pct: '12.5%', barPct: 13 },
+          { name: isTr ? 'Anortozit "Genesis" Kristalleri' : 'Anorthosite "Genesis" Crystals', pct: '6.1%', barPct: 9 },
+          { name: isTr ? 'Güneş Rüzgarı Gaz Kapanı' : 'Trapped Solar Wind Volatiles', pct: '3.0%', barPct: 6 }
+        ],
+        diag: isTr
+          ? 'Astronotlar tarafından yüzeyden toplanan ilksel ay kabuğu parçaları; güneş sisteminin 4.5 milyar yıllık jeolojik geçmişini ve erken çarpma kraterleşme tarihini barındırır.'
+          : 'Pristine lunar crustal samples collected by astronauts; encapsulating 4.5 billion years of early solar system bombardment history.'
+      };
+    } else {
+      // Default: Aerospace chassis
+      data = {
+        name: isTr ? 'HAVACILIK GÖVDE PANELİ VE BİLEŞENLERİ' : 'AEROSPACE CHASSIS & STRUCTURAL PANELS',
+        elems: [
+          { name: isTr ? 'Al-Li 2195 Alüminyum-Lityum' : 'Al-Li 2195 Aluminum-Lithium', pct: '68.4%', barPct: 68 },
+          { name: isTr ? 'Magnezyum-Toryum Alaşımı' : 'Magnesium-Thorium Alloy', pct: '18.2%', barPct: 18 },
+          { name: isTr ? 'Altın Kaplama İletkenler (Au)' : 'Gold-Plated Telemetry Connectors', pct: '8.1%', barPct: 10 },
+          { name: isTr ? 'Floropolimer Yalıtım' : 'Fluoropolymer Wire Insulation', pct: '5.3%', barPct: 8 }
+        ],
+        diag: isTr
+          ? 'Düşük kütleli alaşımlardan imal edilmiş havacılık strüktürü. Termal battaniyeler altında vakum ortamında mükemmel korunmuştur.'
+          : 'Low-mass aerospace structural alloys. Sealed beneath thermal blankets, preserved in pristine condition within the deep space vacuum.'
+      };
+    }
+
+    // Update DOM
+    const targetNameEl = document.getElementById('spec-target-name');
+    const targetMetaEl = document.getElementById('spec-target-meta');
+    const diagDescEl = document.getElementById('spec-diag-desc');
+
+    if (targetNameEl) targetNameEl.innerText = data.name;
+    if (targetMetaEl) {
+      targetMetaEl.innerText = isTr
+        ? `Mesafe: ${dist.toFixed(2)} m • Tarama Açısı: 12°`
+        : `Range: ${dist.toFixed(2)} m • Scan Angle: 12°`;
+    }
+    if (diagDescEl) diagDescEl.innerText = data.diag;
+
+    for (let i = 1; i <= 4; i++) {
+      const eNameEl = document.getElementById(`elem-name-${i}`);
+      const eFillEl = document.getElementById(`elem-fill-${i}`);
+      const ePctEl = document.getElementById(`elem-pct-${i}`);
+      const item = data.elems[i - 1];
+      if (item) {
+        if (eNameEl) eNameEl.innerText = item.name;
+        if (eFillEl) eFillEl.style.width = `${item.barPct}%`;
+        if (ePctEl) ePctEl.innerText = item.pct;
+      }
+    }
+  }
+
   renderFrame() {
     if (!this.isPlaying) return;
 
@@ -5993,6 +6534,10 @@ class MissionSimulationTheater {
     this.updateSimulationPhysics(this.simTime, dt);
     this.updateHUD(this.simTime);
     this.updateCamera(this.simTime, dt);
+
+    if (this.cameraMode === 'walk') {
+      this.updateSpectrometer(dt);
+    }
 
     if (this.controls && this.cameraMode === 'free' && !this.renderer.xr.isPresenting) {
       this.controls.update();

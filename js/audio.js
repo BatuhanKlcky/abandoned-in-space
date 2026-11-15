@@ -486,6 +486,64 @@ class SpaceAudioEngine {
       }
     } catch (_) {}
   }
+
+  /**
+   * Handheld XRF / Raman Archaeological Spectrometer Scanning Beam Hum
+   */
+  setSpectrometerBeamHum(active = false) {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      if (active) {
+        if (!this.scannerOsc) {
+          this.scannerOsc = this.ctx.createOscillator();
+          this.scannerGain = this.ctx.createGain();
+          this.scannerFilter = this.ctx.createBiquadFilter();
+          this.scannerFilter.type = 'bandpass';
+          this.scannerFilter.frequency.setValueAtTime(1200, now);
+          this.scannerFilter.Q.setValueAtTime(4.0, now);
+          this.scannerOsc.type = 'sine';
+          this.scannerOsc.frequency.setValueAtTime(640, now);
+          this.scannerGain.gain.setValueAtTime(0.001, now);
+          this.scannerOsc.connect(this.scannerFilter);
+          this.scannerFilter.connect(this.scannerGain);
+          this.scannerGain.connect(this.ctx.destination);
+          this.scannerOsc.start(now);
+        }
+        this.scannerOsc.frequency.setTargetAtTime(780, now, 0.08);
+        this.scannerGain.gain.setTargetAtTime(0.045, now, 0.05);
+      } else if (this.scannerGain) {
+        this.scannerGain.gain.setTargetAtTime(0.00001, now, 0.08);
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Handheld Spectrometer Spectral Analysis Acquired (4-tone fast digital chirp)
+   */
+  playSpectrometerAnalyzeChirp() {
+    if (!this.enabled) return;
+    this._initContext();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      [1046, 1318, 1567, 2093].forEach((f, i) => {
+        const t = now + i * 0.035;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(0.08, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.connect(g);
+        g.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.055);
+      });
+    } catch (_) {}
+  }
 }
 
 window.SpaceAudio = new SpaceAudioEngine();

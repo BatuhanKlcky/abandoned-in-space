@@ -3493,8 +3493,182 @@ body {
 }
 
 /* ==========================================================================
-   V4.6 NASA SPACE APPS 2026 GLOBAL AWARD COMPLIANCE:
-   VISIBLE PROCEDURAL/AI WATERMARK & SUBMISSION DOSSIER STYLES
+   HANDHELD XRF / RAMAN ARCHAEOLOGICAL SURFACE SPECTROMETER STYLES
+   ========================================================================== */
+
+.spectrometer-card {
+  position: absolute;
+  top: 90px;
+  right: 24px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: rgba(6, 12, 24, 0.90);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  border-radius: 12px;
+  padding: 12px 14px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.2);
+  z-index: 30;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  user-select: none;
+}
+
+.spectrometer-card.hidden {
+  display: none !important;
+}
+
+.spec-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  padding-bottom: 6px;
+}
+
+.spec-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  letter-spacing: 0.5px;
+}
+
+.spec-beacon-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+  animation: pulseBeacon 1.2s infinite ease-in-out;
+}
+
+.spec-key-hint {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.spec-target-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spec-target-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+.spec-elem-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.spec-elem-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.elem-name {
+  color: #e2e8f0;
+  min-width: 110px;
+}
+
+.elem-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.elem-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #00f0ff);
+  border-radius: 3px;
+  transition: width 0.35s ease;
+}
+
+.elem-pct {
+  color: #38bdf8;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: right;
+}
+
+.spec-diag-box {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 2.5px solid #10b981;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+.spec-diag-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.spec-diag-desc {
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+
+.spec-trigger-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.3));
+  border: 1px solid rgba(0, 240, 255, 0.6);
+  color: #e0f2fe;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.spec-trigger-btn:hover,
+.spec-trigger-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), rgba(16, 185, 129, 0.5));
+  border-color: #00f0ff;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   PROCEDURAL / AI WATERMARK STYLES
    ========================================================================== */
 
 .procedural-watermark-badge {

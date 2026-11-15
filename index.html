@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet with Cache-Buster -->
-  <link rel="stylesheet" href="css/style.css?v=9.0">
+  <link rel="stylesheet" href="css/style.css?v=9.1">
   <link rel="icon" type="image/jpeg" href="assets/yigido-orbit-logo.jpg">
   
   <!-- Three.js & OrbitControls via CDN -->
@@ -717,8 +717,55 @@
               <button class="walk-sub-btn" id="btn-walk-view-toggle" title="Toggle 1st / 3rd Person View (V)" data-i18n="walk_btn_view">👁️ View: 1st Person (Astronaut Hands)</button>
               <button class="walk-sub-btn active" id="btn-walk-cabin" title="Open / Close Airlock Hatch (E)" data-i18n="walk_btn_cabin">🚪 Open EVA Hatch & Exit (E)</button>
               <button class="walk-sub-btn active" id="btn-walk-torch" title="Toggle NASA EVA Flashlight (F)" data-i18n="walk_btn_torch">🔦 EVA Torch (F)</button>
+              <button class="walk-sub-btn" id="btn-walk-scanner" title="Toggle Handheld XRF / Raman Spectrometer (G)" data-i18n="walk_btn_scanner">🔬 XRF Spektrometre (G)</button>
               <button class="walk-sub-btn" id="btn-walk-clean-ui" title="Cinematic Fullscreen Mode (H / TAB)" data-i18n="walk_btn_clean_ui">🎮 Hide UI / Game Mode (H)</button>
             </div>
+          </div>
+
+          <!-- Handheld XRF / Raman Archaeological Spectrometer HUD Card -->
+          <div class="spectrometer-card hidden" id="spectrometer-card">
+            <div class="spec-card-header">
+              <div class="spec-status-pill">
+                <span class="spec-beacon-pulse"></span>
+                <span id="spec-status-text">XRF / RAMAN SPEKTROMETRE</span>
+              </div>
+              <span class="spec-key-hint">[G / CLICK]</span>
+            </div>
+            <div class="spec-target-name" id="spec-target-name">HEDEF: YÜZEY AY REGOLİTİ</div>
+            <div class="spec-target-meta" id="spec-target-meta">Mesafe: 1.82 m • Tarama Açısı: 14°</div>
+
+            <!-- Elemental Composition Spectrum Breakdown -->
+            <div class="spec-elem-grid" id="spec-elem-grid">
+              <div class="spec-elem-row">
+                <span class="elem-name" id="elem-name-1">SiO₂ (Silika)</span>
+                <div class="elem-bar-track"><div class="elem-bar-fill" id="elem-fill-1" style="width: 45%;"></div></div>
+                <span class="elem-pct" id="elem-pct-1">45.2%</span>
+              </div>
+              <div class="spec-elem-row">
+                <span class="elem-name" id="elem-name-2">FeO (Demir Oksit)</span>
+                <div class="elem-bar-track"><div class="elem-bar-fill" id="elem-fill-2" style="width: 14%;"></div></div>
+                <span class="elem-pct" id="elem-pct-2">14.3%</span>
+              </div>
+              <div class="spec-elem-row">
+                <span class="elem-name" id="elem-name-3">Al₂O₃ (Alümina)</span>
+                <div class="elem-bar-track"><div class="elem-bar-fill" id="elem-fill-3" style="width: 15%;"></div></div>
+                <span class="elem-pct" id="elem-pct-3">14.9%</span>
+              </div>
+              <div class="spec-elem-row">
+                <span class="elem-name" id="elem-name-4">He-3 (Helyum-3)</span>
+                <div class="elem-bar-track"><div class="elem-bar-fill" id="elem-fill-4" style="width: 28%;"></div></div>
+                <span class="elem-pct" id="elem-pct-4">4.2 ppb</span>
+              </div>
+            </div>
+
+            <!-- Archaeological Weathering Diagnosis -->
+            <div class="spec-diag-box">
+              <div class="spec-diag-title">📜 ARKEOLOJİK & AŞINMA ANALİZİ:</div>
+              <div class="spec-diag-desc" id="spec-diag-desc">Güneş rüzgarı partikülleri ve mikrometeorit bombardımanı regoliti camsı aglütinatlara dönüştürdü; Apollo 11 iniş iticisiyle saçılan regolit tozu metalik yüzeylerde mikron düzeyinde tutunmuştur.</div>
+            </div>
+
+            <!-- Interactive Scan Trigger Button for Mobile / Mouse Touch -->
+            <button class="spec-trigger-btn" id="btn-spec-trigger">⚡ YÜZEYİ TARA (BASILI TUT)</button>
           </div>
 
           <!-- Center Visor Crosshair & Interactive 3D Button / Switch Tooltip -->
@@ -862,12 +909,12 @@
     <button class="toast-close" id="btn-close-toast">✕</button>
   </div>
 
-  <!-- JavaScript Modules with Cache-Buster v9.0 -->
-  <script src="js/data.js?v=9.0"></script>
-  <script src="js/textures.js?v=9.0"></script>
-  <script src="js/audio.js?v=9.0"></script>
-  <script src="js/scene.js?v=9.0"></script>
-  <script src="js/simulation.js?v=9.0"></script>
-  <script src="js/app.js?v=9.0"></script>
+  <!-- JavaScript Modules with Cache-Buster v9.1 -->
+  <script src="js/data.js?v=9.1"></script>
+  <script src="js/textures.js?v=9.1"></script>
+  <script src="js/audio.js?v=9.1"></script>
+  <script src="js/scene.js?v=9.1"></script>
+  <script src="js/simulation.js?v=9.1"></script>
+  <script src="js/app.js?v=9.1"></script>
 </body>
 </html>

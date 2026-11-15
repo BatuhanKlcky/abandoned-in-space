@@ -2363,6 +2363,87 @@ class MissionSimulationTheater {
     this.scene.add(station);
   }
 
+  // =========================================================================
+  // VEHICLE SURFACE & WALKABLE DECK PROFILE (PHYSICS COLLISION & CLIMBING)
+  // Calculates physical deck elevation, top solar panel heights, and obstacle radius
+  // Allows astronauts to jump and walk ON TOP of space vehicles without freezing!
+  // =========================================================================
+  getVehicleSurfaceProfile(x, z) {
+    if (!this.spacecraft) {
+      return { isOverVehicle: false, deckY: 0, radius: 2.8, isWalkableDeck: false };
+    }
+    const art = this.currentArtifact;
+    const sPos = this.spacecraft.position;
+    const dx = x - (sPos.x || 0);
+    const dz = z - (sPos.z || 0);
+    const d = Math.hypot(dx, dz);
+    const descentOffset = (this.getDescentOffset && typeof this.simTime === 'number') ? this.getDescentOffset(this.simTime) : 0;
+    const isLanded = typeof this.simTime === 'number' ? (this.simTime >= 5.8) : true;
+
+    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(art ? art.id : '');
+    const isRover = art && (art.category === 'rover' || (art.id && art.id.includes('rover')) || ['curiosity', 'perseverance', 'opportunity', 'spirit', 'sojourner'].includes(art.id));
+    const isVenera = art && (art.category === 'venera' || (art.id && art.id.includes('venera')));
+    const isHelicopter = art && (art.category === 'helicopter' || (art.id && art.id === 'ingenuity'));
+
+    if (isApolloLM) {
+      // Apollo Lunar Module Descent Stage:
+      // Octagonal launch deck atop descent stage: radius 2.55m, deck height y = 3.25m
+      // Landing gear outrigger struts: radius up to 4.2m, step height y = 0.55m
+      if (d <= 2.55) {
+        return { isOverVehicle: true, deckY: (isLanded ? 3.25 : 3.25 + descentOffset), radius: 2.55, isWalkableDeck: true };
+      }
+      if (d <= 4.2) {
+        return { isOverVehicle: true, deckY: 0.55, radius: 4.2, isWalkableDeck: true };
+      }
+      return { isOverVehicle: false, deckY: 0, radius: 2.55, isWalkableDeck: false };
+    }
+
+    if (isRover) {
+      // Mars Rovers (Curiosity, Perseverance, Opportunity, Spirit, Sojourner):
+      // Main chassis, RTG / warm electronics box, and photovoltaic solar wings: deck height y = 1.45m
+      // Rocker-bogie wheel suspension tops: y = 0.65m
+      if (d <= 2.5) {
+        return { isOverVehicle: true, deckY: 1.45, radius: 2.5, isWalkableDeck: true };
+      }
+      if (d <= 3.4) {
+        return { isOverVehicle: true, deckY: 0.65, radius: 3.4, isWalkableDeck: true };
+      }
+      return { isOverVehicle: false, deckY: 0, radius: 2.5, isWalkableDeck: false };
+    }
+
+    if (isVenera) {
+      // Soviet Venera Landers:
+      // Aerodynamic brake disk & top instrument ring: deck height y = 1.65m
+      // Toroidal shock-absorber base ring: y = 0.45m
+      if (d <= 2.3) {
+        return { isOverVehicle: true, deckY: 1.65, radius: 2.3, isWalkableDeck: true };
+      }
+      if (d <= 3.2) {
+        return { isOverVehicle: true, deckY: 0.45, radius: 3.2, isWalkableDeck: true };
+      }
+      return { isOverVehicle: false, deckY: 0, radius: 2.3, isWalkableDeck: false };
+    }
+
+    if (isHelicopter) {
+      // Ingenuity Mars Helicopter:
+      // Fuselage box & solar panel mast: y = 2.2m
+      if (d <= 1.4) {
+        return { isOverVehicle: true, deckY: 2.2, radius: 1.4, isWalkableDeck: true };
+      }
+      return { isOverVehicle: false, deckY: 0, radius: 1.4, isWalkableDeck: false };
+    }
+
+    // Default landers, probes, Centaur stage, Skycrane:
+    // Upper equipment platform / solar deck: y = 1.35m
+    if (d <= 2.4) {
+      return { isOverVehicle: true, deckY: 1.35, radius: 2.4, isWalkableDeck: true };
+    }
+    if (d <= 3.3) {
+      return { isOverVehicle: true, deckY: 0.5, radius: 3.3, isWalkableDeck: true };
+    }
+    return { isOverVehicle: false, deckY: 0, radius: 2.4, isWalkableDeck: false };
+  }
+
   // Exact Analytical Planetary Surface Height Function (O(1) Ultra-Fast, Zero Raycaster Lag Spikes!)
   getExactSurfaceHeight(x, z) {
     const d = Math.hypot(x, z);
@@ -6280,6 +6361,7 @@ class MissionSimulationTheater {
     const groundY0 = this.getExactSurfaceHeight(0, 6.85);
     const isTr = window.app ? window.app.currentLang === 'tr' : false;
     const cabinBtn = document.getElementById('btn-walk-cabin');
+    const isApolloLM = ['apollo-11', 'apollo-12-surveyor', 'apollo-14-fra-mauro', 'apollo-15-hadley', 'apollo-16-descartes', 'apollo-17-taurus'].includes(this.currentArtifact ? this.currentArtifact.id : '');
 
     // Smoothly animate BOTH Doors of the Dual-Door Pressurized Airlock System:
     // • Door #1 (Inner Cabin Bulkhead Dual-Leaf Door at z = 1.65) + Inner Blue Valve Wheel
@@ -6422,7 +6504,7 @@ class MissionSimulationTheater {
         }
       } else {
         // 2. Check if astronaut is in the Exterior Boarding Ladder & Flat EVA Porch Corridor (|x| < 0.90, z between 2.65 and 6.95)
-        const inLadderCorridor = Math.abs(candidateX) < 0.90 && candidateZ >= 2.65 && candidateZ <= 6.95;
+        const inLadderCorridor = isApolloLM && Math.abs(candidateX) < 0.90 && candidateZ >= 2.65 && candidateZ <= 6.95;
         if (inLadderCorridor) {
           ws.isOnLadder = true;
           ws.x = Math.max(-0.48, Math.min(0.48, candidateX));
@@ -6456,17 +6538,50 @@ class MissionSimulationTheater {
             this.updateVRGameMiniPill(isTr ? 'Gezegen Yüzeyine İnildi — Numuneleri Toplayın!' : 'On Planetary Surface — Collect Samples!');
           }
           ws.isOnLadder = false;
-          // Standard surface movement outside compact octagonal lander hull (radius 3.25m)
-          if (candidateDist > 3.25 && candidateDist < 120) {
-            ws.x = candidateX;
-            ws.z = candidateZ;
+
+          const curProfile = this.getVehicleSurfaceProfile(ws.x, ws.z);
+          const candProfile = this.getVehicleSurfaceProfile(candidateX, candidateZ);
+
+          // Is the astronaut jumping, climbing, or walking on top of the spacecraft / rover deck?
+          const isAtDeckElevation = ws.y >= (curProfile.deckY - 0.35) || ws.y >= (candProfile.deckY - 0.35);
+          const isWalkingOnVehicleDeck = isAtDeckElevation && (curProfile.isWalkableDeck || candProfile.isWalkableDeck);
+
+          if (isWalkingOnVehicleDeck) {
+            // Free, smooth 360-degree walking across spacecraft tops, solar decks and chassis without any freezing!
+            const dCand = Math.hypot(candidateX, candidateZ);
+            if (dCand < 120) {
+              ws.x = candidateX;
+              ws.z = candidateZ;
+            }
+          } else {
+            // Ground-level obstacle collision: smoothly slide around hull perimeter rather than freezing!
+            const hullRadius = candProfile.radius || 2.5;
+            let finalX = candidateX;
+            let finalZ = candidateZ;
+            const curDist = Math.hypot(candidateX, candidateZ);
+
+            if (curDist < hullRadius) {
+              if (curDist > 0.001) {
+                // Smooth tangent sliding projection (never gets stuck inside or locked)
+                finalX = (candidateX / curDist) * hullRadius;
+                finalZ = (candidateZ / curDist) * hullRadius;
+              } else {
+                finalZ = hullRadius;
+              }
+            }
+
+            const finalDist = Math.hypot(finalX, finalZ);
+            if (finalDist < 120) {
+              ws.x = finalX;
+              ws.z = finalZ;
+            }
           }
         }
       }
 
       ws.stepPhase += dt * (ws.isInsideCabin ? 5.2 : 6.4);
 
-      // Dynamic Procedural Footsteps across Cabin Deck, EVA Ladder & Lunar Regolith:
+      // Dynamic Procedural Footsteps across Cabin Deck, EVA Ladder, Vehicle Deck & Lunar Regolith:
       const stepInterval = Math.PI * 0.72;
       const stepIndex = Math.floor(ws.stepPhase / stepInterval);
       if (stepIndex > ws.lastStepCount && ws.isGrounded && !ws.isDrivingRover) {
@@ -6475,7 +6590,7 @@ class MissionSimulationTheater {
         if (ws.isInsideCabin) {
           if (window.SpaceAudio) window.SpaceAudio.playDeckStep();
           this.pulseXRHaptics(0.18, 14, isLeftFoot ? 'left' : 'right');
-        } else if (ws.isOnLadder) {
+        } else if (ws.isOnLadder || ws.isOnVehicleDeck) {
           if (window.SpaceAudio) window.SpaceAudio.playLadderClank();
           this.pulseXRHaptics(0.25, 18, isLeftFoot ? 'left' : 'right');
         } else {
@@ -6493,10 +6608,21 @@ class MissionSimulationTheater {
       window.SpaceAudio.setRoverMotorHum(false);
     }
 
-    // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Rover vs. Planetary Surface Gravity
+    // Vertical Elevation: Inside Descending/Landed Cabin vs. Climbing Ladder vs. Rover vs. Planetary Surface Gravity vs. On Spacecraft Deck
     const body = this.currentArtifact ? this.currentArtifact.body : 'moon';
     const gravity = body === 'moon' ? 3.2 : body === 'outer' ? 2.8 : body === 'mars' ? 5.5 : 9.8;
-    const groundY = this.getExactSurfaceHeight(ws.x, ws.z);
+    const terrainGroundY = this.getExactSurfaceHeight(ws.x, ws.z);
+
+    const vehicleProfile = this.getVehicleSurfaceProfile(ws.x, ws.z);
+    let effectiveFloorY = terrainGroundY;
+    let standingOnDeck = false;
+
+    // If astronaut is elevated at or above the vehicle deck, the vehicle deck acts as a solid walkable surface!
+    if (vehicleProfile.isWalkableDeck && ws.y >= (vehicleProfile.deckY - 0.35)) {
+      effectiveFloorY = Math.max(terrainGroundY, vehicleProfile.deckY);
+      standingOnDeck = true;
+    }
+    ws.isOnVehicleDeck = standingOnDeck;
 
     if (ws.isInsideCabin) {
       // Ride smoothly inside the descending rocket cabin from 68m altitude down to 4.5m deck height!
@@ -6507,7 +6633,7 @@ class MissionSimulationTheater {
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isDrivingRover) {
-      ws.y = groundY + 0.38 + (isMoving ? Math.sin(this.simTime * 18) * 0.025 : 0);
+      ws.y = terrainGroundY + 0.38 + (isMoving ? Math.sin(this.simTime * 18) * 0.025 : 0);
       ws.vy = 0;
       ws.isGrounded = true;
     } else if (ws.isOnLadder) {
@@ -6521,19 +6647,28 @@ class MissionSimulationTheater {
       }
       ws.vy = 0;
       ws.isGrounded = true;
-    } else if (!ws.isGrounded || ws.y > groundY + 0.04) {
+    } else if (!ws.isGrounded || ws.y > effectiveFloorY + 0.04) {
       ws.vy -= gravity * dt;
       ws.y += ws.vy * dt;
-      if (ws.y <= groundY) {
-        ws.y = groundY;
+      if (ws.y <= effectiveFloorY) {
+        ws.y = effectiveFloorY;
         ws.vy = 0;
         ws.isGrounded = true;
-        this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, true);
-        this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, false);
-        this.spawnBootDust(ws.x, ws.z, 10);
+        if (standingOnDeck) {
+          if (window.SpaceAudio) window.SpaceAudio.playLadderClank();
+        } else {
+          this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, true);
+          this.spawnFootprint(ws.x, ws.z, effectiveMoveYaw, false);
+          this.spawnBootDust(ws.x, ws.z, 10);
+        }
       }
     } else {
-      ws.y = groundY;
+      ws.y = effectiveFloorY;
+      ws.isGrounded = true;
+    }
+
+    if (standingOnDeck && !ws.isInsideCabin && !ws.isOnLadder && !ws.isDrivingRover) {
+      this.updateVRGameMiniPill(isTr ? '🚀 Uzay Aracı Üzerinde Yürüyüş Modu' : '🚀 Walking on Spacecraft Deck');
     }
 
     // Keep the exterior spacecraft / rocket / descent stage visible at all elevations and angles;

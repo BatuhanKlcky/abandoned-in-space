@@ -1343,6 +1343,228 @@ class CelestialTextureGenerator {
     }
     return canvas;
   }
+
+  /**
+   * Generates dynamic procedural PBR textures that physically weather and accumulate regolith in real time
+   * Provides authentic Kapton UV photolysis bleaching, micro-meteorite craters, and layered regolith silt.
+   */
+  createDynamicWeatheringTextures(width = 512, height = 512) {
+    const kCanvas = document.createElement('canvas');
+    kCanvas.width = width;
+    kCanvas.height = height;
+    const kCtx = kCanvas.getContext('2d');
+    const kTex = (typeof THREE !== 'undefined' && THREE.CanvasTexture)
+      ? new THREE.CanvasTexture(kCanvas)
+      : null;
+    if (kTex) {
+      kTex.wrapS = THREE.RepeatWrapping;
+      kTex.wrapT = THREE.RepeatWrapping;
+    }
+
+    const sCanvas = document.createElement('canvas');
+    sCanvas.width = width;
+    sCanvas.height = height;
+    const sCtx = sCanvas.getContext('2d');
+    const sTex = (typeof THREE !== 'undefined' && THREE.CanvasTexture)
+      ? new THREE.CanvasTexture(sCanvas)
+      : null;
+    if (sTex) {
+      sTex.wrapS = THREE.RepeatWrapping;
+      sTex.wrapT = THREE.RepeatWrapping;
+    }
+
+    const update = (factor = 0.75, body = 'moon') => {
+      factor = Math.max(0, Math.min(1, typeof factor === 'number' ? factor : 0.75));
+
+      // 1. Kapton Polyimide Multilayer Foil Weathering Canvas
+      // Day 0: Deep brilliant aerospace gold (#f59e0b / #d97706 / #fbbf24)
+      // +55 Yrs / +100 Yrs: Photochemically bleached silvery-aluminum (#e2e8f0), micro-pitted & dust-laden
+      kCtx.clearRect(0, 0, width, height);
+
+      const goldR1 = 245, goldG1 = 158, goldB1 = 11;
+      const goldR2 = 217, goldG2 = 119, goldB2 = 6;
+      const silverR1 = 226, silverG1 = 232, silverB1 = 240;
+      const silverR2 = 186, silverG2 = 196, silverB2 = 208;
+
+      const r1 = Math.round(goldR1 + (silverR1 - goldR1) * factor * 0.95);
+      const g1 = Math.round(goldG1 + (silverG1 - goldG1) * factor * 0.95);
+      const b1 = Math.round(goldB1 + (silverB1 - goldB1) * factor * 0.95);
+      const r2 = Math.round(goldR2 + (silverR2 - goldR2) * factor * 0.95);
+      const g2 = Math.round(goldG2 + (silverG2 - goldG2) * factor * 0.95);
+      const b2 = Math.round(goldB2 + (silverB2 - goldB2) * factor * 0.95);
+
+      const kGrad = kCtx.createLinearGradient(0, 0, width, height);
+      kGrad.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
+      kGrad.addColorStop(0.5, `rgb(${r2}, ${g2}, ${b2})`);
+      kGrad.addColorStop(1, `rgb(${Math.round(r1 * 0.85)}, ${Math.round(g1 * 0.85)}, ${Math.round(b1 * 0.85)})`);
+      kCtx.fillStyle = kGrad;
+      kCtx.fillRect(0, 0, width, height);
+
+      // Irregular specular facets
+      for (let i = 0; i < 45; i++) {
+        const cx = (i * 73 + 19) % width;
+        const cy = (i * 127 + 43) % height;
+        const radius = 20 + ((i * 17) % 55);
+        const fGrad = kCtx.createRadialGradient(cx, cy, 2, cx, cy, radius);
+        if (factor < 0.3) {
+          fGrad.addColorStop(0, 'rgba(254, 243, 199, 0.45)');
+          fGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        } else {
+          fGrad.addColorStop(0, `rgba(255, 255, 255, ${0.45 * (1 - factor * 0.4)})`);
+          fGrad.addColorStop(1, 'rgba(203, 213, 225, 0)');
+        }
+        kCtx.fillStyle = fGrad;
+        kCtx.beginPath();
+        kCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+        kCtx.fill();
+      }
+
+      // UV Photolysis Bleaching Splotches (expanding irregular white-aluminum patches)
+      if (factor > 0.04) {
+        const numPatches = Math.round(factor * 28);
+        for (let p = 0; p < numPatches; p++) {
+          const px = (p * 97 + 31) % width;
+          const py = (p * 139 + 71) % height;
+          const pRad = 15 + ((p * 29) % 65) * factor;
+          const pGrad = kCtx.createRadialGradient(px, py, 2, px, py, pRad);
+          pGrad.addColorStop(0, `rgba(248, 250, 252, ${Math.min(0.92, factor * 0.95)})`);
+          pGrad.addColorStop(0.6, `rgba(226, 232, 240, ${Math.min(0.68, factor * 0.72)})`);
+          pGrad.addColorStop(1, 'rgba(226, 232, 240, 0)');
+          kCtx.fillStyle = pGrad;
+          kCtx.beginPath();
+          kCtx.arc(px, py, pRad, 0, Math.PI * 2);
+          kCtx.fill();
+        }
+      }
+
+      // Micro-meteorite Impact Craters & Spallation Halos
+      if (factor > 0.12) {
+        const numPits = Math.round(factor * 35);
+        for (let m = 0; m < numPits; m++) {
+          const mx = (m * 151 + 59) % width;
+          const my = (m * 89 + 113) % height;
+          const mSize = 1.2 + ((m * 3) % 4.5);
+          kCtx.fillStyle = `rgba(255, 255, 255, ${0.45 + factor * 0.35})`;
+          kCtx.beginPath();
+          kCtx.arc(mx, my, mSize * 2.2, 0, Math.PI * 2);
+          kCtx.fill();
+          kCtx.fillStyle = '#1e293b';
+          kCtx.beginPath();
+          kCtx.arc(mx, my, mSize, 0, Math.PI * 2);
+          kCtx.fill();
+        }
+      }
+
+      // Planetary Dust Stippling on Foil
+      if (factor > 0.08) {
+        let dustR = 100, dustG = 116, dustB = 139; // Lunar gray
+        if (body === 'mars') { dustR = 194; dustG = 65; dustB = 12; } // Martian red rust
+        else if (body === 'venus') { dustR = 41; dustG = 37; dustB = 36; } // Venusian soot
+        else if (body === 'outer') { dustR = 162; dustG = 109; dustB = 70; } // Tholin
+
+        kCtx.fillStyle = `rgba(${dustR}, ${dustG}, ${dustB}, ${Math.min(0.85, factor * 0.88)})`;
+        for (let d = 0; d < Math.round(factor * 260); d++) {
+          const dx = (d * 79 + 17) % width;
+          const dy = (d * 163 + 83) % height;
+          const dRad = 1 + ((d * 7) % 3.5);
+          kCtx.fillRect(dx, dy, dRad, dRad);
+        }
+      }
+
+      // Thermal tape seam lines
+      const tapeAlpha = Math.max(0.18, 0.85 - factor * 0.55);
+      kCtx.strokeStyle = (factor < 0.4) ? `rgba(180, 83, 9, ${tapeAlpha})` : `rgba(71, 85, 105, ${tapeAlpha})`;
+      kCtx.lineWidth = 4;
+      [128, 256, 384].forEach(coord => {
+        kCtx.beginPath();
+        kCtx.moveTo(coord, 0);
+        kCtx.lineTo(coord, height);
+        kCtx.stroke();
+        kCtx.beginPath();
+        kCtx.moveTo(0, coord);
+        kCtx.lineTo(width, coord);
+        kCtx.stroke();
+      });
+      if (kTex) kTex.needsUpdate = true;
+
+      // 2. Solar Array Photovoltaic Weathering Canvas
+      sCtx.clearRect(0, 0, width, height);
+
+      // Base Silicon Cell Gradient
+      const sGrad = sCtx.createLinearGradient(0, 0, width, height);
+      if (body === 'mars') {
+        const sBlueR = 15, sBlueG = 23, sBlueB = 42;
+        const sDustR = 124, sDustG = 45, sDustB = 18;
+        const sr = Math.round(sBlueR + (sDustR - sBlueR) * factor * 0.9);
+        const sg = Math.round(sBlueG + (sDustG - sBlueG) * factor * 0.9);
+        const sb = Math.round(sBlueB + (sDustB - sBlueB) * factor * 0.9);
+        sGrad.addColorStop(0, `rgb(${sr}, ${sg}, ${sb})`);
+        sGrad.addColorStop(1, `rgb(${Math.round(sr * 0.8)}, ${Math.round(sg * 0.8)}, ${Math.round(sb * 0.8)})`);
+      } else {
+        sGrad.addColorStop(0, factor < 0.5 ? '#0f172a' : '#1e293b');
+        sGrad.addColorStop(0.5, factor < 0.5 ? '#1e3a8a' : '#334155');
+        sGrad.addColorStop(1, factor < 0.5 ? '#172554' : '#0f172a');
+      }
+      sCtx.fillStyle = sGrad;
+      sCtx.fillRect(0, 0, width, height);
+
+      // Gridlines
+      const cols = 8;
+      const rows = 16;
+      const cw = width / cols;
+      const ch = height / rows;
+      const gridAlpha = Math.max(0.08, 0.55 * (1 - factor * 0.82));
+      sCtx.strokeStyle = `rgba(56, 189, 248, ${gridAlpha})`;
+      sCtx.lineWidth = 1.5;
+
+      for (let c = 0; c <= cols; c++) {
+        sCtx.beginPath();
+        sCtx.moveTo(c * cw, 0);
+        sCtx.lineTo(c * cw, height);
+        sCtx.stroke();
+      }
+      for (let r = 0; r <= rows; r++) {
+        sCtx.beginPath();
+        sCtx.moveTo(0, r * ch);
+        sCtx.lineTo(width, r * ch);
+        sCtx.stroke();
+      }
+
+      // Layered Dust Blanket across Solar Cells (Especially on Mars: Opportunity / Spirit / InSight)
+      if (factor > 0.04) {
+        let dustR = 194, dustG = 65, dustB = 12; // Mars ferric rust
+        if (body === 'moon') { dustR = 100; dustG = 116; dustB = 139; }
+        else if (body === 'venus') { dustR = 41; dustG = 37; dustB = 36; }
+        else if (body === 'outer') { dustR = 162; dustG = 109; dustB = 70; }
+
+        sCtx.fillStyle = `rgba(${dustR}, ${dustG}, ${dustB}, ${Math.min(0.88, factor * 0.92)})`;
+        sCtx.fillRect(0, 0, width, height);
+
+        for (let d = 0; d < Math.round(factor * 120); d++) {
+          const dx = (d * 67 + 23) % width;
+          const dy = (d * 131 + 47) % height;
+          const dRad = 15 + ((d * 19) % 45);
+          const dGrad = sCtx.createRadialGradient(dx, dy, 2, dx, dy, dRad);
+          dGrad.addColorStop(0, `rgba(${dustR + 25}, ${dustG + 15}, ${dustB}, ${Math.min(0.95, factor * 0.95)})`);
+          dGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          sCtx.fillStyle = dGrad;
+          sCtx.beginPath();
+          sCtx.arc(dx, dy, dRad, 0, Math.PI * 2);
+          sCtx.fill();
+        }
+      }
+
+      if (sTex) sTex.needsUpdate = true;
+    };
+
+    update(0.75, 'moon');
+
+    return {
+      kaptonTexture: kTex,
+      solarTexture: sTex,
+      update
+    };
+  }
 }
 
 window.CelestialTextures = new CelestialTextureGenerator();

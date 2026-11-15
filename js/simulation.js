@@ -1405,11 +1405,77 @@ class MissionSimulationTheater {
     }
 
     this.buildSimulationScene(artifact);
+    if (typeof this.currentDegradationFactor === 'number') {
+      this.applyDegradation(this.currentDegradationFactor, artifact);
+    }
     this.setCameraMode(this.cameraMode);
 
     this.lastTime = performance.now();
     // Use setAnimationLoop so both standard desktop browsers and WebXR headsets render seamlessly
     this.renderer.setAnimationLoop(() => this.renderFrame());
+  }
+
+  applyDegradation(factor, artifact = null) {
+    factor = Math.max(0, Math.min(1, typeof factor === 'number' ? factor : 0.75));
+    this.currentDegradationFactor = factor;
+    if (!this.spacecraft) return;
+
+    const targetArt = artifact || this.currentArtifact;
+    const body = (targetArt && targetArt.body) ? targetArt.body.toLowerCase() : (this.currentBody || 'moon');
+
+    this.spacecraft.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach((m) => {
+          if (!m || !m.color) return;
+
+          if (!m.userData) m.userData = {};
+          if (!m.userData.origColor) {
+            m.userData.origColor = m.color.clone();
+            m.userData.origRoughness = m.roughness !== undefined ? m.roughness : 0.25;
+            m.userData.origMetalness = m.metalness !== undefined ? m.metalness : 0.5;
+            m.userData.origBumpScale = m.bumpScale !== undefined ? m.bumpScale : 0.04;
+          }
+
+          const orig = m.userData;
+
+          // 1. Gold / Amber MLI Kapton Foil
+          if (orig.origColor.r > 0.8 && orig.origColor.g > 0.4 && orig.origColor.b < 0.3) {
+            const bleached = new THREE.Color(0xdce2e8);
+            m.color.copy(orig.origColor).lerp(bleached, factor * 0.92);
+            m.roughness = Math.min(0.85, orig.origRoughness + factor * 0.52);
+            m.metalness = Math.max(0.42, orig.origMetalness - factor * 0.4);
+            if (m.bumpScale !== undefined) {
+              m.bumpScale = orig.origBumpScale + factor * 0.14;
+            }
+          }
+          // 2. Solar Arrays (Dark blue/indigo cells)
+          else if (orig.origColor.b > 0.22 && orig.origColor.r < 0.2) {
+            let solarDust = new THREE.Color(0x3e5265);
+            if (body === 'mars') solarDust = new THREE.Color(0x7c4930);
+            else if (body === 'venus') solarDust = new THREE.Color(0x2d251e);
+            m.color.copy(orig.origColor).lerp(solarDust, factor * 0.86);
+            m.roughness = Math.min(0.88, orig.origRoughness + factor * 0.65);
+            m.metalness = Math.max(0.2, orig.origMetalness - factor * 0.55);
+          }
+          // 3. White / Light Chassis Coatings
+          else if (orig.origColor.r > 0.85 && orig.origColor.g > 0.85 && orig.origColor.b > 0.85) {
+            let dustColor = new THREE.Color(0x9fa8b2);
+            if (body === 'mars') dustColor = new THREE.Color(0xcc6f43);
+            else if (body === 'venus') dustColor = new THREE.Color(0x382f25);
+            else if (body === 'outer') dustColor = new THREE.Color(0xa26d46);
+            m.color.copy(orig.origColor).lerp(dustColor, factor * 0.82);
+            m.roughness = Math.min(0.92, orig.origRoughness + factor * 0.48);
+          }
+          // 4. Structural Metals
+          else if (orig.origMetalness > 0.6) {
+            m.roughness = Math.min(0.78, orig.origRoughness + factor * 0.45);
+          }
+
+          m.needsUpdate = true;
+        });
+      }
+    });
   }
 
   stopSimulation() {

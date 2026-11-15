@@ -713,6 +713,10 @@ class SpaceSceneManager {
     this.miniModelGroup = new THREE.Group();
     this.miniScene.add(this.miniModelGroup);
 
+    if (!this.dynamicWeathering && window.CelestialTextures && typeof window.CelestialTextures.createDynamicWeatheringTextures === 'function') {
+      this.dynamicWeathering = window.CelestialTextures.createDynamicWeatheringTextures();
+    }
+
     this.updateMiniModel('lander');
     this.resizeMiniViewer();
   }
@@ -756,9 +760,13 @@ class SpaceSceneManager {
       this.miniModelGroup.remove(this.miniModelGroup.children[0]);
     }
 
-    const kaptonMap = window.CelestialTextures ? window.CelestialTextures.generateKaptonFoilMap() : null;
+    if (!this.dynamicWeathering && window.CelestialTextures && typeof window.CelestialTextures.createDynamicWeatheringTextures === 'function') {
+      this.dynamicWeathering = window.CelestialTextures.createDynamicWeatheringTextures();
+    }
+
+    const kaptonMap = this.dynamicWeathering ? this.dynamicWeathering.kaptonTexture : (window.CelestialTextures ? window.CelestialTextures.generateKaptonFoilMap() : null);
     const kaptonBump = window.CelestialTextures ? window.CelestialTextures.generateKaptonFoilBump() : null;
-    const solarTex = window.CelestialTextures ? window.CelestialTextures.generateSolarPanelTexture() : null;
+    const solarTex = this.dynamicWeathering ? this.dynamicWeathering.solarTexture : (window.CelestialTextures ? window.CelestialTextures.generateSolarPanelTexture() : null);
     const inconelTex = window.CelestialTextures ? window.CelestialTextures.generateInconelShieldTexture() : null;
 
     const goldMat = new THREE.MeshStandardMaterial({
@@ -831,6 +839,15 @@ class SpaceSceneManager {
       emissiveIntensity: 0.4,
       wireframe: this.isMiniWireframe
     });
+    const dustCrustMat = new THREE.MeshStandardMaterial({
+      color: 0x9fa8b2,
+      roughness: 0.98,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      wireframe: this.isMiniWireframe
+    });
 
     this.currentMiniArtifact = artifact;
     this.miniMaterials = {
@@ -843,7 +860,8 @@ class SpaceSceneManager {
       darkMat,
       copperEngineMat,
       solarMat,
-      cyanAccentMat
+      cyanAccentMat,
+      dustCrustMat
     };
 
     this.miniOriginals = {
@@ -902,6 +920,12 @@ class SpaceSceneManager {
       const deck = new THREE.Mesh(deckGeo, silverMat);
       deck.position.y = 0.38;
       model.add(deck);
+
+      // Regolith dust accumulation crust layer on launch deck
+      const deckDust = new THREE.Mesh(new THREE.CylinderGeometry(1.94, 2.04, 0.02, 8), dustCrustMat);
+      deckDust.position.y = 0.44;
+      deckDust.isDustCrust = true;
+      model.add(deckDust);
 
       // Central Ascent Engine Blast Deflector Bowl & Stainless Steel Pyrotechnic Ring
       const deflectorBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.5, 0.22, 24, 1, true), darkMat);
@@ -1005,6 +1029,11 @@ class SpaceSceneManager {
         padUpper.position.set(3.02, -1.75, 0);
         legGroup.add(padUpper);
 
+        const padDust = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.49, 0.02, 24), dustCrustMat);
+        padDust.position.set(3.02, -1.71, 0);
+        padDust.isDustCrust = true;
+        legGroup.add(padDust);
+
         const padLip = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.035, 8, 28), silverMat);
         padLip.rotation.x = Math.PI / 2;
         padLip.position.set(3.02, -1.75, 0);
@@ -1064,6 +1093,11 @@ class SpaceSceneManager {
         const fwdDeck = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.32, 0.95), silverMat);
         fwdDeck.position.set(0, -0.1, 1.05);
         model.add(fwdDeck);
+
+        const fwdDeckDust = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.02, 0.94), dustCrustMat);
+        fwdDeckDust.position.set(0, 0.07, 1.05);
+        fwdDeckDust.isDustCrust = true;
+        model.add(fwdDeckDust);
 
         // Dual Folding Lawn-Chair Mesh Seats with Tubular Aluminum Frames
         for (let s = -1; s <= 1; s += 2) {
@@ -1159,6 +1193,11 @@ class SpaceSceneManager {
         const topDeck = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.12, 2.95), whiteMat);
         topDeck.position.y = 0.42;
         model.add(topDeck);
+
+        const topDeckDust = new THREE.Mesh(new THREE.BoxGeometry(2.24, 0.02, 2.94), dustCrustMat);
+        topDeckDust.position.y = 0.49;
+        topDeckDust.isDustCrust = true;
+        model.add(topDeckDust);
 
         // Rear MMRTG Finned Nuclear Power Generator
         const rtgGroup = new THREE.Group();
@@ -1268,6 +1307,11 @@ class SpaceSceneManager {
       const solar = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 1.15), solarMat);
       solar.position.y = 2.02;
       model.add(solar);
+
+      const solarDust = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.02, 1.14), dustCrustMat);
+      solarDust.position.y = 2.06;
+      solarDust.isDustCrust = true;
+      model.add(solarDust);
 
       // Counter-Rotating Carbon-Fiber Airfoil Blades
       const bladeGeo = new THREE.BoxGeometry(4.6, 0.035, 0.34);
@@ -1589,15 +1633,25 @@ class SpaceSceneManager {
     const targetArt = artifact || this.currentMiniArtifact || this.selectedArtifact;
     const body = (targetArt && targetArt.body) ? targetArt.body.toLowerCase() : (this.currentBody || 'moon');
 
+    // Dynamically regenerate procedural canvases for Kapton bleaching, micro-craters & dust
+    if (this.dynamicWeathering && typeof this.dynamicWeathering.update === 'function') {
+      this.dynamicWeathering.update(factor, body);
+    }
+
     const {
       goldMat, amberFoilMat, inconelMat, silverMat, titaniumMat,
-      whiteMat, darkMat, copperEngineMat, solarMat, cyanAccentMat
+      whiteMat, darkMat, copperEngineMat, solarMat, cyanAccentMat,
+      dustCrustMat
     } = this.miniMaterials;
 
     const orig = this.miniOriginals;
 
     // 1. Kapton Polyimide Multi-Layer Insulation (Gold & Amber MLI)
     // NASA LROC confirmed: Unfiltered solar UV photolysis bleaches polyimide, revealing silvery aluminized backing
+    // Dynamic crinkling & micro-delamination via bumpScale
+    goldMat.bumpScale = 0.02 + factor * 0.14;
+    amberFoilMat.bumpScale = 0.03 + factor * 0.13;
+
     const bleachedGold = new THREE.Color(0xdce2e8); // Silvery-white aluminum backing
     goldMat.color.copy(orig.goldColor).lerp(bleachedGold, factor * 0.94);
     goldMat.roughness = orig.goldRoughness + factor * 0.54; // 0.22 -> 0.76 (embrittlement & micro-flaking)
@@ -1630,7 +1684,15 @@ class SpaceSceneManager {
     whiteMat.roughness = Math.min(0.92, orig.whiteRoughness + factor * dustRoughnessBoost);
     whiteMat.metalness = Math.max(0.04, orig.whiteMetalness - factor * 0.1);
 
-    // 3. Photovoltaic Solar Arrays (Dust Obstruction & Power Attenuation)
+    // 3. Physical 3D Dust Crust Layer Overlay (Regolith Accumulation)
+    if (dustCrustMat) {
+      dustCrustMat.color.copy(dustColor);
+      dustCrustMat.opacity = Math.min(0.94, factor * 1.15);
+      dustCrustMat.roughness = 0.95 + factor * 0.04;
+      dustCrustMat.needsUpdate = true;
+    }
+
+    // 4. Photovoltaic Solar Arrays (Dust Obstruction & Power Attenuation)
     if (body === 'mars') {
       // Opportunity / Spirit / InSight solar array suffocation by Martian dust
       const marsSolarDust = new THREE.Color(0x7c4930);
@@ -1645,7 +1707,7 @@ class SpaceSceneManager {
     solarMat.roughness = Math.min(0.88, orig.solarRoughness + factor * 0.65); // 0.18 -> 0.83 (loss of gloss)
     solarMat.metalness = Math.max(0.18, orig.solarMetalness - factor * 0.55); // 0.75 -> 0.20
 
-    // 4. Structural Titanium, Stainless Steel & Inconel Alloys
+    // 5. Structural Titanium, Stainless Steel & Inconel Alloys
     // Micrometeorite pitting & thermal cycle fatigue
     silverMat.roughness = Math.min(0.72, orig.silverRoughness + factor * 0.52);
     titaniumMat.roughness = Math.min(0.78, orig.titaniumRoughness + factor * 0.46);
@@ -1658,7 +1720,7 @@ class SpaceSceneManager {
       titaniumMat.color.copy(orig.titaniumColor).lerp(new THREE.Color(0x738191), factor * 0.4);
     }
 
-    // 5. Copper & Rocket Engine Exhaust Nozzles
+    // 6. Copper & Rocket Engine Exhaust Nozzles
     if (body === 'venus') {
       copperEngineMat.color.copy(orig.copperColor).lerp(new THREE.Color(0x3a2512), factor * 0.85);
     } else {

@@ -1140,9 +1140,67 @@ class AbandonedInSpaceApp {
     if (intelHeadline) intelHeadline.innerText = headline;
     if (intelDesc) intelDesc.innerText = desc;
 
-    // Apply real-time 3D PBR degradation to scene
+    // Real-Time Engineering Degradation Telemetry Gauges
+    const valSolar = document.getElementById('deg-val-solar');
+    const valKapton = document.getElementById('deg-val-kapton');
+    const valDust = document.getElementById('deg-val-dust');
+    const valThermal = document.getElementById('deg-val-thermal');
+
+    if (valSolar) {
+      if (body === 'venus') {
+        valSolar.innerText = isTr ? '0% (Termal İflas / 467°C)' : '0% (Thermal Burnout)';
+      } else {
+        const solarEff = Math.max(0, Math.round((1 - factor * 0.94) * 100));
+        let solarDesc = '';
+        if (solarEff > 85) solarDesc = isTr ? ' (Kusursuz)' : ' (Pristine)';
+        else if (solarEff > 45) solarDesc = isTr ? ' (Zayıflamış)' : ' (Attenuated)';
+        else if (solarEff > 12) solarDesc = isTr ? ' (Tozla Tıkalı)' : ' (Dust-Choked)';
+        else solarDesc = isTr ? ' (Tam Boğulma)' : ' (Total Choke)';
+        valSolar.innerText = `${solarEff}%${solarDesc}`;
+      }
+    }
+
+    if (valKapton) {
+      const kaptonBleach = Math.min(99, Math.round(factor * 99));
+      let kaptonDesc = '';
+      if (kaptonBleach < 10) kaptonDesc = isTr ? ' (Altın MLI)' : ' (Gold MLI)';
+      else if (kaptonBleach < 45) kaptonDesc = isTr ? ' (Erken Fotoliz)' : ' (Early UV Bleach)';
+      else if (kaptonBleach < 85) kaptonDesc = isTr ? ' (Gümüş Alüminyum)' : ' (Silvery Aluminum)';
+      else kaptonDesc = isTr ? ' (Gevrek / Dökülme)' : ' (Delaminated Foil)';
+      valKapton.innerText = `${kaptonBleach}%${kaptonDesc}`;
+    }
+
+    if (valDust) {
+      let dustDensity = 0;
+      if (body === 'moon') dustDensity = (factor * 12.8).toFixed(1);
+      else if (body === 'mars') dustDensity = (factor * 34.5).toFixed(1);
+      else if (body === 'venus') dustDensity = (factor * 48.2).toFixed(1);
+      else dustDensity = (factor * 9.4).toFixed(1);
+      valDust.innerText = `${dustDensity} mg/cm²`;
+    }
+
+    if (valThermal) {
+      if (body === 'moon') {
+        const cycles = Math.round(factor * 950);
+        valThermal.innerText = isTr ? `${cycles}+ Gece-Gündüz Döngüsü` : `${cycles}+ Day/Night Cycles`;
+      } else if (body === 'mars') {
+        const sols = Math.round(factor * 22000);
+        valThermal.innerText = isTr ? `${sols}+ Sol (Mars Günü)` : `${sols}+ Sols (Mars Days)`;
+      } else if (body === 'venus') {
+        valThermal.innerText = isTr ? '467°C Sabit Piroliz (93 bar)' : '467°C Static Pyrolysis (93 bar)';
+      } else {
+        valThermal.innerText = isTr ? '-179°C Kriyojenik Sabit' : '-179°C Cryogenic Stasis';
+      }
+    }
+
+    // Apply real-time 3D PBR degradation to mini holographic viewer
     if (this.sceneManager) {
       this.sceneManager.setMiniModelDegradation(factor, targetArt);
+    }
+
+    // Synchronize 1:1 scale surface walk / simulation model
+    if (this.simulation && typeof this.simulation.applyDegradation === 'function') {
+      this.simulation.applyDegradation(factor, targetArt);
     }
   }
 
@@ -1728,6 +1786,10 @@ const TRANSLATIONS = {
     deg_step_25: "⏳ +25 Yıl",
     deg_step_today: "🔬 Bugün (55+ Yıl)",
     deg_step_future: "🌌 Gelecek (+100)",
+    deg_lbl_solar: "GÜNEŞ PANELİ VERİMİ:",
+    deg_lbl_kapton: "KAPTON UV BEYAZLAMA:",
+    deg_lbl_dust: "REGOLİT TOZ YÜKÜ:",
+    deg_lbl_thermal: "TERMAL DÖNGÜ YORGUNLUĞU:",
     transmission_label: "TELSİZ VE TELEMETRİ SESİ",
     play_audio_btn: "TELSİZİ DİNLE",
     btn_prev_site: "Önceki Kalıntı",
@@ -1859,6 +1921,10 @@ const TRANSLATIONS = {
     deg_step_25: "⏳ +25 Yrs",
     deg_step_today: "🔬 Present Day",
     deg_step_future: "🌌 Future (+100)",
+    deg_lbl_solar: "SOLAR ARRAY EFFICIENCY:",
+    deg_lbl_kapton: "KAPTON UV BLEACHING:",
+    deg_lbl_dust: "REGOLITH DUST LOAD:",
+    deg_lbl_thermal: "THERMAL CYCLING FATIGUE:",
     transmission_label: "RADIO AUDIO & TELEMETRY",
     play_audio_btn: "LISTEN TO TRANSMISSION",
     btn_prev_site: "Previous Site",

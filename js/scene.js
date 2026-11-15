@@ -139,7 +139,8 @@ class SpaceSceneManager {
 
     const bgMat = new THREE.PointsMaterial({
       map: starTex,
-      size: 2.8,
+      size: 2.2,
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
       opacity: 0.95,
@@ -181,7 +182,8 @@ class SpaceSceneManager {
 
     const brightMat = new THREE.PointsMaterial({
       map: starTex,
-      size: 6.0,
+      size: 5.2,
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
@@ -241,7 +243,8 @@ class SpaceSceneManager {
 
     const mwMat = new THREE.PointsMaterial({
       map: starTex,
-      size: 3.5,
+      size: 3.0,
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
       opacity: 0.92,

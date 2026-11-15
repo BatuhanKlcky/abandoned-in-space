@@ -161,7 +161,7 @@ class MissionSimulationTheater {
 
     this.scene = new THREE.Scene();
 
-    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.04, 3000);
+    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.04, 8000);
     this.cameraRig = new THREE.Group();
     this.cameraRig.add(this.camera);
 
@@ -3341,7 +3341,7 @@ class MissionSimulationTheater {
       new THREE.Color(0xff8870)  // M: Crimson stellar flare
     ];
 
-    const skyRadius = 3800; // vast astronomical sky sphere radius
+    const skyRadius = 2400; // vast astronomical sky sphere radius
 
     // =========================================================================
     // LAYER 1: Deep Cosmos Starfield (9,500 Stars across full celestial dome)
@@ -3352,7 +3352,7 @@ class MissionSimulationTheater {
     const bgColors = new Float32Array(bgCount * 3);
 
     for (let i = 0; i < bgCount; i++) {
-      const r = skyRadius + (Math.random() - 0.5) * 600;
+      const r = skyRadius + (Math.random() - 0.5) * 400;
       const theta = Math.random() * Math.PI * 2;
       const u = Math.random() * 2 - 1;
       const phi = Math.acos(u);
@@ -3379,10 +3379,11 @@ class MissionSimulationTheater {
 
     const bgMat = new THREE.PointsMaterial({
       map: starTex,
-      size: isMoon ? 2.8 : (isOuter ? 3.0 : 2.2),
+      size: isMoon ? 2.2 : (isOuter ? 2.4 : 1.8),
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
-      opacity: isMoon ? 0.98 : (isOuter ? 1.0 : 0.82),
+      opacity: isMoon ? 0.98 : (isOuter ? 1.0 : 0.85),
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       depthTest: true
@@ -3400,7 +3401,7 @@ class MissionSimulationTheater {
     const brightColors = new Float32Array(brightCount * 3);
 
     for (let i = 0; i < brightCount; i++) {
-      const r = skyRadius + (Math.random() - 0.5) * 300;
+      const r = skyRadius + (Math.random() - 0.5) * 200;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
 
@@ -3421,7 +3422,8 @@ class MissionSimulationTheater {
 
     const brightMat = new THREE.PointsMaterial({
       map: starTex,
-      size: isMoon ? 6.2 : (isOuter ? 6.5 : 4.8),
+      size: isMoon ? 5.2 : (isOuter ? 5.5 : 4.2),
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
@@ -3448,7 +3450,7 @@ class MissionSimulationTheater {
     for (let i = 0; i < mwCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const latDev = (Math.random() + Math.random() + Math.random() - 1.5) * 0.22;
-      const r = skyRadius + (Math.random() - 0.5) * 450;
+      const r = skyRadius + (Math.random() - 0.5) * 300;
 
       const pCirc = new THREE.Vector3()
         .addScaledVector(mwU, Math.cos(angle))
@@ -3489,10 +3491,11 @@ class MissionSimulationTheater {
 
     const mwMat = new THREE.PointsMaterial({
       map: starTex,
-      size: isMoon ? 3.6 : (isOuter ? 4.0 : 2.8),
+      size: isMoon ? 3.0 : (isOuter ? 3.2 : 2.4),
+      sizeAttenuation: false,
       vertexColors: true,
       transparent: true,
-      opacity: isMoon ? 0.95 : (isOuter ? 0.98 : 0.78),
+      opacity: isMoon ? 0.95 : (isOuter ? 0.98 : 0.80),
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       depthTest: true
@@ -3512,7 +3515,7 @@ class MissionSimulationTheater {
     for (let i = 0; i < nebCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const latDev = (Math.random() + Math.random() - 1.0) * 0.16;
-      const r = skyRadius * 0.98;
+      const r = skyRadius * 0.96;
 
       const pCirc = new THREE.Vector3()
         .addScaledVector(mwU, Math.cos(angle))
@@ -3545,7 +3548,8 @@ class MissionSimulationTheater {
 
     const nebMat = new THREE.PointsMaterial({
       map: nebulaTex,
-      size: 280,
+      size: 260,
+      sizeAttenuation: true,
       vertexColors: true,
       transparent: true,
       opacity: isMoon ? 0.34 : (isOuter ? 0.40 : 0.20),
@@ -3592,7 +3596,8 @@ class MissionSimulationTheater {
 
       const mMat = new THREE.PointsMaterial({
         map: starTex,
-        size: 3.4,
+        size: 2.8,
+        sizeAttenuation: false,
         vertexColors: true,
         transparent: true,
         opacity: isMoon ? 0.88 : 0.68,
